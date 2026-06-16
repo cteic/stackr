@@ -1,5 +1,8 @@
-# Local secrets for `wrangler` / OpenNext dev, consumed by the same-origin RPC
-# proxies at apps/web/src/app/api/rpc/{solana,eth}/route.ts.
+# Local secrets for `wrangler` / OpenNext dev, consumed by the same-origin
+# proxies at:
+#   apps/web/src/app/api/rpc/{solana,eth}/route.ts  (JSON-RPC: Helius / Alchemy)
+#   apps/web/src/app/api/etherscan/route.ts          (REST: Etherscan)
+#   apps/web/src/app/api/stocks/route.ts             (REST: Alpha Vantage)
 #
 # Setup:
 #   1. Copy this file to `.dev.vars` (already gitignored) in apps/web/.
@@ -7,9 +10,14 @@
 #   3. For deployed environments, provision the secrets instead of committing them:
 #        wrangler secret put HELIUS_API_KEY
 #        wrangler secret put ALCHEMY_API_KEY
+#        wrangler secret put ETHERSCAN_API_KEY
+#        wrangler secret put ALPHAVANTAGE_API_KEY
 #
 # These are SERVER-ONLY secrets: note the absence of a NEXT_PUBLIC_ prefix, so
 # they are never inlined into the client bundle. When a key is absent the
-# matching proxy falls back to a public RPC and the app still works.
+# matching proxy falls back to a public (keyless) upstream and the app still
+# works, just at the upstream's lower unauthenticated rate limit.
 HELIUS_API_KEY=your-helius-key-here
 ALCHEMY_API_KEY=your-alchemy-key-here
+ETHERSCAN_API_KEY=your-etherscan-key-here
+ALPHAVANTAGE_API_KEY=your-alphavantage-key-here

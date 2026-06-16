@@ -49,11 +49,13 @@ const walletConnectConnect = [
 const chainDataConnect = [
   'https://blockstream.info', // BTC balances + transactions (services/btc, transactions)
   'https://api.hiro.so', // STX balances, BNS, transactions (services/stx, transactions)
-  'https://api.etherscan.io', // ETH balances + transactions (services/eth, transactions)
+  // Etherscan (ETH balances + transactions) and Alpha Vantage (stocks) are no
+  // longer listed: the browser only ever reaches the same-origin proxies at
+  // /api/etherscan and /api/stocks (covered by 'self'), which hold the
+  // server-only keys and forward upstream. See #69.
   'https://api.mainnet-beta.solana.com', // SOL balance JSON-RPC (services/sol)
   'https://api.coingecko.com', // spot prices + market charts (services/prices)
   'https://fullnode.mainnet.sui.io', // SUI balances + transactions (services/sui)
-  'https://www.alphavantage.co', // stock quotes / search / history (services/stocks)
   'https://api.kamino.finance', // Kamino liquidation-health reads (services/health/kamino)
   'wss://ws.kraken.com', // live ticker + order book (services/ticker, orderbook)
 ];

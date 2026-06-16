@@ -12,10 +12,13 @@ import {
   type CustomThemeTokenKey,
 } from './custom-theme';
 
-// Bumped to 1 when persisted-state validation landed. The migration re-checks
-// each persisted field against its domain rules so tampered or stale localStorage
+// v1 added persisted-state validation. v2 dropped the BYO Etherscan / Alpha
+// Vantage API-key fields: those keys are now app-owned and applied server-side
+// by the `/api/etherscan` and `/api/stocks` proxies, so the migration strips
+// them from any older persisted blob. The migration still re-checks each
+// surviving field against its domain rules so tampered or stale localStorage
 // can't rehydrate an invalid currency or a half-formed custom theme.
-const PERSIST_VERSION = 1;
+const PERSIST_VERSION = 2;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -41,12 +44,8 @@ function sanitizeCustomTheme(value: unknown): CustomTheme {
 }
 
 interface SettingsState {
-  etherscanApiKey: string;
-  setEtherscanApiKey: (key: string) => void;
   currency: Currency;
   setCurrency: (currency: Currency) => void;
-  alphaVantageApiKey: string;
-  setAlphaVantageApiKey: (key: string) => void;
   hideBalance: boolean;
   toggleHideBalance: () => void;
   customTheme: CustomTheme;
@@ -58,12 +57,8 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     set => ({
-      etherscanApiKey: '',
-      setEtherscanApiKey: key => set({ etherscanApiKey: key }),
       currency: 'usd',
       setCurrency: currency => set({ currency }),
-      alphaVantageApiKey: '',
-      setAlphaVantageApiKey: key => set({ alphaVantageApiKey: key }),
       hideBalance: false,
       toggleHideBalance: () => set(s => ({ hideBalance: !s.hideBalance })),
       customTheme: defaultCustomTheme(),
@@ -82,27 +77,22 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'stackr-settings',
       version: PERSIST_VERSION,
       partialize: state => ({
-        etherscanApiKey: state.etherscanApiKey,
         currency: state.currency,
-        alphaVantageApiKey: state.alphaVantageApiKey,
         customTheme: state.customTheme,
       }),
+      // v2 also drops the removed `etherscanApiKey` / `alphaVantageApiKey`
+      // fields: they are simply not read back out, so any value an older blob
+      // carried is discarded rather than rehydrated.
       migrate: persisted => {
         if (!isRecord(persisted)) {
           return {
-            etherscanApiKey: '',
             currency: 'usd',
-            alphaVantageApiKey: '',
             customTheme: defaultCustomTheme(),
           };
         }
         const currency = CurrencySchema.safeParse(persisted.currency);
         return {
-          etherscanApiKey:
-            typeof persisted.etherscanApiKey === 'string' ? persisted.etherscanApiKey : '',
           currency: currency.success ? currency.data : 'usd',
-          alphaVantageApiKey:
-            typeof persisted.alphaVantageApiKey === 'string' ? persisted.alphaVantageApiKey : '',
           customTheme: sanitizeCustomTheme(persisted.customTheme),
         };
       },

@@ -5,38 +5,7 @@ import { useSettingsStore } from './settings-store';
 import { defaultCustomTheme, THEME_SEEDS } from './custom-theme';
 
 beforeEach(() => {
-  useSettingsStore.setState({ etherscanApiKey: '', customTheme: defaultCustomTheme() });
-});
-
-feature('settings — Etherscan API key', () => {
-  scenario('starts empty', () => {
-    then('no key is set', () => {
-      expect(useSettingsStore.getState().etherscanApiKey).toBe('');
-    });
-  });
-
-  scenario('a key can be saved', () => {
-    when('a key is entered', () => useSettingsStore.getState().setEtherscanApiKey('test-key-123'));
-    then('it is persisted in the store', () => {
-      expect(useSettingsStore.getState().etherscanApiKey).toBe('test-key-123');
-    });
-  });
-
-  scenario('saving a new key overwrites the old one', () => {
-    given('an existing key', () => useSettingsStore.getState().setEtherscanApiKey('key-1'));
-    when('a new key is saved', () => useSettingsStore.getState().setEtherscanApiKey('key-2'));
-    then('only the new key remains', () => {
-      expect(useSettingsStore.getState().etherscanApiKey).toBe('key-2');
-    });
-  });
-
-  scenario('a key can be cleared', () => {
-    given('a saved key', () => useSettingsStore.getState().setEtherscanApiKey('some-key'));
-    when('it is set to empty', () => useSettingsStore.getState().setEtherscanApiKey(''));
-    then('no key is set', () => {
-      expect(useSettingsStore.getState().etherscanApiKey).toBe('');
-    });
-  });
+  useSettingsStore.setState({ currency: 'usd', customTheme: defaultCustomTheme() });
 });
 
 feature('settings — custom theme', () => {
@@ -93,27 +62,27 @@ feature('settings — custom theme', () => {
 
 feature('persisted settings migration', () => {
   scenario('invalid persisted settings fall back to safe defaults', async () => {
-    given('a store with an unknown currency and an unrecognised theme base', () =>
+    given('a v1 store with a BYO key, an unknown currency and an unrecognised theme base', () =>
       localStorage.setItem(
         'stackr-settings',
         JSON.stringify({
           state: {
-            etherscanApiKey: 'keep-me',
+            etherscanApiKey: 'leftover-key',
             currency: 'doge',
-            alphaVantageApiKey: 42,
+            alphaVantageApiKey: 'another-leftover',
             customTheme: { base: 'not-a-theme', tokens: { background: '#abcdef' } },
           },
-          version: 0,
+          version: 1,
         }),
       ),
     );
     when('the store rehydrates under the current version', async () => {
       await useSettingsStore.persist.rehydrate();
     });
-    then('a valid string key is preserved but a non-string key is reset', () => {
-      const state = useSettingsStore.getState();
-      expect(state.etherscanApiKey).toBe('keep-me');
-      expect(state.alphaVantageApiKey).toBe('');
+    then('the removed BYO API-key fields are not written back to persisted storage', () => {
+      const raw = localStorage.getItem('stackr-settings') ?? '{}';
+      expect(raw).not.toContain('etherscanApiKey');
+      expect(raw).not.toContain('alphaVantageApiKey');
     });
     then('the unknown currency falls back to usd', () => {
       expect(useSettingsStore.getState().currency).toBe('usd');
@@ -132,7 +101,6 @@ feature('persisted settings migration', () => {
     });
     then('all settings return to their defaults', () => {
       const state = useSettingsStore.getState();
-      expect(state.etherscanApiKey).toBe('');
       expect(state.currency).toBe('usd');
       expect(state.customTheme).toEqual(defaultCustomTheme());
     });

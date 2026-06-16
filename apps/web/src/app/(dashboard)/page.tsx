@@ -21,9 +21,7 @@ import { Collectibles } from '@/components/collectibles';
 export default function DashboardPage() {
   const wallets = useWalletStore(s => s.wallets);
   const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const etherscanApiKey = useSettingsStore(s => s.etherscanApiKey);
   const currency = useSettingsStore(s => s.currency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const holdings = useHoldingsStore(s => s.holdings);
 
@@ -53,9 +51,7 @@ export default function DashboardPage() {
   // chains plug in here as their NFT adapters land (#93).
   const stxAddresses = [...new Set(allWallets.filter(w => w.chain === 'stx').map(w => w.address))];
 
-  const balanceQueries = useBalances(allWallets, {
-    ethApiKey: etherscanApiKey || undefined,
-  });
+  const balanceQueries = useBalances(allWallets);
 
   // Manual crypto positions are priced through the same feed as wallet balances,
   // so they need their chains in the price query too.
@@ -98,7 +94,7 @@ export default function DashboardPage() {
     (h): h is Extract<typeof h, { type: 'stock' }> => h.type === 'stock',
   );
   const stockSymbols = stockHoldings.map(h => h.symbol);
-  const { data: stockQuotes } = useStockQuotes(stockSymbols, alphaVantageApiKey);
+  const { data: stockQuotes } = useStockQuotes(stockSymbols);
   const quoteMap = new Map(stockQuotes?.map(q => [q.symbol, q]) ?? []);
   const stockTotal = stockHoldings.reduce((sum, h) => {
     const quote = quoteMap.get(h.symbol);

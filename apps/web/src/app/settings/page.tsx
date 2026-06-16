@@ -2,19 +2,15 @@
 
 import { CurrencySchema, currencyMeta } from '@stackr/models';
 import type { Currency } from '@stackr/models';
-import { Input, Card, Separator } from '@stackr/ui';
+import { Card } from '@stackr/ui';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
 
 export default function SettingsPage() {
-  const etherscanApiKey = useSettingsStore(s => s.etherscanApiKey);
-  const setEtherscanApiKey = useSettingsStore(s => s.setEtherscanApiKey);
   const currency = useSettingsStore(s => s.currency);
   const setCurrency = useSettingsStore(s => s.setCurrency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
-  const setAlphaVantageApiKey = useSettingsStore(s => s.setAlphaVantageApiKey);
 
   return (
     <>
@@ -40,28 +36,6 @@ export default function SettingsPage() {
                 </option>
               ))}
             </select>
-          </div>
-        </Card>
-
-        <Card className="p-4 mt-4">
-          <h2 className="text-sm font-semibold mb-3">API Keys</h2>
-          <div className="flex flex-col gap-4">
-            <Input
-              label="Etherscan API Key (optional)"
-              value={etherscanApiKey}
-              onChange={e => setEtherscanApiKey(e.target.value)}
-              placeholder="Enter your Etherscan API key"
-            />
-            <Separator />
-            <Input
-              label="Alpha Vantage API Key (optional)"
-              value={alphaVantageApiKey}
-              onChange={e => setAlphaVantageApiKey(e.target.value)}
-              placeholder="Enter your Alpha Vantage API key"
-            />
-            <p className="text-xs text-muted-foreground">
-              Required for stock ticker tracking. Free tier: 25 requests/day.
-            </p>
           </div>
         </Card>
       </main>
