@@ -114,3 +114,59 @@ feature('connected wallet addresses', () => {
     });
   });
 });
+
+feature('persisted wallet migration', () => {
+  scenario('a tampered or stale wallet record is dropped on rehydrate', async () => {
+    const valid = {
+      id: crypto.randomUUID(),
+      label: 'Cold storage',
+      chain: 'btc',
+      address: 'bc1qtest123',
+      createdAt: new Date().toISOString(),
+    };
+    given('a version 0 store holding one valid wallet plus a corrupt record', () =>
+      localStorage.setItem(
+        'stackr-wallets',
+        JSON.stringify({
+          state: { wallets: [valid, { id: 'not-a-uuid', chain: 'doge' }] },
+          version: 0,
+        }),
+      ),
+    );
+    when('the store rehydrates under the current version', async () => {
+      await useWalletStore.persist.rehydrate();
+    });
+    then('only the schema-valid wallet survives', () => {
+      const { wallets } = useWalletStore.getState();
+      expect(wallets).toHaveLength(1);
+      expect(wallets[0]).toMatchObject({ chain: 'btc', address: 'bc1qtest123' });
+    });
+  });
+
+  scenario('a persisted blob with no wallet array rehydrates empty', async () => {
+    given('a store missing its wallets array', () =>
+      localStorage.setItem(
+        'stackr-wallets',
+        JSON.stringify({ state: { wallets: 'not-an-array' }, version: 0 }),
+      ),
+    );
+    when('the store rehydrates', async () => {
+      await useWalletStore.persist.rehydrate();
+    });
+    then('the wallet list is empty rather than corrupt', () => {
+      expect(useWalletStore.getState().wallets).toEqual([]);
+    });
+  });
+
+  scenario('a non-object persisted state rehydrates empty', async () => {
+    given('a store whose state is not an object', () =>
+      localStorage.setItem('stackr-wallets', JSON.stringify({ state: null, version: 0 })),
+    );
+    when('the store rehydrates', async () => {
+      await useWalletStore.persist.rehydrate();
+    });
+    then('no wallets are restored', () => {
+      expect(useWalletStore.getState().wallets).toEqual([]);
+    });
+  });
+});

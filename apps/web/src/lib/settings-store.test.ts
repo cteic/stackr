@@ -90,3 +90,83 @@ feature('settings — custom theme', () => {
     });
   });
 });
+
+feature('persisted settings migration', () => {
+  scenario('invalid persisted settings fall back to safe defaults', async () => {
+    given('a store with an unknown currency and an unrecognised theme base', () =>
+      localStorage.setItem(
+        'stackr-settings',
+        JSON.stringify({
+          state: {
+            etherscanApiKey: 'keep-me',
+            currency: 'doge',
+            alphaVantageApiKey: 42,
+            customTheme: { base: 'not-a-theme', tokens: { background: '#abcdef' } },
+          },
+          version: 0,
+        }),
+      ),
+    );
+    when('the store rehydrates under the current version', async () => {
+      await useSettingsStore.persist.rehydrate();
+    });
+    then('a valid string key is preserved but a non-string key is reset', () => {
+      const state = useSettingsStore.getState();
+      expect(state.etherscanApiKey).toBe('keep-me');
+      expect(state.alphaVantageApiKey).toBe('');
+    });
+    then('the unknown currency falls back to usd', () => {
+      expect(useSettingsStore.getState().currency).toBe('usd');
+    });
+    then('the unrecognised theme base resets to the default palette', () => {
+      expect(useSettingsStore.getState().customTheme).toEqual(defaultCustomTheme());
+    });
+  });
+
+  scenario('a non-object persisted blob resets every field', async () => {
+    given('a store whose state is not an object', () =>
+      localStorage.setItem('stackr-settings', JSON.stringify({ state: null, version: 0 })),
+    );
+    when('the store rehydrates', async () => {
+      await useSettingsStore.persist.rehydrate();
+    });
+    then('all settings return to their defaults', () => {
+      const state = useSettingsStore.getState();
+      expect(state.etherscanApiKey).toBe('');
+      expect(state.currency).toBe('usd');
+      expect(state.customTheme).toEqual(defaultCustomTheme());
+    });
+  });
+
+  scenario('a non-string theme base resets to the default palette', async () => {
+    given('a custom theme whose base is not a string', () =>
+      localStorage.setItem(
+        'stackr-settings',
+        JSON.stringify({ state: { customTheme: { base: 7, tokens: {} } }, version: 0 }),
+      ),
+    );
+    when('the store rehydrates', async () => {
+      await useSettingsStore.persist.rehydrate();
+    });
+    then('the theme falls back to the default', () => {
+      expect(useSettingsStore.getState().customTheme).toEqual(defaultCustomTheme());
+    });
+  });
+
+  scenario('a known base with a malformed token map keeps the base seed', async () => {
+    given('a valid base whose tokens are not an object', () =>
+      localStorage.setItem(
+        'stackr-settings',
+        JSON.stringify({ state: { customTheme: { base: 'kraken', tokens: 'oops' } }, version: 0 }),
+      ),
+    );
+    when('the store rehydrates', async () => {
+      await useSettingsStore.persist.rehydrate();
+    });
+    then('the base survives and the palette falls back to its seed', () => {
+      const { customTheme } = useSettingsStore.getState();
+      expect(customTheme.base).toBe('kraken');
+      expect(customTheme.tokens).toEqual(THEME_SEEDS.kraken);
+    });
+  });
+});

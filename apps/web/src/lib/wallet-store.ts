@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { WalletSchema } from '@stackr/models';
 import type { Wallet, CreateWallet, Chain } from '@stackr/models';
+
+// Bumped to 1 when persisted-state validation landed. Earlier stores held an
+// unvalidated wallet array; the migration re-validates each record so a
+// malformed or tampered entry can't crash rehydration.
+const PERSIST_VERSION = 1;
 
 interface WalletState {
   wallets: Wallet[];
@@ -49,8 +55,23 @@ export const useWalletStore = create<WalletState>()(
     }),
     {
       name: 'stackr-wallets',
+      version: PERSIST_VERSION,
       // connectedAddresses is intentionally excluded — wagmi handles reconnect
       partialize: state => ({ wallets: state.wallets }),
+      migrate: persisted => {
+        const raw =
+          persisted && typeof persisted === 'object' && 'wallets' in persisted
+            ? persisted.wallets
+            : [];
+        const items = Array.isArray(raw) ? raw : [];
+        // Re-validate each persisted wallet against the domain schema; drop any
+        // record that no longer satisfies it rather than rehydrate bad state.
+        const wallets = items.flatMap((item: unknown) => {
+          const parsed = WalletSchema.safeParse(item);
+          return parsed.success ? [parsed.data] : [];
+        });
+        return { wallets };
+      },
     },
   ),
 );
