@@ -58,15 +58,8 @@ export function WalletDetailView({
   );
   const removeWallet = useWalletStore(s => s.removeWallet);
   const updateLabel = useWalletStore(s => s.updateLabel);
-  const etherscanApiKey = useSettingsStore(s => s.etherscanApiKey);
   const currency = useSettingsStore(s => s.currency);
-  const {
-    data: balance,
-    isLoading,
-    error,
-  } = useBalance(chain, address, {
-    ethApiKey: etherscanApiKey || undefined,
-  });
+  const { data: balance, isLoading, error } = useBalance(chain, address);
   const { data: prices } = usePrices([chain], currency);
   const price = prices?.[0];
   const fiatValue = balance && price ? parseFloat(balance.balance) * price.fiatPrice : undefined;

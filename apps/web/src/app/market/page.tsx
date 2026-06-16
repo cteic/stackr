@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { DepthChart, PriceChart } from '@stackr/charts/react';
 import type { DataPoint } from '@stackr/charts';
 import { useLiveTicks, useOrderbook, usePriceHistory, useStockPriceHistory } from '@stackr/queries';
 import { formatChange, formatFiat } from '@stackr/services';
 import type { Chain, Currency } from '@stackr/models';
-import { Callout, Card, Skeleton } from '@stackr/ui';
+import { Card, Skeleton } from '@stackr/ui';
 import { Header } from '@/components/header';
 import { Orderbook } from '@/components/orderbook';
 import { useWalletStore } from '@/lib/wallet-store';
@@ -26,25 +25,13 @@ import {
 } from '@/lib/chart-assets';
 
 interface ChartBodyProps {
-  needsStockKey: boolean;
   isLoading: boolean;
   points: DataPoint[];
   currency: Currency;
   rangeDays: number;
 }
 
-function ChartBody({ needsStockKey, isLoading, points, currency, rangeDays }: ChartBodyProps) {
-  if (needsStockKey) {
-    return (
-      <Callout variant="warning">
-        Add your Alpha Vantage API key in{' '}
-        <Link href="/settings" className="underline">
-          Settings
-        </Link>{' '}
-        to chart stock prices.
-      </Callout>
-    );
-  }
+function ChartBody({ isLoading, points, currency, rangeDays }: ChartBodyProps) {
   if (isLoading) {
     return <Skeleton width="100%" height={360} />;
   }
@@ -72,7 +59,6 @@ export default function MarketsPage() {
   const connectedAddresses = useWalletStore(s => s.connectedAddresses);
   const holdings = useHoldingsStore(s => s.holdings);
   const currency = useSettingsStore(s => s.currency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
 
   const options = useMemo(() => {
     const walletChains = wallets.map(w => w.chain);
@@ -115,7 +101,7 @@ export default function MarketsPage() {
   const cryptoQuery = usePriceHistory(cryptoChain ?? 'btc', rangeDays, currency, {
     enabled: isCrypto,
   });
-  const stockQuery = useStockPriceHistory(stockSymbol ?? '', alphaVantageApiKey, rangeDays);
+  const stockQuery = useStockPriceHistory(stockSymbol ?? '', rangeDays);
 
   const activeQuery = isStock ? stockQuery : cryptoQuery;
   const polledPoints = useMemo(
@@ -125,7 +111,6 @@ export default function MarketsPage() {
   // CoinGecko owns the history; Kraken supplies the live tail appended here.
   const points = useMemo(() => appendLiveTicks(polledPoints, ticks), [polledPoints, ticks]);
 
-  const needsStockKey = isStock && alphaVantageApiKey.length === 0;
   const last = points[points.length - 1]?.y;
   const first = points[0]?.y;
   const changePct = first && last ? ((last - first) / first) * 100 : undefined;
@@ -219,7 +204,6 @@ export default function MarketsPage() {
             </div>
 
             <ChartBody
-              needsStockKey={needsStockKey}
               isLoading={activeQuery.isLoading}
               points={points}
               currency={currency}

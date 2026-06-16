@@ -38,20 +38,23 @@ pnpm format:check  # Prettier check (CI mode)
 All env vars are optional. Without them, stackr falls back to public RPCs
 where possible.
 
-| Variable                   | Purpose                                                                          |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `ALCHEMY_API_KEY`          | Higher-rate Ethereum RPC (server-only, via `/api/rpc/eth`)                       |
-| `HELIUS_API_KEY`           | Higher-rate Solana RPC + SPL token metadata (server-only, via `/api/rpc/solana`) |
-| (user-entered in Settings) | Etherscan API key for richer ETH balance data                                    |
-| (user-entered in Settings) | Alpha Vantage API key for stock prices + charts                                  |
+| Variable               | Purpose                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `ALCHEMY_API_KEY`      | Higher-rate Ethereum RPC (server-only, via `/api/rpc/eth`)                       |
+| `HELIUS_API_KEY`       | Higher-rate Solana RPC + SPL token metadata (server-only, via `/api/rpc/solana`) |
+| `ETHERSCAN_API_KEY`    | Higher-rate ETH balances + transactions (server-only, via `/api/etherscan`)      |
+| `ALPHAVANTAGE_API_KEY` | Stock quotes / search / price history (server-only, via `/api/stocks`)           |
 
-Public (`NEXT_PUBLIC_`) vars go in `.env.local`. Server-only secrets like
-`ALCHEMY_API_KEY` and `HELIUS_API_KEY` must **never** carry a `NEXT_PUBLIC_`
-prefix — that would inline them into the browser bundle. They go in
-`apps/web/.dev.vars` (copy `apps/web/.dev.vars.example`) for local dev and
-become `wrangler secret put` secrets for deploys — never commit either. Both
-keys are consumed exclusively by the same-origin proxies at
-`/api/rpc/eth` and `/api/rpc/solana`; client code never reads them directly.
+Public (`NEXT_PUBLIC_`) vars go in `.env.local`. Server-only secrets —
+`ALCHEMY_API_KEY`, `HELIUS_API_KEY`, `ETHERSCAN_API_KEY`,
+`ALPHAVANTAGE_API_KEY` — must **never** carry a `NEXT_PUBLIC_` prefix; that
+would inline them into the browser bundle. They go in `apps/web/.dev.vars`
+(copy `apps/web/.dev.vars.example`) for local dev and become
+`wrangler secret put <NAME>` secrets for deploys — never commit them. Each is
+consumed exclusively by its same-origin proxy (`/api/rpc/eth`,
+`/api/rpc/solana`, `/api/etherscan`, `/api/stocks`); client code never reads
+them directly, and each proxy falls back to a public keyless upstream when its
+key is absent.
 
 ## Workspace layout
 

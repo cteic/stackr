@@ -15,14 +15,13 @@ export default function HoldingsPage() {
   const holdings = useHoldingsStore(s => s.holdings);
   const removeHolding = useHoldingsStore(s => s.removeHolding);
   const currency = useSettingsStore(s => s.currency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
   const hideBalance = useSettingsStore(s => s.hideBalance);
 
   const stockSymbols = holdings
     .filter((h): h is Extract<typeof h, { type: 'stock' }> => h.type === 'stock')
     .map(h => h.symbol);
 
-  const { data: stockQuotes } = useStockQuotes(stockSymbols, alphaVantageApiKey);
+  const { data: stockQuotes } = useStockQuotes(stockSymbols);
   const quoteMap = new Map(stockQuotes?.map(q => [q.symbol, q]) ?? []);
 
   const cashHoldings = holdings.filter(
@@ -139,14 +138,7 @@ export default function HoldingsPage() {
             {/* Stock holdings */}
             {stockHoldings.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-                  Stocks
-                  {!alphaVantageApiKey && (
-                    <span className="ml-2 text-xs text-warning">
-                      (Add API key in Settings for live prices)
-                    </span>
-                  )}
-                </h2>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">Stocks</h2>
                 <div className="flex flex-col gap-2">
                   {stockHoldings.map(h => {
                     const quote = quoteMap.get(h.symbol);

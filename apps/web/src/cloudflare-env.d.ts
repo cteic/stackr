@@ -7,6 +7,8 @@ declare global {
   interface CloudflareEnv {
     HELIUS_API_KEY?: string;
     ALCHEMY_API_KEY?: string;
+    ETHERSCAN_API_KEY?: string;
+    ALPHAVANTAGE_API_KEY?: string;
   }
 }
 

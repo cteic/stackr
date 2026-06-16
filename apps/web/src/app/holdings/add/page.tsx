@@ -7,7 +7,6 @@ import type { Currency, Chain } from '@stackr/models';
 import { useStockSearch } from '@stackr/queries';
 import { Button, Input, Card, Tabs, TabsList, TabsTrigger, TabsContent } from '@stackr/ui';
 import { useHoldingsStore } from '@/lib/holdings-store';
-import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
@@ -18,7 +17,6 @@ export default function AddHoldingPage() {
   const addCashHolding = useHoldingsStore(s => s.addCashHolding);
   const addStockHolding = useHoldingsStore(s => s.addStockHolding);
   const addCryptoHolding = useHoldingsStore(s => s.addCryptoHolding);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
 
   // Cash form state
   const [cashLabel, setCashLabel] = useState('');
@@ -37,7 +35,7 @@ export default function AddHoldingPage() {
   const [cryptoQuantity, setCryptoQuantity] = useState('');
   const [cryptoLabel, setCryptoLabel] = useState('');
 
-  const { data: searchResults } = useStockSearch(stockQuery, alphaVantageApiKey);
+  const { data: searchResults } = useStockSearch(stockQuery);
 
   const handleCashSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,78 +151,67 @@ export default function AddHoldingPage() {
 
           <TabsContent value="stock">
             <Card className="p-4 mt-4">
-              {!alphaVantageApiKey ? (
-                <div className="text-sm text-muted-foreground text-center py-4">
-                  <p className="mb-2">An Alpha Vantage API key is required for stock search.</p>
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/settings">Go to Settings</a>
-                  </Button>
+              <form onSubmit={handleStockSubmit} className="flex flex-col gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-muted-foreground">Search Stock</label>
+                  <Input
+                    value={stockQuery}
+                    onChange={e => {
+                      setStockQuery(e.target.value);
+                      setSelectedStock(null);
+                    }}
+                    placeholder="Search by symbol or name..."
+                  />
+                  {searchResults && searchResults.length > 0 && !selectedStock && (
+                    <div className="border rounded-md max-h-48 overflow-auto">
+                      {searchResults.map(r => (
+                        <button
+                          key={r.symbol}
+                          type="button"
+                          onClick={() => {
+                            setSelectedStock({ symbol: r.symbol, name: r.name });
+                            setStockQuery(r.symbol);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
+                        >
+                          <span>
+                            <span className="font-mono font-semibold">{r.symbol}</span>
+                            <span className="ml-2 text-muted-foreground">{r.name}</span>
+                          </span>
+                          <span className="text-xs text-muted-foreground">{r.region}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {selectedStock && (
+                    <div className="text-sm text-success">
+                      Selected: {selectedStock.symbol} — {selectedStock.name}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <form onSubmit={handleStockSubmit} className="flex flex-col gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Search Stock
-                    </label>
-                    <Input
-                      value={stockQuery}
-                      onChange={e => {
-                        setStockQuery(e.target.value);
-                        setSelectedStock(null);
-                      }}
-                      placeholder="Search by symbol or name..."
-                    />
-                    {searchResults && searchResults.length > 0 && !selectedStock && (
-                      <div className="border rounded-md max-h-48 overflow-auto">
-                        {searchResults.map(r => (
-                          <button
-                            key={r.symbol}
-                            type="button"
-                            onClick={() => {
-                              setSelectedStock({ symbol: r.symbol, name: r.name });
-                              setStockQuery(r.symbol);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
-                          >
-                            <span>
-                              <span className="font-mono font-semibold">{r.symbol}</span>
-                              <span className="ml-2 text-muted-foreground">{r.name}</span>
-                            </span>
-                            <span className="text-xs text-muted-foreground">{r.region}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {selectedStock && (
-                      <div className="text-sm text-success">
-                        Selected: {selectedStock.symbol} — {selectedStock.name}
-                      </div>
-                    )}
-                  </div>
-                  <Input
-                    label="Number of Shares"
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={shares}
-                    onChange={e => setShares(e.target.value)}
-                    placeholder="100"
-                    required
-                  />
-                  <Input
-                    label="Average Cost Basis (optional)"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={costBasis}
-                    onChange={e => setCostBasis(e.target.value)}
-                    placeholder="150.00"
-                  />
-                  <Button type="submit" className="mt-2" disabled={!selectedStock}>
-                    Add Stock Holding
-                  </Button>
-                </form>
-              )}
+                <Input
+                  label="Number of Shares"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={shares}
+                  onChange={e => setShares(e.target.value)}
+                  placeholder="100"
+                  required
+                />
+                <Input
+                  label="Average Cost Basis (optional)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={costBasis}
+                  onChange={e => setCostBasis(e.target.value)}
+                  placeholder="150.00"
+                />
+                <Button type="submit" className="mt-2" disabled={!selectedStock}>
+                  Add Stock Holding
+                </Button>
+              </form>
             </Card>
           </TabsContent>
 
