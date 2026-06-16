@@ -9,7 +9,6 @@ import type { BalanceAdapter } from './ports.js';
 // Provider ports (the contracts the app depends on) and the concrete adapters.
 export type {
   BalanceAdapter,
-  BalanceAdapterOptions,
   PriceAdapter,
   TransactionAdapter,
   StockAdapter,
@@ -31,6 +30,12 @@ export {
   coinGeckoPriceAdapter,
 } from './prices.js';
 export { ETH_PROXY_PATH, ethPublicRpcUrl, resolveEthRpcUrl } from './eth-rpc.js';
+export {
+  ETHERSCAN_PROXY_PATH,
+  etherscanPublicBase,
+  resolveEtherscanBase,
+} from './etherscan-config.js';
+export { STOCKS_PROXY_PATH, stocksPublicBase, resolveStocksBase } from './stocks-config.js';
 export { parseOrThrow } from './validate.js';
 export { ServiceException, isServiceException, type ServiceError } from './service-error.js';
 export { safeFetch } from './fetch-wrapper.js';
@@ -142,10 +147,6 @@ export const healthAdapters: readonly HealthAdapter[] = [
   graniteHealthAdapter,
 ];
 
-export interface FetchBalanceOptions {
-  ethApiKey?: string;
-}
-
 /**
  * Registry of per-chain balance adapters, keyed by chain. Replaces the old
  * hand-written `switch` with a single lookup; `satisfies` guarantees at
@@ -160,12 +161,8 @@ const balanceAdapters = {
   sui: suiBalanceAdapter,
 } satisfies Record<Chain, BalanceAdapter>;
 
-export async function fetchBalance(
-  chain: Chain,
-  address: string,
-  options?: FetchBalanceOptions,
-): Promise<Balance> {
-  // `ethApiKey` is the public, app-facing name kept for back-compat with the
-  // query hooks and pages; it maps onto the adapter port's generic `apiKey`.
-  return balanceAdapters[chain].fetchBalance(address, { apiKey: options?.ethApiKey });
+export async function fetchBalance(chain: Chain, address: string): Promise<Balance> {
+  // The ETH adapter's Etherscan key is now app-owned and applied server-side by
+  // the `/api/etherscan` proxy, so no per-call key is threaded through.
+  return balanceAdapters[chain].fetchBalance(address);
 }

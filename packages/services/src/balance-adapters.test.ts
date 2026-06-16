@@ -96,12 +96,14 @@ describe('balance adapters — boundary enforcement', () => {
     await expect(fetchBalance('eth', '0xabc')).rejects.toThrow(/Etherscan API error: NOTOK/);
   });
 
-  it('threads the eth api key through to the Etherscan request', async () => {
+  it('never carries an api key in the ETH request — the proxy applies it server-side', async () => {
     const fn = mockFetchOnce({ status: '1', message: 'OK', result: '0' });
 
-    await fetchBalance('eth', '0xabc', { ethApiKey: 'SECRET_KEY' });
+    await fetchBalance('eth', '0xabc');
 
+    // Non-browser context (no window) → public base, and crucially no `apikey`
+    // is ever interpolated client-side. In the browser it targets the proxy.
     const calledUrl = String(fn.mock.calls[0]?.[0]);
-    expect(calledUrl).toContain('apikey=SECRET_KEY');
+    expect(calledUrl).not.toContain('apikey=');
   });
 });

@@ -30,7 +30,7 @@ describe('searchStocks', () => {
       ],
     });
 
-    expect(await searchStocks('apple', 'KEY')).toEqual([
+    expect(await searchStocks('apple')).toEqual([
       {
         symbol: 'AAPL',
         name: 'Apple Inc.',
@@ -43,7 +43,7 @@ describe('searchStocks', () => {
 
   it('returns an empty list when bestMatches is absent', async () => {
     mockFetchOnce({});
-    expect(await searchStocks('zzz', 'KEY')).toEqual([]);
+    expect(await searchStocks('zzz')).toEqual([]);
   });
 });
 
@@ -58,7 +58,7 @@ describe('fetchStockQuote', () => {
       },
     });
 
-    expect(await fetchStockQuote('AAPL', 'KEY')).toEqual({
+    expect(await fetchStockQuote('AAPL')).toEqual({
       symbol: 'AAPL',
       price: 191.5,
       change: 1.25,

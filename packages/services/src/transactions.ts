@@ -4,6 +4,7 @@ import { TransactionSchema } from '@stackr/models';
 import type { TransactionAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
+import { resolveEtherscanBase } from './etherscan-config.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
@@ -145,10 +146,11 @@ export function normalizeEthTransactions(txs: EtherscanTx[], address: string): T
   return parseOrThrow(TransactionListSchema, normalized, 'eth.fetchTransactions(egress)');
 }
 
-async function fetchEthTransactions(address: string, apiKey?: string): Promise<Transaction[]> {
-  const keyParam = apiKey ? `&apikey=${apiKey}` : '';
+async function fetchEthTransactions(address: string): Promise<Transaction[]> {
+  // Browser → same-origin `/api/etherscan` proxy (appends the server-only key);
+  // else → public Etherscan base keyless.
   const res = await fetch(
-    `https://api.etherscan.io/api?module=account&action=txlist&address=${encodeURIComponent(address)}&startblock=0&endblock=99999999&sort=desc&page=1&offset=20${keyParam}`,
+    `${resolveEtherscanBase()}?module=account&action=txlist&address=${encodeURIComponent(address)}&startblock=0&endblock=99999999&sort=desc&page=1&offset=20`,
   );
   if (!res.ok) throw new Error(`Etherscan API error: ${res.status}`);
 

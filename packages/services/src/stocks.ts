@@ -3,13 +3,12 @@ import type { PriceHistoryPoint, StockQuote, StockSearchResult } from '@stackr/m
 import { StockQuoteSchema, StockSearchResultSchema } from '@stackr/models';
 import type { StockAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
+import { resolveStocksBase } from './stocks-config.js';
 
 // Re-export the domain types from their canonical home (`@stackr/models`) so
 // existing `import { StockQuote } from '@stackr/services'` call sites keep
 // working unchanged.
 export type { StockSearchResult, StockQuote } from '@stackr/models';
-
-const AV_BASE = 'https://www.alphavantage.co/query';
 
 /**
  * Ingress schema for Alpha Vantage `SYMBOL_SEARCH`. The vendor returns numbered
@@ -20,8 +19,9 @@ const AlphaVantageSearchSchema = z.object({
   bestMatches: z.array(z.record(z.string(), z.string())).optional(),
 });
 
-export async function searchStocks(query: string, apiKey: string): Promise<StockSearchResult[]> {
-  const url = `${AV_BASE}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}&apikey=${apiKey}`;
+export async function searchStocks(query: string): Promise<StockSearchResult[]> {
+  // Browser → same-origin proxy (appends the server-only key); else → public base.
+  const url = `${resolveStocksBase()}?function=SYMBOL_SEARCH&keywords=${encodeURIComponent(query)}`;
   const res = await fetch(url);
 
   if (!res.ok) {
@@ -47,8 +47,8 @@ const AlphaVantageQuoteSchema = z.object({
   'Global Quote': z.record(z.string(), z.string()).optional(),
 });
 
-export async function fetchStockQuote(symbol: string, apiKey: string): Promise<StockQuote> {
-  const url = `${AV_BASE}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+export async function fetchStockQuote(symbol: string): Promise<StockQuote> {
+  const url = `${resolveStocksBase()}?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(symbol)}`;
   const res = await fetch(url);
 
   if (!res.ok) {
@@ -72,8 +72,8 @@ export async function fetchStockQuote(symbol: string, apiKey: string): Promise<S
   return parseOrThrow(StockQuoteSchema, normalized, 'stocks.fetchQuote(egress)');
 }
 
-export async function fetchStockQuotes(symbols: string[], apiKey: string): Promise<StockQuote[]> {
-  const results = await Promise.allSettled(symbols.map(s => fetchStockQuote(s, apiKey)));
+export async function fetchStockQuotes(symbols: string[]): Promise<StockQuote[]> {
+  const results = await Promise.allSettled(symbols.map(s => fetchStockQuote(s)));
 
   return results
     .filter((r): r is PromiseFulfilledResult<StockQuote> => r.status === 'fulfilled')
@@ -111,11 +111,10 @@ export function parseDailyCloses(
  */
 export async function fetchStockPriceHistory(
   symbol: string,
-  apiKey: string,
   days: number,
 ): Promise<PriceHistoryPoint[]> {
   const outputsize = days > 100 ? 'full' : 'compact';
-  const url = `${AV_BASE}?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=${outputsize}&apikey=${apiKey}`;
+  const url = `${resolveStocksBase()}?function=TIME_SERIES_DAILY&symbol=${encodeURIComponent(symbol)}&outputsize=${outputsize}`;
   const res = await fetch(url);
 
   if (!res.ok) {
