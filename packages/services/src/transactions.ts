@@ -5,10 +5,15 @@ import type { TransactionAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
 import { resolveEtherscanBase } from './etherscan-config.js';
+import { safeFetch } from './fetch-wrapper.js';
+import { assertValidAddress } from './address-guard.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
 export async function fetchTransactions(chain: Chain, address: string): Promise<Transaction[]> {
+  // Defense-in-depth: reject an unvalidated address before any per-chain branch
+  // splices it into an upstream URL or RPC body.
+  assertValidAddress(chain, address);
   switch (chain) {
     case 'btc':
       return fetchBtcTransactions(address);
@@ -89,10 +94,9 @@ export function normalizeBtcTransactions(txs: BlockstreamTx[], address: string):
 }
 
 async function fetchBtcTransactions(address: string): Promise<Transaction[]> {
-  const res = await fetch(
+  const res = await safeFetch(
     `https://blockstream.info/api/address/${encodeURIComponent(address)}/txs`,
   );
-  if (!res.ok) throw new Error(`Blockstream API error: ${res.status}`);
 
   const data = parseOrThrow(
     BlockstreamTxListSchema,
@@ -149,10 +153,9 @@ export function normalizeEthTransactions(txs: EtherscanTx[], address: string): T
 async function fetchEthTransactions(address: string): Promise<Transaction[]> {
   // Browser → same-origin `/api/etherscan` proxy (appends the server-only key);
   // else → public Etherscan base keyless.
-  const res = await fetch(
+  const res = await safeFetch(
     `${resolveEtherscanBase()}?module=account&action=txlist&address=${encodeURIComponent(address)}&startblock=0&endblock=99999999&sort=desc&page=1&offset=20`,
   );
-  if (!res.ok) throw new Error(`Etherscan API error: ${res.status}`);
 
   const data = parseOrThrow(
     EtherscanTxListSchema,
@@ -215,10 +218,9 @@ export function normalizeStxTransactions(txs: HiroTx[], address: string): Transa
 }
 
 async function fetchStxTransactions(address: string): Promise<Transaction[]> {
-  const res = await fetch(
+  const res = await safeFetch(
     `https://api.hiro.so/extended/v1/address/${encodeURIComponent(address)}/transactions?limit=20`,
   );
-  if (!res.ok) throw new Error(`Hiro API error: ${res.status}`);
 
   const data = parseOrThrow(HiroTxListSchema, await res.json(), 'stx.fetchTransactions(ingress)');
   return normalizeStxTransactions(data.results, address);
@@ -262,7 +264,7 @@ export function normalizeSolTransactions(signatures: SolanaSignature[]): Transac
 }
 
 async function fetchSolTransactions(address: string): Promise<Transaction[]> {
-  const sigRes = await fetch('https://api.mainnet-beta.solana.com', {
+  const sigRes = await safeFetch('https://api.mainnet-beta.solana.com', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -272,8 +274,6 @@ async function fetchSolTransactions(address: string): Promise<Transaction[]> {
       params: [address, { limit: 20 }],
     }),
   });
-
-  if (!sigRes.ok) throw new Error(`Solana RPC error: ${sigRes.status}`);
 
   const data = parseOrThrow(
     SolanaSignaturesSchema,
@@ -414,15 +414,13 @@ async function fetchSuiTransactions(address: string): Promise<Transaction[]> {
     });
 
   const post = (filterKey: 'FromAddress' | 'ToAddress') =>
-    fetch(SUI_RPC, {
+    safeFetch(SUI_RPC, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: queryBody(filterKey),
     });
 
   const [fromRes, toRes] = await Promise.all([post('FromAddress'), post('ToAddress')]);
-  if (!fromRes.ok) throw new Error(`Sui RPC error: ${fromRes.status}`);
-  if (!toRes.ok) throw new Error(`Sui RPC error: ${toRes.status}`);
 
   const fromData = parseOrThrow(
     SuiTxBlocksSchema,

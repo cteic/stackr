@@ -1,4 +1,5 @@
 import type { Balance, Chain } from '@stackr/models';
+import { assertValidAddress } from './address-guard.js';
 import { btcBalanceAdapter } from './btc.js';
 import { stxBalanceAdapter } from './stx.js';
 import { ethBalanceAdapter } from './eth.js';
@@ -37,6 +38,7 @@ export {
 } from './etherscan-config.js';
 export { STOCKS_PROXY_PATH, stocksPublicBase, resolveStocksBase } from './stocks-config.js';
 export { parseOrThrow } from './validate.js';
+export { assertValidAddress } from './address-guard.js';
 export { ServiceException, isServiceException, type ServiceError } from './service-error.js';
 export { safeFetch } from './fetch-wrapper.js';
 export { formatBaseUnits } from './base-units.js';
@@ -162,6 +164,9 @@ const balanceAdapters = {
 } satisfies Record<Chain, BalanceAdapter>;
 
 export async function fetchBalance(chain: Chain, address: string): Promise<Balance> {
+  // Defense-in-depth: reject an unvalidated address before any adapter splices
+  // it into an upstream URL, regardless of how the caller reached this layer.
+  assertValidAddress(chain, address);
   // The ETH adapter's Etherscan key is now app-owned and applied server-side by
   // the `/api/etherscan` proxy, so no per-call key is threaded through.
   return balanceAdapters[chain].fetchBalance(address);

@@ -4,6 +4,7 @@ import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
+import { safeFetch } from './fetch-wrapper.js';
 
 const HIRO_API = 'https://api.hiro.so';
 
@@ -16,11 +17,7 @@ const HiroStxBalanceSchema = z.object({
 });
 
 export async function fetchStxBalance(address: string): Promise<Balance> {
-  const res = await fetch(`${HIRO_API}/extended/v1/address/${encodeURIComponent(address)}/stx`);
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch STX balance: ${res.status} ${res.statusText}`);
-  }
+  const res = await safeFetch(`${HIRO_API}/extended/v1/address/${encodeURIComponent(address)}/stx`);
 
   // Ingress boundary: validate Hiro's payload before reading the balance.
   const data = parseOrThrow(HiroStxBalanceSchema, await res.json(), 'stx.fetchBalance(ingress)');

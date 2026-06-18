@@ -5,6 +5,7 @@ import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
 import { resolveEtherscanBase } from './etherscan-config.js';
+import { safeFetch } from './fetch-wrapper.js';
 
 /**
  * Ingress schema for Etherscan's `account.balance` response. Etherscan wraps
@@ -29,11 +30,7 @@ export async function fetchEthBalance(address: string): Promise<Balance> {
   // In the browser this resolves to the same-origin proxy, which appends the
   // server-only `ETHERSCAN_API_KEY`; the client never carries a key. Outside
   // the browser it hits the public base keyless (rate-limited, but functional).
-  const res = await fetch(`${resolveEtherscanBase()}?${params}`);
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch ETH balance: ${res.status} ${res.statusText}`);
-  }
+  const res = await safeFetch(`${resolveEtherscanBase()}?${params}`);
 
   // Ingress boundary: validate the envelope, then check the in-band status.
   const data = parseOrThrow(EtherscanBalanceSchema, await res.json(), 'eth.fetchBalance(ingress)');

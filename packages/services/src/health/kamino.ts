@@ -5,6 +5,7 @@ import { HealthPositionSchema } from '@stackr/models';
 import type { HealthAdapter } from '../ports.js';
 import { parseOrThrow } from '../validate.js';
 import { formatBaseUnits } from '../base-units.js';
+import { safeFetch } from '../fetch-wrapper.js';
 
 /**
  * Kamino (Solana) liquidation-health adapter (step 3 of the ADR 0016 build
@@ -82,11 +83,7 @@ function toScaled(value: string): bigint {
 }
 
 async function fetchKaminoObligations(address: string): Promise<KaminoObligation[]> {
-  const res = await fetch(obligationsUrl(address));
-
-  if (!res.ok) {
-    throw new Error(`Kamino API error: ${res.status} ${res.statusText}`);
-  }
+  const res = await safeFetch(obligationsUrl(address));
 
   // Ingress boundary: validate the upstream array before reading any figure.
   return parseOrThrow(

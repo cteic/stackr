@@ -4,6 +4,7 @@ import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
+import { safeFetch } from './fetch-wrapper.js';
 
 const SUI_RPC = 'https://fullnode.mainnet.sui.io';
 
@@ -24,7 +25,7 @@ const SuiBalanceSchema = z.object({
 });
 
 export async function fetchSuiBalance(address: string): Promise<Balance> {
-  const res = await fetch(SUI_RPC, {
+  const res = await safeFetch(SUI_RPC, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -34,10 +35,6 @@ export async function fetchSuiBalance(address: string): Promise<Balance> {
       params: [address, SUI_COIN_TYPE],
     }),
   });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch SUI balance: ${res.status} ${res.statusText}`);
-  }
 
   // Ingress boundary: validate the JSON-RPC result before reading MIST.
   const data = parseOrThrow(SuiBalanceSchema, await res.json(), 'sui.fetchBalance(ingress)');

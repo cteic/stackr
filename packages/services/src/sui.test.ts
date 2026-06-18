@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchSuiBalance } from './sui';
+import { isServiceException } from './service-error';
 
 /** Build a minimal `Response`-like object backing a single fetch call. */
 function mockFetchOnce(body: unknown, ok = true) {
@@ -60,10 +61,13 @@ describe('fetchSuiBalance', () => {
     await expect(fetchSuiBalance(ADDRESS)).rejects.toThrow(/sui\.fetchBalance\(ingress\)/);
   });
 
-  it('throws on a non-OK RPC response', async () => {
+  it('maps a non-OK RPC response to a structured upstream error', async () => {
     mockFetchOnce({}, false);
 
-    await expect(fetchSuiBalance(ADDRESS)).rejects.toThrow(/Failed to fetch SUI balance/);
+    const error: unknown = await fetchSuiBalance(ADDRESS).catch(e => e);
+
+    if (!isServiceException(error)) throw new Error('expected a ServiceException');
+    expect(error.serviceError).toMatchObject({ kind: 'upstream', status: 500 });
   });
 
   it('queries the native SUI coin type explicitly', async () => {

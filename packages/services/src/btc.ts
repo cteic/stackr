@@ -4,36 +4,36 @@ import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
+import { safeFetch } from './fetch-wrapper.js';
 
 const BLOCKSTREAM_API = 'https://blockstream.info/api';
+
+/**
+ * A satoshi sum field. Modeled as a string end-to-end (like STX micro-units and
+ * SUI MIST): a JSON number above 2^53 has already lost precision by the time
+ * Zod sees it, so we accept either representation and coerce to a string
+ * immediately, keeping the raw value exact through to the BigInt math below.
+ */
+const SatSumSchema = z.union([z.string(), z.number()]).transform(v => String(v));
 
 /**
  * Ingress schema for Blockstream's address endpoint. Kept private to this
  * module — this vendor shape must never escape the adapter. We model only the
  * fields we consume; Blockstream returns more.
- *
- * Sats fields are validated as numbers at the JSON boundary. Bitcoin's total
- * supply is 21M × 1e8 = 2.1e15 satoshis, which is within
- * `Number.MAX_SAFE_INTEGER` (2^53 ≈ 9e15), so JSON number precision is not at
- * risk. The arithmetic below then uses BigInt to keep the intent documented.
  */
 const BlockstreamAddressSchema = z.object({
   chain_stats: z.object({
-    funded_txo_sum: z.number(),
-    spent_txo_sum: z.number(),
+    funded_txo_sum: SatSumSchema,
+    spent_txo_sum: SatSumSchema,
   }),
   mempool_stats: z.object({
-    funded_txo_sum: z.number(),
-    spent_txo_sum: z.number(),
+    funded_txo_sum: SatSumSchema,
+    spent_txo_sum: SatSumSchema,
   }),
 });
 
 export async function fetchBtcBalance(address: string): Promise<Balance> {
-  const res = await fetch(`${BLOCKSTREAM_API}/address/${encodeURIComponent(address)}`);
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch BTC balance: ${res.status} ${res.statusText}`);
-  }
+  const res = await safeFetch(`${BLOCKSTREAM_API}/address/${encodeURIComponent(address)}`);
 
   // Ingress boundary: validate Blockstream's payload before we read from it.
   const data = parseOrThrow(
