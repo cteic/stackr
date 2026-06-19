@@ -13,6 +13,7 @@ overrides:
   ws@>=7.0.0 <7.5.11: 7.5.11
   ws@>=6.0.0 <6.2.4: 6.2.4
   form-data@>=4.0.0 <4.0.6: 4.0.6
+  hono@<4.12.25: '>=4.12.25'
 
 importers:
 
@@ -6399,8 +6400,8 @@ packages:
   hmac-drbg@1.0.1:
     resolution: {integrity: sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==}
 
-  hono@4.12.19:
-    resolution: {integrity: sha512-xa3eYXYXx68XTT4hZ7dRzsXBhaq85ToSrlUJNoR0gwz/1Ap/CNwX47wfvV7pc/xWhjKVVkLT7zBJy8chhNguqQ==}
+  hono@4.12.26:
+    resolution: {integrity: sha512-uyZtpnYxM9CmQ7QsQknM4zN8EftNqhON1qYeIKM0Se67CCEe2c44xyGURwB0axX2fBDu1dqHrHAc1hmNT8ITkw==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@6.0.0:
@@ -17936,7 +17937,7 @@ snapshots:
       minimalistic-crypto-utils: 1.0.1
     optional: true
 
-  hono@4.12.19: {}
+  hono@4.12.26: {}
 
   html-encoding-sniffer@6.0.0(@noble/hashes@1.8.0):
     dependencies:
@@ -19479,7 +19480,7 @@ snapshots:
   porto@0.2.35(jnijnbri56bnnfxdy5dotpmg7m):
     dependencies:
       '@wagmi/core': 2.22.1(@tanstack/query-core@5.90.20)(@types/react@19.2.14)(immer@10.2.0)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
-      hono: 4.12.19
+      hono: 4.12.26
       idb-keyval: 6.2.2
       mipd: 0.0.7(typescript@5.9.3)
       ox: 0.9.17(typescript@5.9.3)(zod@4.4.3)
