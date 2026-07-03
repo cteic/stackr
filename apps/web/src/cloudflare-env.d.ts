@@ -9,6 +9,15 @@ declare global {
     ALCHEMY_API_KEY?: string;
     ETHERSCAN_API_KEY?: string;
     ALPHAVANTAGE_API_KEY?: string;
+    /**
+     * Workers Rate Limiting binding (wrangler.jsonc `unsafe.bindings`), the
+     * fleet-wide layer of the /api/* proxy rate limiting. Optional: absent
+     * outside the Workers runtime and on deploys made before the binding
+     * existed; `proxy-limit.ts` degrades to its in-isolate window.
+     */
+    PROXY_RATE_LIMITER?: {
+      limit(options: { key: string }): Promise<{ success: boolean }>;
+    };
   }
 }
 

@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { checkProxyRateLimit } from '../proxy-limit';
 
 /**
  * Same-origin REST proxy for Etherscan.
@@ -46,41 +47,6 @@ const ALLOWED_PARAMS = new Set([
   'offset',
 ]);
 
-const RATE_LIMIT_PER_MINUTE = 120;
-const rateWindow = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(key: string, now: number): boolean {
-  const entry = rateWindow.get(key);
-  if (!entry || entry.resetAt <= now) {
-    if (rateWindow.size > 10_000) {
-      rateWindow.clear();
-    }
-    rateWindow.set(key, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_PER_MINUTE;
-}
-
-// FNV-1a (32-bit). A tiny synchronous hash so the rate-limit key derived from a
-// forwarded-for chain doesn't retain raw client IPs in the isolate's map.
-function hashKey(value: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(36);
-}
-
-function resolveRateLimitKey(request: Request): string | null {
-  const connectingIp = request.headers.get('cf-connecting-ip');
-  if (connectingIp) return `ip:${connectingIp}`;
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) return `xff:${hashKey(forwardedFor)}`;
-  return null;
-}
-
 function proxyError(status: number, message: string): Response {
   return Response.json(
     { error: message },
@@ -125,8 +91,8 @@ export async function GET(request: Request): Promise<Response> {
     return proxyError(403, 'cross-origin requests are not allowed');
   }
 
-  const rateLimitKey = resolveRateLimitKey(request);
-  if (rateLimitKey === null || isRateLimited(rateLimitKey, Date.now())) {
+  // Per-client rate limit: in-isolate window + fleet limiter (proxy-limit.ts).
+  if ((await checkProxyRateLimit(request, 'etherscan')) !== 'allowed') {
     return proxyError(429, 'rate limit exceeded');
   }
 
