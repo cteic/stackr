@@ -7,6 +7,7 @@ export default defineWorkspace([
   'packages/charts/vitest.config.ts',
   'packages/services/vitest.config.ts',
   'packages/queries/vitest.config.ts',
+  'packages/wallet-link/vitest.config.ts',
   'packages/controllers/vitest.config.ts',
   'packages/features/vitest.config.ts',
   'scripts/vitest.config.ts',
