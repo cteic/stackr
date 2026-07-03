@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parseOrThrow } from '../validate.js';
+import { resolveHiroBase } from '../hiro-config.js';
 import {
   deserializeClarityHex,
   serializeClarityArg,
@@ -17,8 +18,6 @@ import {
  * `clarity.ts`). This is the bespoke, per-protocol path ADR 0016 calls the moat.
  */
 
-const HIRO_API = 'https://api.hiro.so';
-
 /**
  * Hiro's `call-read` envelope. `okay: true` carries the serialized return value
  * in `result`; `okay: false` carries a Clarity runtime error in `cause`. We
@@ -30,20 +29,6 @@ const CallReadResponseSchema = z.object({
   result: z.string().optional(),
   cause: z.string().optional(),
 });
-
-/**
- * Read the optional Hiro API key from the environment. A key lifts the rate
- * limit from 50 rpm to 500 rpm, but is never required — the reads work keyless.
- * The key is server-side only (not a `NEXT_PUBLIC_` var), so in the browser
- * `process.env.HIRO_API_KEY` is simply `undefined` and we send no header. Guard
- * the `process` reference so this is safe in any runtime.
- */
-export function hiroApiKey(): string | undefined {
-  if (typeof process === 'undefined') {
-    return undefined;
-  }
-  return process.env.HIRO_API_KEY || undefined;
-}
 
 export interface CallReadOptions {
   /** Deployer principal of the contract, e.g. `SP2VCQJGH7…`. */
@@ -61,7 +46,6 @@ export interface CallReadOptions {
 /** Injected dependencies, so the adapters can be tested without a network. */
 export interface CallReadDeps {
   fetchFn?: typeof fetch;
-  apiKey?: string;
 }
 
 /**
@@ -75,17 +59,15 @@ export async function callReadOnly(
   deps: CallReadDeps = {},
 ): Promise<ClarityValue> {
   const fetchFn = deps.fetchFn ?? fetch;
-  const apiKey = deps.apiKey ?? hiroApiKey();
 
-  const url = `${HIRO_API}/v2/contracts/call-read/${options.contractAddress}/${options.contractName}/${options.functionName}`;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (apiKey) {
-    headers['x-api-key'] = apiKey;
-  }
+  // The browser reaches Hiro through the same-origin proxy, which attaches the
+  // server-only `HIRO_API_KEY` (500 rpm vs the keyless 50 rpm) before
+  // forwarding — no key ever rides in client code.
+  const url = `${resolveHiroBase()}/v2/contracts/call-read/${options.contractAddress}/${options.contractName}/${options.functionName}`;
 
   const res = await fetchFn(url, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sender: options.sender,
       arguments: options.functionArgs.map(serializeClarityArg),

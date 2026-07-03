@@ -2,8 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CurrencySchema, currencyMeta, ChainSchema, chainMeta } from '@stackr/models';
-import type { Currency, Chain } from '@stackr/models';
+import {
+  CurrencySchema,
+  currencyMeta,
+  ChainSchema,
+  chainMeta,
+  GoldUnitSchema,
+  goldUnitMeta,
+  AssetCategorySchema,
+  assetCategoryMeta,
+} from '@stackr/models';
+import type { Currency, Chain, GoldUnit, AssetCategory } from '@stackr/models';
 import { useStockSearch } from '@stackr/queries';
 import { Button, Input, Card, Tabs, TabsList, TabsTrigger, TabsContent } from '@stackr/ui';
 import { useHoldingsStore } from '@/lib/holdings-store';
@@ -11,12 +20,16 @@ import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
 const chains = ChainSchema.options;
+const goldUnits = GoldUnitSchema.options;
+const assetCategories = AssetCategorySchema.options;
 
 export default function AddHoldingPage() {
   const router = useRouter();
   const addCashHolding = useHoldingsStore(s => s.addCashHolding);
   const addStockHolding = useHoldingsStore(s => s.addStockHolding);
   const addCryptoHolding = useHoldingsStore(s => s.addCryptoHolding);
+  const addGoldHolding = useHoldingsStore(s => s.addGoldHolding);
+  const addAssetHolding = useHoldingsStore(s => s.addAssetHolding);
 
   // Cash form state
   const [cashLabel, setCashLabel] = useState('');
@@ -34,6 +47,18 @@ export default function AddHoldingPage() {
   const [cryptoChain, setCryptoChain] = useState<Chain>('btc');
   const [cryptoQuantity, setCryptoQuantity] = useState('');
   const [cryptoLabel, setCryptoLabel] = useState('');
+
+  // Gold form state
+  const [goldQuantity, setGoldQuantity] = useState('');
+  const [goldUnit, setGoldUnit] = useState<GoldUnit>('oz');
+  const [goldLabel, setGoldLabel] = useState('');
+
+  // Asset form state
+  const [assetName, setAssetName] = useState('');
+  const [assetCategory, setAssetCategory] = useState<AssetCategory>('property');
+  const [assetValue, setAssetValue] = useState('');
+  const [assetCurrency, setAssetCurrency] = useState<Currency>('usd');
+  const [assetNotes, setAssetNotes] = useState('');
 
   const { data: searchResults } = useStockSearch(stockQuery);
 
@@ -73,6 +98,32 @@ export default function AddHoldingPage() {
     router.push('/holdings');
   };
 
+  const handleGoldSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const quantity = parseFloat(goldQuantity);
+    if (!(quantity > 0)) return;
+    addGoldHolding({
+      quantity,
+      unit: goldUnit,
+      label: goldLabel.trim() || undefined,
+    });
+    router.push('/holdings');
+  };
+
+  const handleAssetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = parseFloat(assetValue);
+    if (!assetName.trim() || !(value > 0)) return;
+    addAssetHolding({
+      name: assetName.trim(),
+      category: assetCategory,
+      value,
+      currency: assetCurrency,
+      notes: assetNotes.trim() || undefined,
+    });
+    router.push('/holdings');
+  };
+
   return (
     <>
       <Header />
@@ -89,6 +140,12 @@ export default function AddHoldingPage() {
             </TabsTrigger>
             <TabsTrigger value="crypto" className="flex-1">
               Crypto
+            </TabsTrigger>
+            <TabsTrigger value="gold" className="flex-1">
+              Gold
+            </TabsTrigger>
+            <TabsTrigger value="asset" className="flex-1">
+              Asset
             </TabsTrigger>
           </TabsList>
 
@@ -256,6 +313,132 @@ export default function AddHoldingPage() {
                 />
                 <Button type="submit" className="mt-2" disabled={!(parseFloat(cryptoQuantity) > 0)}>
                   Add Crypto Holding
+                </Button>
+              </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gold">
+            <Card className="p-4 mt-4">
+              <form onSubmit={handleGoldSubmit} className="flex flex-col gap-4">
+                <Input
+                  label="Weight"
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={goldQuantity}
+                  onChange={e => setGoldQuantity(e.target.value)}
+                  placeholder={goldUnit === 'oz' ? '2.5' : '100'}
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label htmlFor="gold-unit" className="text-sm font-medium text-muted-foreground">
+                    Unit
+                  </label>
+                  <select
+                    id="gold-unit"
+                    value={goldUnit}
+                    onChange={e => setGoldUnit(GoldUnitSchema.parse(e.target.value))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {goldUnits.map(u => (
+                      <option key={u} value={u}>
+                        {goldUnitMeta[u].name} ({goldUnitMeta[u].abbrev})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="Label (optional)"
+                  value={goldLabel}
+                  onChange={e => setGoldLabel(e.target.value)}
+                  placeholder="e.g. Krugerrand coins"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Valued at spot gold (via PAX Gold) in your display currency.
+                </p>
+                <Button type="submit" className="mt-2" disabled={!(parseFloat(goldQuantity) > 0)}>
+                  Add Gold Holding
+                </Button>
+              </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="asset">
+            <Card className="p-4 mt-4">
+              <form onSubmit={handleAssetSubmit} className="flex flex-col gap-4">
+                <Input
+                  label="Name"
+                  value={assetName}
+                  onChange={e => setAssetName(e.target.value)}
+                  placeholder="e.g. Apartment"
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="asset-category"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Category
+                  </label>
+                  <select
+                    id="asset-category"
+                    value={assetCategory}
+                    onChange={e => setAssetCategory(AssetCategorySchema.parse(e.target.value))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {assetCategories.map(c => (
+                      <option key={c} value={c}>
+                        {assetCategoryMeta[c].name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="Current Value"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={assetValue}
+                  onChange={e => setAssetValue(e.target.value)}
+                  placeholder="350000.00"
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="asset-currency"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Currency
+                  </label>
+                  <select
+                    id="asset-currency"
+                    value={assetCurrency}
+                    onChange={e => setAssetCurrency(CurrencySchema.parse(e.target.value))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {currencies.map(c => (
+                      <option key={c} value={c}>
+                        {currencyMeta[c].symbol} {currencyMeta[c].name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="Notes (optional)"
+                  value={assetNotes}
+                  onChange={e => setAssetNotes(e.target.value)}
+                  placeholder="e.g. Last valued at purchase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Self-valued — there is no price feed, so update the value whenever it changes.
+                </p>
+                <Button
+                  type="submit"
+                  className="mt-2"
+                  disabled={!assetName.trim() || !(parseFloat(assetValue) > 0)}
+                >
+                  Add Asset
                 </Button>
               </form>
             </Card>

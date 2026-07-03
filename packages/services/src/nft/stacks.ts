@@ -7,6 +7,7 @@ import { formatBaseUnits } from '../base-units.js';
 import { getExplorerUrl } from '../explorers.js';
 import { toIpfsGatewayUrl, DEFAULT_IPFS_GATEWAY } from './ipfs-url.js';
 import { detectContentType } from './content-type.js';
+import { resolveHiroBase } from '../hiro-config.js';
 
 /**
  * Stacks SIP-9 NFT adapter — a fresh build of the technique in Leather's
@@ -25,7 +26,6 @@ import { detectContentType } from './content-type.js';
  * throwing. See the PR's Verification notes.
  */
 
-const HIRO_API = 'https://api.hiro.so';
 const GAMMA_API = 'https://gamma.io/api';
 
 /** Hiro caps holdings at 200 per page; phase 1 reads the first page only. */
@@ -273,7 +273,7 @@ export async function fetchStacksNfts(
 ): Promise<NftAsset[]> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const gateway = deps.gateway ?? DEFAULT_IPFS_GATEWAY;
-  const stacksApiUrl = deps.stacksApiUrl ?? HIRO_API;
+  const stacksApiUrl = deps.stacksApiUrl ?? resolveHiroBase();
   const detectType = deps.detectType ?? ((url: string) => detectContentType(url, fetchImpl));
 
   const holdingsUrl = `${stacksApiUrl}/extended/v1/tokens/nft/holdings?principal=${encodeURIComponent(address)}&limit=${HOLDINGS_LIMIT}`;

@@ -130,11 +130,30 @@ describe('GET /api/stocks', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('sets no-store + nosniff on success responses', async () => {
+  it('marks cacheable market data public with the per-function TTL', async () => {
+    const quoteRes = await GET(proxyRequest(quoteQuery));
+    expect(quoteRes.headers.get('cache-control')).toBe('public, max-age=300');
+    expect(quoteRes.headers.get('x-content-type-options')).toBe('nosniff');
+
+    const searchRes = await GET(proxyRequest(searchQuery));
+    expect(searchRes.headers.get('cache-control')).toBe('public, max-age=3600');
+
+    const historyRes = await GET(proxyRequest(historyQuery));
+    expect(historyRes.headers.get('cache-control')).toBe('public, max-age=3600');
+  });
+
+  it('never caches an Alpha Vantage throttle note (200 with a Note body)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ Note: 'Thank you for using Alpha Vantage! 25 requests/day' }),
+      ),
+    );
+
     const res = await GET(proxyRequest(quoteQuery));
 
+    expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
-    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
   });
 
   it('sets Cache-Control: no-store on error responses', async () => {
@@ -142,6 +161,59 @@ describe('GET /api/stocks', () => {
 
     expect(res.status).toBe(403);
     expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+
+  describe('edge cache (caches.default, Workers runtime only)', () => {
+    // Minimal stand-in for Cloudflare's default zone cache. Node has no
+    // `caches` global, so stubbing one exercises the Workers-only path.
+    function stubEdgeCache(entries: Map<string, Response> = new Map()) {
+      const cache = {
+        match: vi.fn(async (request: Request) => entries.get(request.url)),
+        put: vi.fn(async (request: Request, response: Response) => {
+          entries.set(request.url, response);
+        }),
+      };
+      vi.stubGlobal('caches', { default: cache });
+      return cache;
+    }
+
+    it('serves a cache hit without touching the upstream', async () => {
+      const entries = new Map<string, Response>();
+      const cache = stubEdgeCache(entries);
+
+      const first = await GET(proxyRequest(quoteQuery));
+      expect(first.status).toBe(200);
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(cache.put).toHaveBeenCalledOnce();
+
+      const second = await GET(proxyRequest(quoteQuery));
+      expect(second.status).toBe(200);
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(await second.json()).toEqual({ bestMatches: [] });
+    });
+
+    it('keys the cache on sorted whitelisted params, never the API key', async () => {
+      vi.stubEnv('ALPHAVANTAGE_API_KEY', 'secret-key-123');
+      const cache = stubEdgeCache();
+
+      await GET(proxyRequest('symbol=AAPL&function=GLOBAL_QUOTE'));
+
+      const keyUrl = cache.put.mock.calls[0]?.[0].url;
+      expect(keyUrl).toBe('https://stackr.ie/api/stocks?function=GLOBAL_QUOTE&symbol=AAPL');
+      expect(keyUrl).not.toContain('secret-key-123');
+    });
+
+    it('does not cache throttle notes', async () => {
+      const cache = stubEdgeCache();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => Response.json({ Information: 'rate limit reached' })),
+      );
+
+      await GET(proxyRequest(quoteQuery));
+
+      expect(cache.put).not.toHaveBeenCalled();
+    });
   });
 
   it('maps upstream transport failure to the fixed 502 contract', async () => {
