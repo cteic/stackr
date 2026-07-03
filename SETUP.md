@@ -63,8 +63,11 @@ apps/
   web/                  Next.js 15 web app
 packages/
   models/               Zod schemas (Wallet, Balance, Chain, Price, …)
-  services/             Multi-chain API clients (BTC, ETH, SOL, STX)
+  services/             Multi-chain API clients (BTC, ETH, SOL, STX, SUI)
   queries/              TanStack Query hooks + query keys
+  controllers/          Controller/messenger layer (ActivityController)
+  features/             Platform-independent view-models (web + mobile share)
+  analytics/            PostHog wrapper — opt-in, PII-free events
   ui/                   Hand-rolled component library (Radix + Tailwind)
   charts/               Custom SVG charting (Kraken-inspired)
   eslint-config/        Shared ESLint flat config
@@ -77,8 +80,12 @@ docs/
 ## CI
 
 GitHub Actions runs lint → typecheck → test → build → Playwright on every pull
-request (and on push to `main`). Deploys auto-trigger on push to `main` via
-Cloudflare Workers (`@opennextjs/cloudflare`).
+request (and on push to `main`). Deploys to Cloudflare Workers
+(`@opennextjs/cloudflare`) run via the Deploy workflow
+(`.github/workflows/deploy.yml`) on push to `main` — it requires the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets and
+fails loudly when they are missing. Manual fallback:
+`pnpm --filter @stackr/web run build:cf && pnpm --filter @stackr/web run deploy:cf`.
 
 ## Conventions
 
