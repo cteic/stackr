@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Overridable so parallel checkouts (worktrees, second dev servers) don't
+// collide on — or silently reuse — a single port's server.
+const port = Number(process.env.PLAYWRIGHT_PORT ?? 3000);
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -8,7 +12,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'blob' : 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
   },
   projects: [
@@ -17,8 +21,8 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
+    command: `pnpm dev --port ${port}`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     // Cold-start compile of the grown workspace can exceed the 60s default
     // on a busy CI shard.
