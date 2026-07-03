@@ -1,0 +1,7 @@
+{
+  "extends": "@stackr/tsconfig-config/react-native.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src", "tamagui.config.ts"]
+}
