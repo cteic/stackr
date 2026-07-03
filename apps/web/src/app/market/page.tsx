@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DepthChart, PriceChart } from '@stackr/charts/react';
 import type { DataPoint } from '@stackr/charts';
 import { useLiveTicks, useOrderbook, usePriceHistory, useStockPriceHistory } from '@stackr/queries';
@@ -12,6 +12,7 @@ import { Orderbook } from '@/components/orderbook';
 import { useWalletStore } from '@/lib/wallet-store';
 import { useHoldingsStore } from '@/lib/holdings-store';
 import { useSettingsStore } from '@/lib/settings-store';
+import { useLiveOrderbookFallback } from '@/lib/use-live-orderbook-fallback';
 import {
   CHART_RANGES,
   appendLiveTicks,
@@ -71,7 +72,7 @@ export default function MarketsPage() {
 
   const [selectedId, setSelectedId] = useState('');
   const [rangeDays, setRangeDays] = useState(7);
-  const [mode, setMode] = useState<'mock' | 'live'>('mock');
+  const [mode, setMode] = useState<'mock' | 'live'>('live');
 
   const selected = findAsset(options, selectedId) ?? options[0];
   const range = CHART_RANGES.find(r => r.days === rangeDays) ?? CHART_RANGES[1];
@@ -97,6 +98,11 @@ export default function MarketsPage() {
 
   const { orderbook } = useOrderbook({ pair, mode: bookMode, midPrice });
   const ticks = useLiveTicks(pair, liveEnabled);
+
+  // Live by default, but never a dead screen: an empty live book past the
+  // fallback delay drops the page to mock (the toggle stays for retrying).
+  const fallBackToMock = useCallback(() => setMode('mock'), []);
+  useLiveOrderbookFallback(liveEnabled, orderbook !== null, fallBackToMock);
 
   const cryptoQuery = usePriceHistory(cryptoChain ?? 'btc', rangeDays, currency, {
     enabled: isCrypto,
