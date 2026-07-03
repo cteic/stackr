@@ -21,25 +21,20 @@ import { formatBaseUnits } from '../base-units.js';
 /**
  * Kamino public API.
  *
- * Base + the Main lending market are pinned from the Kamino Lending SDK
- * (`@kamino-finance/klend-sdk`), the authoritative published source:
- *   - base `…/v2/kamino-market` — `getApiEndpoint()` in `src/utils/constants.ts`
- *   - Main Market `7u3HeHxY…GAv5PfF` — the SDK README's `KaminoMarket.load` example
- *   - the per-obligation stat field names below (`loanToValue`, `liquidationLtv`,
- *     `userTotalDeposit`, `userTotalBorrow`) — the SDK's `ObligationStats`
- *     (`src/classes/obligation.ts`).
+ * The Main lending market (`7u3HeHxY…GAv5PfF`) and the per-obligation stat
+ * field names below (`loanToValue`, `liquidationLtv`, `userTotalDeposit`,
+ * `userTotalBorrow`) are pinned from the Kamino Lending SDK
+ * (`@kamino-finance/klend-sdk`): the SDK README's `KaminoMarket.load` example
+ * and the SDK's `ObligationStats` (`src/classes/obligation.ts`).
  *
- * NOTE — the build plan calls for pinning the exact obligations path from the
- * live Swagger at https://api.kamino.finance/documentation/. That host (and
- * every Kamino docs/API host) is outside this build environment's network
- * egress allowlist, so the path/response shape below is pinned from the SDK
- * base above + the documented public-API route shape and MUST be re-verified
- * against the live Swagger once `api.kamino.finance` is allowlisted. The
- * adapter is built so that re-verification touches only the constants here and
- * `KaminoObligationSchema`: a wrong shape fails loud at the ingress boundary
+ * The base path is verified against the live API (2026-07-03): the SDK
+ * `getApiEndpoint()` base of `…/v2/kamino-market` 404s on the obligations
+ * route, while the un-versioned
+ * `/kamino-market/{market}/users/{address}/obligations` returns 200 with the
+ * obligations array. A wrong shape still fails loud at the ingress boundary
  * (`parseOrThrow`) rather than leaking a bad position into the app.
  */
-const KAMINO_API_BASE = 'https://api.kamino.finance/v2/kamino-market';
+const KAMINO_API_BASE = 'https://api.kamino.finance/kamino-market';
 const KAMINO_MAIN_MARKET = '7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF';
 
 /** Which oracle Kamino liquidates against (Scope, its Pyth/Switchboard aggregator). */

@@ -2,7 +2,7 @@
 
 **A cross-chain Web3 portfolio for self-custodial holders.**
 
-Track your real holdings across Bitcoin, Ethereum, Solana, and Stacks in one
+Track your real holdings across Bitcoin, Ethereum, Solana, Stacks, and Sui in one
 view — connected wallets, watch-only addresses, and stablecoin positions
 unified with live prices, depth-aware charts, and a trading-terminal aesthetic
 built for people who actually use crypto.
@@ -29,7 +29,7 @@ configuring a key.
 
 ## Features
 
-- **Multi-chain by default** — Bitcoin, Ethereum, Solana, Stacks. Stable
+- **Multi-chain by default** — Bitcoin, Ethereum, Solana, Stacks, Sui. Stable
   coins and FIAT-pegged tokens treated as first-class citizens.
 - **Connected + watch-only unified** — your hardware wallet, your hot wallet,
   and your partner's address all in one portfolio view.
