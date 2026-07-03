@@ -5,6 +5,7 @@ import type { TransactionAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
 import { resolveEtherscanBase } from './etherscan-config.js';
+import { resolveHiroBase } from './hiro-config.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
@@ -216,7 +217,7 @@ export function normalizeStxTransactions(txs: HiroTx[], address: string): Transa
 
 async function fetchStxTransactions(address: string): Promise<Transaction[]> {
   const res = await fetch(
-    `https://api.hiro.so/extended/v1/address/${encodeURIComponent(address)}/transactions?limit=20`,
+    `${resolveHiroBase()}/extended/v1/address/${encodeURIComponent(address)}/transactions?limit=20`,
   );
   if (!res.ok) throw new Error(`Hiro API error: ${res.status}`);
 

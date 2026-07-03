@@ -48,11 +48,12 @@ const walletConnectConnect = [
 
 const chainDataConnect = [
   'https://blockstream.info', // BTC balances + transactions (services/btc, transactions)
-  'https://api.hiro.so', // STX balances, BNS, transactions (services/stx, transactions)
-  // Etherscan (ETH balances + transactions) and Alpha Vantage (stocks) are no
-  // longer listed: the browser only ever reaches the same-origin proxies at
-  // /api/etherscan and /api/stocks (covered by 'self'), which hold the
-  // server-only keys and forward upstream. See #69.
+  // Etherscan (ETH balances + transactions), Alpha Vantage (stocks), and Hiro
+  // (STX balances, BNS, transactions, NFTs, health call-reads) are no longer
+  // listed: the browser only ever reaches the same-origin proxies at
+  // /api/etherscan, /api/stocks, and /api/hiro (covered by 'self'), which hold
+  // the server-only keys and forward upstream. See #69.
+  'https://gamma.io', // Stacks NFT metadata enrichment (services/nft/stacks)
   'https://api.mainnet-beta.solana.com', // SOL balance JSON-RPC (services/sol)
   'https://api.coingecko.com', // spot prices + market charts (services/prices)
   'https://fullnode.mainnet.sui.io', // SUI balances + transactions (services/sui)

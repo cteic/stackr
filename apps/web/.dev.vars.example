@@ -3,6 +3,7 @@
 #   apps/web/src/app/api/rpc/{solana,eth}/route.ts  (JSON-RPC: Helius / Alchemy)
 #   apps/web/src/app/api/etherscan/route.ts          (REST: Etherscan)
 #   apps/web/src/app/api/stocks/route.ts             (REST: Alpha Vantage)
+#   apps/web/src/app/api/hiro/[...path]/route.ts     (REST: Hiro / Stacks)
 #
 # Setup:
 #   1. Copy this file to `.dev.vars` (already gitignored) in apps/web/.
@@ -12,6 +13,7 @@
 #        wrangler secret put ALCHEMY_API_KEY
 #        wrangler secret put ETHERSCAN_API_KEY
 #        wrangler secret put ALPHAVANTAGE_API_KEY
+#        wrangler secret put HIRO_API_KEY
 #
 # These are SERVER-ONLY secrets: note the absence of a NEXT_PUBLIC_ prefix, so
 # they are never inlined into the client bundle. When a key is absent the
@@ -21,3 +23,4 @@ HELIUS_API_KEY=your-helius-key-here
 ALCHEMY_API_KEY=your-alchemy-key-here
 ETHERSCAN_API_KEY=your-etherscan-key-here
 ALPHAVANTAGE_API_KEY=your-alphavantage-key-here
+HIRO_API_KEY=your-hiro-key-here
