@@ -12,6 +12,14 @@ import {
   isStacksWalletConnected,
   readStacksAddresses,
 } from '@/lib/stacks-connect';
+import {
+  connectSuiWallet,
+  disconnectSuiWallet,
+  isSuiWalletAvailable,
+  isSuiWalletRemembered,
+  restoreSuiWallet,
+  subscribeSuiWalletAvailability,
+} from '@/lib/sui-connect';
 
 import { detectInstalledWallets, INSTALL_URLS, type WalletId } from './wallet-detect';
 
@@ -32,14 +40,14 @@ export interface WalletConnection {
 }
 
 /**
- * Single source of truth for connecting/disconnecting the three supported
+ * Single source of truth for connecting/disconnecting the four supported
  * wallets and reading their connected state. The unified connect modal and the
  * header status indicators both consume this — there is no per-wallet button.
  *
  * Connected state is read from `wallet-store.connectedAddresses`, which the
  * ETH/SOL sync components keep in step with wagmi and the Solana adapter.
- * Leather has no adapter-level provider, so this hook owns both writing its
- * addresses into the store and restoring them after a refresh.
+ * Leather and Slush have no adapter-level provider, so this hook owns both
+ * writing their addresses into the store and restoring them after a refresh.
  */
 export function useWalletConnections(): WalletConnection[] {
   const { connectors, connectAsync } = useConnect();
@@ -54,9 +62,15 @@ export function useWalletConnections(): WalletConnection[] {
     metamask: false,
     phantom: false,
     leather: false,
+    slush: false,
   });
   useEffect(() => {
-    setInstalled(detectInstalledWallets(window));
+    // Slush isn't window-detectable: it announces itself through the Wallet
+    // Standard registry, possibly after mount, so keep listening for it.
+    setInstalled({ ...detectInstalledWallets(window), slush: isSuiWalletAvailable() });
+    return subscribeSuiWalletAvailability(available =>
+      setInstalled(prev => ({ ...prev, slush: available })),
+    );
   }, []);
 
   // --- Leather: restore a persisted session on mount ---
@@ -67,6 +81,20 @@ export function useWalletConnections(): WalletConnection[] {
     setConnectedAddresses('stx', [addrs.stx]);
     setConnectedAddresses('btc', [addrs.btc]);
   }, [setConnectedAddresses]);
+
+  // --- Slush: restore a remembered session once the wallet has registered ---
+  const slushInstalled = installed.slush;
+  useEffect(() => {
+    if (!slushInstalled || !isSuiWalletRemembered()) return;
+    let cancelled = false;
+    void restoreSuiWallet().then(addrs => {
+      if (cancelled || !addrs) return;
+      setConnectedAddresses('sui', addrs);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slushInstalled, setConnectedAddresses]);
 
   // --- Phantom: connect after the adapter has selected the wallet ---
   const wantPhantomRef = useRef(false);
@@ -106,6 +134,17 @@ export function useWalletConnections(): WalletConnection[] {
     clearConnectedAddresses('btc');
   }, [clearConnectedAddresses]);
 
+  const connectSlush = useCallback(async () => {
+    const addrs = await connectSuiWallet();
+    if (!addrs) return;
+    setConnectedAddresses('sui', addrs);
+  }, [setConnectedAddresses]);
+
+  const disconnectSlush = useCallback(() => {
+    disconnectSuiWallet();
+    clearConnectedAddresses('sui');
+  }, [clearConnectedAddresses]);
+
   const has = (chain: Chain) => (connectedAddresses[chain]?.length ?? 0) > 0;
 
   return [
@@ -138,6 +177,16 @@ export function useWalletConnections(): WalletConnection[] {
       installUrl: INSTALL_URLS.leather,
       connect: connectLeather,
       disconnect: disconnectLeather,
+    },
+    {
+      id: 'slush',
+      name: 'Slush',
+      chains: ['sui'],
+      connected: has('sui'),
+      installed: installed.slush,
+      installUrl: INSTALL_URLS.slush,
+      connect: connectSlush,
+      disconnect: disconnectSlush,
     },
   ];
 }
