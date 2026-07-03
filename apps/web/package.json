@@ -35,6 +35,8 @@
     "@stackr/ui": "workspace:*",
     "@stackr/wallet-link": "workspace:^",
     "@stacks/connect": "^8.2.6",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.0",
     "@tanstack/react-query": "^5.62.8",
     "@wallet-standard/app": "^1.1.1",
     "@wallet-standard/base": "^1.1.1",
@@ -48,6 +50,7 @@
     "tailwind-merge": "^2.6.0",
     "viem": "^2.21.54",
     "wagmi": "^2.14.11",
+    "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
