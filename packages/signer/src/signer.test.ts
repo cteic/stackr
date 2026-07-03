@@ -47,6 +47,27 @@ async function initializedSigner() {
   return { signer, storage };
 }
 
+describe('createSigner — revealMnemonic', () => {
+  it('fails closed before initialization', async () => {
+    const signer = createSigner(memoryStorage());
+    await expect(signer.revealMnemonic()).rejects.toMatchObject({ code: 'not_initialized' });
+  });
+
+  it('returns the stored phrase verbatim after initialization', async () => {
+    const { signer } = await initializedSigner();
+    expect(await signer.revealMnemonic()).toBe(TEST_MNEMONIC);
+  });
+
+  it('reads through storage on every call — never caches', async () => {
+    const { signer, storage } = await initializedSigner();
+    expect(await signer.revealMnemonic()).toBe(TEST_MNEMONIC);
+    // Simulate an external wipe (e.g. another session): the next reveal must
+    // fail closed instead of serving a cached copy.
+    storage.dump().clear();
+    await expect(signer.revealMnemonic()).rejects.toMatchObject({ code: 'not_initialized' });
+  });
+});
+
 describe('createSigner — lifecycle', () => {
   it('fails closed before initialization', async () => {
     const signer = createSigner(memoryStorage());

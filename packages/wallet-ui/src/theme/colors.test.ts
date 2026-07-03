@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ChainSchema } from '@stackr/models';
-import { chainColors, light, terminalDark, type SemanticColors } from './colors.js';
+import { chainColors, light, terminalDark, type SemanticColors } from './colors';
 
 const RN_PARSEABLE = /^(#[0-9a-f]{6}|#[0-9a-f]{8}|rgba?\([\d\s.,%]+\))$/i;
 

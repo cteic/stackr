@@ -1,7 +1,7 @@
 import { chainMeta, type Chain } from '@stackr/models';
 import { Text, View } from 'tamagui';
-import { chainColors } from '../theme/colors.js';
-import { Row } from '../primitives.js';
+import { chainColors } from '../theme/colors';
+import { Row } from '../primitives';
 
 export interface ChainBadgeProps {
   chain: Chain;

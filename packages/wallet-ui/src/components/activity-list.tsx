@@ -1,12 +1,7 @@
 import type { Chain } from '@stackr/models';
-import { Col, Label, Panel, Row, Value } from '../primitives.js';
-import {
-  formatRelativeTime,
-  formatSignedAmount,
-  HIDDEN_VALUE,
-  truncateAddress,
-} from '../format.js';
-import { ChainBadge } from './chain-badge.js';
+import { Col, Label, Panel, Row, Value } from '../primitives';
+import { formatRelativeTime, formatSignedAmount, HIDDEN_VALUE, truncateAddress } from '../format';
+import { ChainBadge } from './chain-badge';
 
 export interface ActivityItem {
   id: string;

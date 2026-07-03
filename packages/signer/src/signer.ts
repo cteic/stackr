@@ -40,6 +40,13 @@ export const MNEMONIC_STORAGE_KEY = 'stackr.signer.mnemonic.v1';
 export interface StackrSigner {
   initialize(mnemonic: string): Promise<void>;
   isInitialized(): Promise<boolean>;
+  /**
+   * Return the stored recovery phrase for a user-facing backup ceremony.
+   * Security-sensitive: callers own the gating (device re-auth, screen-capture
+   * blocking) and must not retain the value beyond the render that shows it.
+   * The signer never caches it — every call reads through secure storage.
+   */
+  revealMnemonic(): Promise<string>;
   getAccount(chain: SignerChain, index: number): Promise<DerivedAccount>;
   signMessage(chain: SignerChain, index: number, message: string): Promise<SignMessageResult>;
   signTransaction(
@@ -119,6 +126,10 @@ export function createSigner(storage: SecureStorage): StackrSigner {
 
     async isInitialized(): Promise<boolean> {
       return (await storage.get(MNEMONIC_STORAGE_KEY)) !== null;
+    },
+
+    async revealMnemonic(): Promise<string> {
+      return requireMnemonic();
     },
 
     async getAccount(chain: SignerChain, index: number): Promise<DerivedAccount> {

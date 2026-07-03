@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Chain } from '@stackr/models';
 import { View } from 'tamagui';
-import { ActionButton, ActionButtonText, Col, Label, Panel, Row, Value } from '../primitives.js';
-import { createHoldToConfirm } from '../hold-to-confirm.js';
-import { ChainBadge } from './chain-badge.js';
+import { ActionButton, ActionButtonText, Col, Label, Panel, Row, Value } from '../primitives';
+import { createHoldToConfirm } from '../hold-to-confirm';
+import { ChainBadge } from './chain-badge';
 
 export interface SignRequestField {
   label: string;

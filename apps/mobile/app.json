@@ -28,7 +28,13 @@
           "configureAndroidBackup": false
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Stackr uses Face ID to protect your recovery phrase."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

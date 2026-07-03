@@ -4,9 +4,9 @@ import { validateAddress } from '@stackr/models';
 /**
  * The wallet's account list, assembled from the two key sources described in
  * ADR 0020: Privy embedded wallets (Ethereum + Solana) and locally-derived
- * accounts via `@stackr/signer` (BTC / STX / SUI). Until the signer package
- * merges, the local chains surface as `pending` rows — visible in the UI,
- * excluded from network reads.
+ * accounts via `@stackr/signer` (BTC / STX / SUI). Local chains surface as
+ * `pending` rows only for the moment between login and the silent-seed
+ * derivation finishing — visible in the UI, excluded from network reads.
  */
 export interface WalletAccount {
   wallet: Wallet;
@@ -15,12 +15,19 @@ export interface WalletAccount {
 
 export interface PendingChain {
   chain: Chain;
-  reason: 'signer-not-integrated';
+  reason: 'seed-not-ready';
+}
+
+export interface LocalAddresses {
+  btc: string | null;
+  stx: string | null;
+  sui: string | null;
 }
 
 export interface AccountSources {
   ethereumAddress: string | null;
   solanaAddress: string | null;
+  localAddresses: LocalAddresses;
 }
 
 export interface AccountsView {
@@ -28,7 +35,7 @@ export interface AccountsView {
   pending: PendingChain[];
 }
 
-const LOCAL_CHAINS: readonly Chain[] = ['btc', 'stx', 'sui'];
+const LOCAL_CHAINS = ['btc', 'stx', 'sui'] as const;
 
 interface WalletIdentity {
   id: string;
@@ -47,9 +54,17 @@ export function buildAccountsView(
 ): AccountsView {
   const accounts: WalletAccount[] = [];
 
-  const candidates: Array<{ chain: Chain; address: string | null; label: string }> = [
-    { chain: 'eth', address: sources.ethereumAddress, label: 'Ethereum' },
-    { chain: 'sol', address: sources.solanaAddress, label: 'Solana' },
+  const candidates: Array<{
+    chain: Chain;
+    address: string | null;
+    label: string;
+    source: WalletAccount['source'];
+  }> = [
+    { chain: 'eth', address: sources.ethereumAddress, label: 'Ethereum', source: 'privy' },
+    { chain: 'sol', address: sources.solanaAddress, label: 'Solana', source: 'privy' },
+    { chain: 'btc', address: sources.localAddresses.btc, label: 'Bitcoin', source: 'local' },
+    { chain: 'stx', address: sources.localAddresses.stx, label: 'Stacks', source: 'local' },
+    { chain: 'sui', address: sources.localAddresses.sui, label: 'Sui', source: 'local' },
   ];
 
   for (const candidate of candidates) {
@@ -58,7 +73,7 @@ export function buildAccountsView(
     if (!result.valid) continue;
     const identity = makeIdentity();
     accounts.push({
-      source: 'privy',
+      source: candidate.source,
       wallet: {
         id: identity.id,
         createdAt: identity.createdAt,
@@ -69,10 +84,9 @@ export function buildAccountsView(
     });
   }
 
-  const pending: PendingChain[] = LOCAL_CHAINS.map(chain => ({
-    chain,
-    reason: 'signer-not-integrated',
-  }));
+  const pending: PendingChain[] = LOCAL_CHAINS.filter(
+    chain => sources.localAddresses[chain] === null,
+  ).map(chain => ({ chain, reason: 'seed-not-ready' }));
 
   return { accounts, pending };
 }

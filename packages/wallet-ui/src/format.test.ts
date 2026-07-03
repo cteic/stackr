@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatRelativeTime, formatSignedAmount, truncateAddress } from './format.js';
+import { formatRelativeTime, formatSignedAmount, truncateAddress } from './format';
 
 describe('truncateAddress', () => {
   it('middle-truncates a long address keeping both ends recognisable', () => {

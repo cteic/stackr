@@ -82,3 +82,13 @@ transport) are unit-tested independently of any transport.
 - Privy becomes an onboarding dependency with a public app-id pair; the trust
   boundary is Privy's dashboard config (allowed apps, login methods), not
   secrecy. A build without ids degrades to a clear setup notice.
+- Onboarding stays ceremony-free: the BTC/STX/SUI seed is generated silently
+  into the hardware keystore at first login, and backup is deferred to a
+  one-time interstitial plus a recurring nudge that escalates once real funds
+  arrive. The Backup & keys section (device re-auth → hold-to-reveal →
+  confirm-two-words) is the only surface where the phrase is ever displayed.
+- Phase-2 candidate, documented not built: opt-in cloud seed sync (iCloud
+  Keychain / Android backup) so the phrase stops being single-device, and
+  Android's Credential Manager one-click save-to-password-manager (needs a
+  native module; the share-sheet and auto-expiring clipboard paths ship
+  first).
