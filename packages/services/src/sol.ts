@@ -4,8 +4,7 @@ import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
-
-const SOLANA_RPC = 'https://api.mainnet-beta.solana.com';
+import { resolveSolanaRpcUrl } from './sol-rpc.js';
 
 /**
  * Ingress schema for a Solana `getBalance` JSON-RPC response. The lamport
@@ -23,7 +22,7 @@ const SolanaBalanceSchema = z.object({
 });
 
 export async function fetchSolBalance(address: string): Promise<Balance> {
-  const res = await fetch(SOLANA_RPC, {
+  const res = await fetch(resolveSolanaRpcUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -59,7 +58,7 @@ export async function fetchSolBalance(address: string): Promise<Balance> {
   );
 }
 
-/** Public-RPC-backed implementation of the SOL balance port. */
+/** Solana-RPC-backed implementation of the SOL balance port. */
 export const solBalanceAdapter: BalanceAdapter = {
   chain: 'sol',
   fetchBalance: address => fetchSolBalance(address),
