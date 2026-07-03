@@ -1,0 +1,19 @@
+# Copy to .dev.vars for `wrangler dev --test-scheduled`; set for prod with
+# `wrangler secret put <NAME>` (run from apps/alerts).
+
+# Supabase project URL and the SERVICE-ROLE key. The service-role key bypasses
+# row-level security — it lives only here and in Wrangler secrets, never in the
+# web app or anything NEXT_PUBLIC_*.
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# VAPID pair for web push. Generate once (`npx web-push generate-vapid-keys`);
+# the PUBLIC key must equal the web app's NEXT_PUBLIC_VAPID_PUBLIC_KEY or
+# existing browser subscriptions stop verifying.
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:pete@cteic.ie
+
+# Optional: lifts Hiro (Stacks) reads from 50 rpm to 500 rpm for the Zest and
+# Granite adapters. Keyless works at this sweep cadence.
+HIRO_API_KEY=

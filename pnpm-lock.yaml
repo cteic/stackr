@@ -50,6 +50,34 @@ importers:
         specifier: ^3.2.6
         version: 3.2.6(@types/debug@4.1.13)(@types/node@22.19.13)(jsdom@28.1.0(@noble/hashes@1.8.0))(lightningcss@1.31.1)(terser@5.46.0)
 
+  apps/alerts:
+    dependencies:
+      '@stackr/models':
+        specifier: workspace:*
+        version: link:../../packages/models
+      '@stackr/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@stackr/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@stackr/tsconfig-config':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig-config
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.3(jiti@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.93.1
+        version: 4.93.1(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   apps/web:
     dependencies:
       '@rainbow-me/rainbowkit':
