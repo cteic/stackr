@@ -3,6 +3,7 @@ import { defineWorkspace } from 'vitest/config';
 export default defineWorkspace([
   'apps/alerts/vitest.config.ts',
   'apps/web/vitest.config.ts',
+  'apps/mobile/vitest.config.ts',
   'packages/analytics/vitest.config.ts',
   'packages/models/vitest.config.ts',
   'packages/charts/vitest.config.ts',
