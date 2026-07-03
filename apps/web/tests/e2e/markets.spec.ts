@@ -43,7 +43,9 @@ test('shows the order book and depth chart alongside the price chart', async ({ 
   await mockCoinGecko(page);
   await page.goto('/market');
 
-  // Mock mode renders the book without any network, for the default BTC pair.
+  // Live is the default; switch to mock so the book renders without any
+  // network, for the default BTC pair.
+  await page.getByRole('button', { name: 'Live' }).click();
   await expect(page.getByText('Order Book — BTC/USD')).toBeVisible();
   await expect(page.getByText('Depth Chart —')).toBeVisible();
 });
