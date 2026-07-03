@@ -6,6 +6,7 @@ import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
 import { resolveEtherscanBase } from './etherscan-config.js';
 import { resolveHiroBase } from './hiro-config.js';
+import { resolveSolanaRpcUrl } from './sol-rpc.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
@@ -263,7 +264,7 @@ export function normalizeSolTransactions(signatures: SolanaSignature[]): Transac
 }
 
 async function fetchSolTransactions(address: string): Promise<Transaction[]> {
-  const sigRes = await fetch('https://api.mainnet-beta.solana.com', {
+  const sigRes = await fetch(resolveSolanaRpcUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
