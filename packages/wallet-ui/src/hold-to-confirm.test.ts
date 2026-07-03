@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHoldToConfirm } from './hold-to-confirm.js';
+import { createHoldToConfirm } from './hold-to-confirm';
 
 describe('createHoldToConfirm', () => {
   beforeEach(() => {

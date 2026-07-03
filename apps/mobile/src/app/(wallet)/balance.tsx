@@ -1,12 +1,14 @@
-import { useMemo } from 'react';
-import { Link } from 'expo-router';
+import { useCallback, useMemo } from 'react';
+import { Link, useFocusEffect } from 'expo-router';
 import { RefreshControl } from 'react-native';
 import { Button, ScrollView, Text, XStack } from 'tamagui';
 import { chainMeta } from '@stackr/models';
 import { formatFiat } from '@stackr/services';
 import { createPortfolioRowView, type PortfolioRowView } from '@stackr/features';
+import { BackupBanner } from '@/components/backup-banner';
 import { BalanceCard } from '@/components/balance-card';
 import { useAccountBalances, usePrices } from '@/lib/queries';
+import { useBackupStatus } from '@/lib/use-backup-status';
 import { useSignQueue } from '@/lib/sign-queue-singleton';
 import { useWalletState } from '@/lib/use-wallet-state';
 
@@ -48,6 +50,16 @@ export default function BalanceScreen() {
     return total;
   }, [balances.data, prices.data]);
 
+  const backup = useBackupStatus(totalFiat > 0);
+  const { refresh: refreshBackup } = backup;
+  // Re-read the persisted flags when the tab regains focus (e.g. returning
+  // from a just-verified backup ceremony).
+  useFocusEffect(
+    useCallback(() => {
+      void refreshBackup();
+    }, [refreshBackup]),
+  );
+
   return (
     <ScrollView
       flex={1}
@@ -85,6 +97,8 @@ export default function BalanceScreen() {
           </Button>
         </XStack>
       </XStack>
+
+      <BackupBanner variant={backup.banner} onDismiss={backup.dismissBanner} />
 
       <BalanceCard
         totalFiatText={formatFiat(totalFiat, DISPLAY_CURRENCY)}

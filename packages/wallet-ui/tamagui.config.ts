@@ -1,9 +1,9 @@
 import { createAnimations } from '@tamagui/animations-react-native';
 import { shorthands } from '@tamagui/shorthands';
 import { createTamagui, createTokens } from 'tamagui';
-import { light, terminalDark, type SemanticColors } from './src/theme/colors.js';
-import { radius, size, space, zIndex } from './src/theme/spacing.js';
-import { monoFont } from './src/theme/typography.js';
+import { light, terminalDark, type SemanticColors } from './src/theme/colors';
+import { radius, size, space, zIndex } from './src/theme/spacing';
+import { monoFont } from './src/theme/typography';
 
 /**
  * Tamagui configuration for the native wallet. Themes carry the full semantic

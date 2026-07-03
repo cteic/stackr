@@ -1,7 +1,7 @@
 import { chainMeta, type Chain } from '@stackr/models';
-import { Col, Label, Panel, Row, Value } from '../primitives.js';
-import { HIDDEN_VALUE, truncateAddress } from '../format.js';
-import { ChainBadge } from './chain-badge.js';
+import { Col, Label, Panel, Row, Value } from '../primitives';
+import { HIDDEN_VALUE, truncateAddress } from '../format';
+import { ChainBadge } from './chain-badge';
 
 export interface BalanceCardProps {
   chain: Chain;
