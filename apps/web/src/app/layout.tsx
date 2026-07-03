@@ -7,6 +7,7 @@ import {
   Spline_Sans_Mono,
 } from 'next/font/google';
 import { Providers } from '@/lib/providers';
+import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
 import './globals.css';
 
 // Per-theme typefaces, exposed as CSS variables that each theme class picks up.
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${fontVars}`} suppressHydrationWarning>
       <body>
+        <ServiceWorkerRegistrar />
         <Providers>{children}</Providers>
       </body>
     </html>

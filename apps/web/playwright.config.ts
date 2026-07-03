@@ -24,5 +24,8 @@ export default defineConfig({
     command: `pnpm dev --port ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
+    // Cold-start compile of the grown workspace can exceed the 60s default
+    // on a busy CI shard.
+    timeout: 180_000,
   },
 });

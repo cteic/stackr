@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL wallet addresses, view balances, and eventually NFTs. PWA-enabled, dark theme.
+Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL/SUI wallet addresses and view balances, activity, liquidation health, and NFTs (Stacks first). Installable web app (manifest only — no service worker/offline yet), dark theme.
 
 ## Tech Stack
 
@@ -20,8 +20,11 @@ Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL wall
 - `packages/prettier-config` — Shared Prettier config
 - `packages/eslint-config` — Shared ESLint flat configs
 - `packages/models` — Zod schemas + types (Wallet, Balance, Chain)
-- `packages/services` — Multi-chain API clients (BTC, STX, ETH, SOL)
+- `packages/services` — Multi-chain API clients (BTC, STX, ETH, SOL, SUI)
 - `packages/queries` — TanStack React Query hooks + query key factories
+- `packages/controllers` — Controller/messenger layer (ActivityController)
+- `packages/features` — Platform-independent view-models (web + mobile share)
+- `packages/analytics` — PostHog wrapper (opt-in, PII-free events)
 - `packages/ui` — Shared React components (Radix-based, hand-styled)
 - `packages/charts` — Custom SVG charting library (Kraken-inspired, Fritsch-Carlson monotone interpolation)
 - `apps/web` — Next.js web app
@@ -46,7 +49,7 @@ pnpm test:e2e       # Run Playwright e2e tests
 
 ## Branching (GitFlow)
 
-- **`main`** — production. Auto-deploys to Cloudflare on push. Never direct-push; lands only via merged PRs from `dev` (releases) or `hotfix/*` (urgent fixes).
+- **`main`** — production. Deploys to Cloudflare on push via the Deploy workflow (needs the `CLOUDFLARE_*` repo secrets). Never direct-push; lands only via merged PRs from `dev` (releases) or `hotfix/*` (urgent fixes).
 - **`dev`** — integration branch. Default branch on GitHub. Every feature/chore/docs PR targets `dev`.
 - **`feat/...`, `fix/...`, `chore/...`, `docs/...`** — short-lived branches off `dev`. Merge back into `dev` via PR.
 - **`hotfix/...`** — branches off `main` for urgent production fixes. PR to `main`, then cherry-pick into `dev` (see `.claude/commands/hotfix.md`).
