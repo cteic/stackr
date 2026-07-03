@@ -17,6 +17,7 @@ import { PortfolioBreakdown } from '@/components/portfolio-breakdown';
 import { RecentActivity } from '@/components/recent-activity';
 import { LiquidationHealth } from '@/components/liquidation-health';
 import { Collectibles } from '@/components/collectibles';
+import { FirstRunHero } from '@/components/first-run-hero';
 
 export default function DashboardPage() {
   const wallets = useWalletStore(s => s.wallets);
@@ -131,12 +132,7 @@ export default function DashboardPage() {
         </div>
 
         {!hasAnything ? (
-          <div className="rounded-lg border border-dashed py-12 px-6 text-center text-muted-foreground">
-            <p className="text-base mb-2">No assets yet</p>
-            <p className="text-sm">
-              Add wallets, cash savings, or stock positions to track your portfolio.
-            </p>
-          </div>
+          <FirstRunHero />
         ) : (
           <>
             <PortfolioSummary
