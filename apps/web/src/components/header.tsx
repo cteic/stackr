@@ -37,6 +37,12 @@ export function Header() {
           Markets
         </Link>
         <Link
+          href="/collectibles"
+          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Collectibles
+        </Link>
+        <Link
           href="/settings"
           className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
         >

@@ -1,9 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchKaminoPosition,
   normalizeKaminoObligations,
   type KaminoObligation,
 } from './kamino.js';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 /**
  * Build a Kamino obligation in the upstream shape: decimal strings, with
@@ -119,6 +123,22 @@ describe('normalizeKaminoObligations', () => {
 });
 
 describe('fetchKaminoPosition', () => {
+  it('requests the un-versioned obligations route (the SDK `/v2` base 404s live)', async () => {
+    const fn = vi.fn(async (_url?: unknown, _init?: unknown) => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => [],
+    }));
+    vi.stubGlobal('fetch', fn);
+
+    await fetchKaminoPosition('SoLwallet');
+
+    expect(fn).toHaveBeenCalledWith(
+      'https://api.kamino.finance/kamino-market/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF/users/SoLwallet/obligations',
+    );
+  });
+
   it('reads through the injected fetch and normalizes the result', async () => {
     const fetchObligations = vi.fn(
       async (): Promise<KaminoObligation[]> => [
