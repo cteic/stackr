@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { checkProxyRateLimit } from '../proxy-limit';
 
 /**
  * Same-origin REST proxy for Alpha Vantage.
@@ -34,39 +35,73 @@ const ALLOWED_FUNCTIONS = new Set(['SYMBOL_SEARCH', 'GLOBAL_QUOTE', 'TIME_SERIES
 // rather than relayed; the `apikey` is never accepted from the client.
 const ALLOWED_PARAMS = new Set(['function', 'keywords', 'symbol', 'outputsize']);
 
-const RATE_LIMIT_PER_MINUTE = 120;
-const rateWindow = new Map<string, { count: number; resetAt: number }>();
+// Shared edge-cache TTLs per Alpha Vantage function. Stock data is not
+// wallet data — the same symbol's quote/search/history is identical for every
+// user — so it is safe (and necessary) to cache cross-user: the free tier is
+// ~25 requests/day against a single app key, which cannot back the feature
+// without a shared cache in front of it.
+const CACHE_TTL_SECONDS: Record<string, number> = {
+  SYMBOL_SEARCH: 3600,
+  GLOBAL_QUOTE: 300,
+  TIME_SERIES_DAILY: 3600,
+};
 
-function isRateLimited(key: string, now: number): boolean {
-  const entry = rateWindow.get(key);
-  if (!entry || entry.resetAt <= now) {
-    if (rateWindow.size > 10_000) {
-      rateWindow.clear();
-    }
-    rateWindow.set(key, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_PER_MINUTE;
+interface EdgeCache {
+  match(request: Request): Promise<Response | undefined>;
+  put(request: Request, response: Response): Promise<unknown>;
 }
 
-// FNV-1a (32-bit). A tiny synchronous hash so the rate-limit key derived from a
-// forwarded-for chain doesn't retain raw client IPs in the isolate's map.
-function hashKey(value: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(36);
+function isEdgeCache(value: unknown): value is EdgeCache {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'match' in value &&
+    typeof value.match === 'function' &&
+    'put' in value &&
+    typeof value.put === 'function'
+  );
 }
 
-function resolveRateLimitKey(request: Request): string | null {
-  const connectingIp = request.headers.get('cf-connecting-ip');
-  if (connectingIp) return `ip:${connectingIp}`;
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) return `xff:${hashKey(forwardedFor)}`;
-  return null;
+/**
+ * Resolve Cloudflare's default zone cache (`caches.default`). Only the
+ * Workers runtime provides it — the standard `CacheStorage` has no `default`
+ * member, and Node/tests have no `caches` at all — so absence simply disables
+ * edge caching rather than failing the route.
+ */
+function resolveEdgeCache(): EdgeCache | undefined {
+  if (!('caches' in globalThis)) return undefined;
+  const storage: unknown = globalThis.caches;
+  if (typeof storage !== 'object' || storage === null || !('default' in storage)) {
+    return undefined;
+  }
+  const candidate: unknown = storage.default;
+  return isEdgeCache(candidate) ? candidate : undefined;
+}
+
+/**
+ * Canonical cache key for one upstream query: the whitelisted params, sorted,
+ * against the route's own origin. Never includes the API key, so the key can't
+ * leak through cache internals, and two clients asking for the same symbol in
+ * a different param order share one entry.
+ */
+function cacheKeyRequest(url: URL, forwarded: URLSearchParams): Request {
+  const sorted = new URLSearchParams([...forwarded.entries()].sort(([a], [b]) => (a < b ? -1 : 1)));
+  return new Request(`${url.origin}${url.pathname}?${sorted}`);
+}
+
+/**
+ * Alpha Vantage signals throttling/misuse inside a 200 body (`Note`,
+ * `Information`, or `Error Message` keys) instead of an HTTP error. Those
+ * bodies must never be cached — they'd pin the throttle message for the TTL.
+ */
+function isAlphaVantageErrorPayload(payload: string): boolean {
+  try {
+    const parsed: unknown = JSON.parse(payload);
+    if (typeof parsed !== 'object' || parsed === null) return true;
+    return 'Note' in parsed || 'Information' in parsed || 'Error Message' in parsed;
+  } catch {
+    return true;
+  }
 }
 
 function proxyError(status: number, message: string): Response {
@@ -109,8 +144,8 @@ export async function GET(request: Request): Promise<Response> {
     return proxyError(403, 'cross-origin requests are not allowed');
   }
 
-  const rateLimitKey = resolveRateLimitKey(request);
-  if (rateLimitKey === null || isRateLimited(rateLimitKey, Date.now())) {
+  // Per-client rate limit: in-isolate window + fleet limiter (proxy-limit.ts).
+  if ((await checkProxyRateLimit(request, 'stocks')) !== 'allowed') {
     return proxyError(429, 'rate limit exceeded');
   }
 
@@ -126,6 +161,17 @@ export async function GET(request: Request): Promise<Response> {
     if (ALLOWED_PARAMS.has(key)) {
       forwarded.set(key, value);
     }
+  }
+
+  // Shared cache first: a hit costs zero upstream quota. The lookup sits
+  // behind the same-origin and rate-limit gates above, so the cache can't be
+  // farmed cross-origin any more than the upstream can.
+  const ttl = CACHE_TTL_SECONDS[fn] ?? 0;
+  const edgeCache = resolveEdgeCache();
+  const cacheKey = cacheKeyRequest(url, forwarded);
+  if (edgeCache && ttl > 0) {
+    const hit = await edgeCache.match(cacheKey);
+    if (hit) return hit;
   }
 
   const apiKey = await resolveAlphaVantageApiKey();
@@ -148,15 +194,24 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const payload = await upstreamRes.text();
+  const cacheable = ttl > 0 && !isAlphaVantageErrorPayload(payload);
 
-  return new Response(payload, {
+  const response = new Response(payload, {
     status: upstreamRes.status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
+      // Real data is shareable market data: cache it (edge + browser) for the
+      // function's TTL. Throttle notes and malformed bodies stay no-store.
+      'Cache-Control': cacheable ? `public, max-age=${ttl}` : 'no-store',
       'X-Content-Type-Options': 'nosniff',
       // Signal whether the proxy is key-backed, WITHOUT leaking the key.
       'x-stackr-stocks-upstream': apiKey ? 'keyed' : 'public',
     },
   });
+
+  if (edgeCache && cacheable) {
+    await edgeCache.put(cacheKey, response.clone());
+  }
+
+  return response;
 }
