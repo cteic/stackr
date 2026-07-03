@@ -54,7 +54,9 @@ const chainDataConnect = [
   // /api/etherscan, /api/stocks, and /api/hiro (covered by 'self'), which hold
   // the server-only keys and forward upstream. See #69.
   'https://gamma.io', // Stacks NFT metadata enrichment (services/nft/stacks)
-  'https://api.mainnet-beta.solana.com', // SOL balance JSON-RPC (services/sol)
+  // api.mainnet-beta.solana.com is no longer listed: SOL balance + transaction
+  // reads go through the same-origin /api/rpc/solana proxy (covered by 'self'),
+  // sharing the server-only Helius key with the wallet-adapter connection.
   'https://api.coingecko.com', // spot prices + market charts (services/prices)
   'https://fullnode.mainnet.sui.io', // SUI balances + transactions (services/sui)
   'https://api.kamino.finance', // Kamino liquidation-health reads (services/health/kamino)
