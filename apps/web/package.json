@@ -36,6 +36,8 @@
     "@stackr/wallet-link": "workspace:^",
     "@stacks/connect": "^8.2.6",
     "@tanstack/react-query": "^5.62.8",
+    "@wallet-standard/app": "^1.1.1",
+    "@wallet-standard/base": "^1.1.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "next": "^15.5.19",
