@@ -76,6 +76,28 @@
         "GHSA-267c-6grr-h53f",
         "GHSA-36qx-fr4f-26g5"
       ]
+    },
+    "packageExtensions": {
+      "next": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      },
+      "next-themes": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      }
     }
   }
 }

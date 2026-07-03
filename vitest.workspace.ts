@@ -13,5 +13,6 @@ export default defineWorkspace([
   'packages/wallet-link/vitest.config.ts',
   'packages/controllers/vitest.config.ts',
   'packages/features/vitest.config.ts',
+  'packages/wallet-ui/vitest.config.ts',
   'scripts/vitest.config.ts',
 ]);
