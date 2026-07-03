@@ -136,6 +136,7 @@ describe('fetchKaminoPosition', () => {
 
     expect(fn).toHaveBeenCalledWith(
       'https://api.kamino.finance/kamino-market/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF/users/SoLwallet/obligations',
+      { method: 'GET', headers: undefined, body: undefined },
     );
   });
 
