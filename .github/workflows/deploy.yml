@@ -1,12 +1,14 @@
 name: Deploy
 
+# workflow_dispatch-only: the Cloudflare Workers Git integration is the live
+# production deploy pipeline (builds every PR preview and every push to
+# main). Keeping this workflow's own push trigger would race it on every
+# merge to main. This stays as a manual backup — see #139.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # One deploy at a time, and never cancelled mid-flight — a killed deploy can
-# leave the worker and its static assets out of step. Later pushes queue.
+# leave the worker and its static assets out of step. Later manual runs queue.
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
