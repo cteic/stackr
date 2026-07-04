@@ -43,6 +43,12 @@ export function Header() {
           Collectibles
         </Link>
         <Link
+          href="/account"
+          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Account
+        </Link>
+        <Link
           href="/settings"
           className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
         >
