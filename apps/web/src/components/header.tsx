@@ -6,6 +6,7 @@ import { Button } from '@stackr/ui';
 import { ChainStatusIndicators } from '@/components/chain-status-indicators';
 import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { ThemePicker } from '@/components/theme-picker';
+import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
 
 export function Header() {
@@ -13,42 +14,49 @@ export function Header() {
   const toggleHideBalance = useSettingsStore(s => s.toggleHideBalance);
 
   return (
-    <header className="flex items-center justify-between border-b px-5 py-3">
+    <header className="flex items-center justify-between border-b px-4 py-3 md:px-5">
       <Link href="/" className="flex items-center text-lg font-bold tracking-tight text-foreground">
         STACKR<span className="font-medium text-primary">{'////'}</span>
       </Link>
-      <nav className="flex items-center gap-5">
-        <Link
-          href="/wallet/add"
-          className="text-xs font-medium uppercase tracking-widest text-primary transition-colors"
-        >
-          Add Wallet
-        </Link>
-        <Link
-          href="/holdings"
-          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Holdings
-        </Link>
-        <Link
-          href="/market"
-          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Markets
-        </Link>
-        <Link
-          href="/collectibles"
-          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Collectibles
-        </Link>
-        <Link
-          href="/settings"
-          className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Settings
-        </Link>
-        <ChainStatusIndicators />
+      <nav className="flex items-center gap-3 md:gap-5">
+        <div className="hidden items-center gap-5 md:flex">
+          <Link
+            href="/wallet/add"
+            className="text-xs font-medium uppercase tracking-widest text-primary transition-colors"
+          >
+            Add Wallet
+          </Link>
+          <Link
+            href="/holdings"
+            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Holdings
+          </Link>
+          <Link
+            href="/market"
+            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Markets
+          </Link>
+          <Link
+            href="/collectibles"
+            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Collectibles
+          </Link>
+          <Link
+            href="/settings"
+            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Settings
+          </Link>
+        </div>
+        <div className="md:hidden">
+          <MobileNav />
+        </div>
+        <div className="hidden sm:flex">
+          <ChainStatusIndicators />
+        </div>
         <WalletConnectModal />
         <Button
           variant="ghost"
