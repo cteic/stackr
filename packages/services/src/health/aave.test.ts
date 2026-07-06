@@ -86,7 +86,10 @@ describe('normalizeAaveAccountData', () => {
   });
 
   it('returns null when the account has no collateral and no debt', () => {
-    const position = normalizeAaveAccountData('0x00000000219ab540356cBB839Cbe05303d7705Fa', accountData({}));
+    const position = normalizeAaveAccountData(
+      '0x00000000219ab540356cBB839Cbe05303d7705Fa',
+      accountData({}),
+    );
     expect(position).toBeNull();
   });
 });

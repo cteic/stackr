@@ -93,7 +93,9 @@ describe('balance adapters — boundary enforcement', () => {
   it('surfaces Etherscan in-band errors (status !== "1")', async () => {
     mockFetchOnce({ status: '0', message: 'NOTOK', result: 'rate limited' });
 
-    await expect(fetchBalance('eth', '0x00000000219ab540356cBB839Cbe05303d7705Fa')).rejects.toThrow(/Etherscan API error: NOTOK/);
+    await expect(fetchBalance('eth', '0x00000000219ab540356cBB839Cbe05303d7705Fa')).rejects.toThrow(
+      /Etherscan API error: NOTOK/,
+    );
   });
 
   it('never carries an api key in the ETH request — the proxy applies it server-side', async () => {
