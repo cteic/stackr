@@ -1,6 +1,6 @@
 # 0014 — Capacitor mobile via an env-gated static-export build mode
 
-- **Status:** Accepted
+- **Status:** Superseded by 0020 (native Expo wallet); the export mode was removed once the Capacitor wrap was abandoned
 - **Date:** 2026-06-11
 
 ## Context
