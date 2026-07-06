@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "NEXT_PUBLIC_TARGET=capacitor next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -54,10 +53,6 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.3.4",
-    "@capacitor/cli": "^8.3.4",
-    "@capacitor/core": "^8.3.4",
-    "@capacitor/ios": "^8.3.4",
     "@opennextjs/cloudflare": "^1.19.11",
     "@playwright/test": "^1.49.1",
     "@stackr/eslint-config": "workspace:*",
