@@ -2,7 +2,7 @@
 
 import type { Protocol } from '@stackr/models';
 import { chainMeta } from '@stackr/models';
-import { Badge, Button, Card, ChainAvatar, Skeleton } from '@stackr/ui';
+import { Badge, Button, Callout, Card, ChainAvatar, Skeleton } from '@stackr/ui';
 import { formatFiat } from '@stackr/services';
 import { useHealthPositions, type HealthAddressesByChain } from '@stackr/queries';
 import { maskFiat } from '@/lib/mask-fiat';
@@ -33,7 +33,8 @@ export function LiquidationHealth({
   addressesByChain,
   hideBalance = false,
 }: LiquidationHealthProps) {
-  const { positions, isLoading, isFetching, refresh } = useHealthPositions(addressesByChain);
+  const { positions, isLoading, isFetching, isError, refresh } =
+    useHealthPositions(addressesByChain);
 
   return (
     <Card className="mt-4 p-4">
@@ -45,6 +46,14 @@ export function LiquidationHealth({
       </div>
       <p className="mb-3 text-xs text-muted-foreground">Collateral and debt shown in USD.</p>
 
+      {isError && (
+        <Callout variant="error" className="mb-3">
+          {positions.length === 0
+            ? "Couldn't check lending positions — one or more protocol reads failed."
+            : 'Some protocol reads failed — positions below may be incomplete.'}
+        </Callout>
+      )}
+
       {isLoading ? (
         <div className="flex flex-col gap-2">
           <Skeleton height="3.5em" />
@@ -52,7 +61,7 @@ export function LiquidationHealth({
         </div>
       ) : positions.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          No lending positions detected
+          {isError ? 'No lending positions confirmed.' : 'No lending positions detected'}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

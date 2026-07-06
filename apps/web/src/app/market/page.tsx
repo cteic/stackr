@@ -222,7 +222,10 @@ export default function MarketsPage() {
               {orderbook ? (
                 <Orderbook orderbook={orderbook} />
               ) : (
-                <Skeleton width="100%" height={400} />
+                <Card className="p-4">
+                  <div className="mb-3 text-sm font-semibold">Order Book — {pair}</div>
+                  <Skeleton width="100%" height={340} />
+                </Card>
               )}
               <Card className="p-4">
                 <div className="mb-3 text-sm font-semibold">Depth Chart — {selected?.label}</div>

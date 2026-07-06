@@ -68,6 +68,13 @@ const analyticsConnect = [
   'https://us-assets.i.posthog.com', // PostHog static assets (array.js / recorder)
 ];
 
+// Wildcard, not the pinned project ref: the ref is a build-time env value
+// (apps/web/.env.production), not something to hardcode into a security
+// policy that could outlive a project migration. Covers both the REST/auth
+// API and the wss:// realtime channel (auth session, web-push opt-in,
+// liquidation alerts — #133/#135/#136).
+const supabaseConnect = ['https://*.supabase.co', 'wss://*.supabase.co'];
+
 // Next's dev runtime (React Refresh / HMR / eval'd source maps) requires
 // 'unsafe-eval'; production does not. We allow it ONLY in development so the
 // enforced production policy stays strict ('wasm-unsafe-eval' for wallet/crypto
@@ -92,7 +99,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:", // next/font self-hosts; no runtime font CDN
-  `connect-src ${["'self'", ...chainDataConnect, ...analyticsConnect, ...walletConnectConnect].join(' ')}`,
+  `connect-src ${["'self'", ...chainDataConnect, ...analyticsConnect, ...walletConnectConnect, ...supabaseConnect].join(' ')}`,
   // WalletConnect / Reown render their pairing + verify UI in iframes.
   "frame-src 'self' https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com",
   "worker-src 'self' blob:", // wallet adapters spin up blob workers

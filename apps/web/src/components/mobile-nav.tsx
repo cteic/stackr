@@ -15,6 +15,7 @@ const LINKS: { href: string; label: string; primary?: boolean }[] = [
   { href: '/holdings', label: 'Holdings' },
   { href: '/market', label: 'Markets' },
   { href: '/collectibles', label: 'Collectibles' },
+  { href: '/account', label: 'Account' },
   { href: '/settings', label: 'Settings' },
 ];
 
