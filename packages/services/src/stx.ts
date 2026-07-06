@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
@@ -15,6 +16,7 @@ const HiroStxBalanceSchema = z.object({
 });
 
 export async function fetchStxBalance(address: string): Promise<Balance> {
+  assertValidAddress('stx', address);
   const res = await fetch(
     `${resolveHiroBase()}/extended/v1/address/${encodeURIComponent(address)}/stx`,
   );

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
@@ -19,6 +20,7 @@ const EtherscanBalanceSchema = z.object({
 });
 
 export async function fetchEthBalance(address: string): Promise<Balance> {
+  assertValidAddress('eth', address);
   const params = new URLSearchParams({
     module: 'account',
     action: 'balance',

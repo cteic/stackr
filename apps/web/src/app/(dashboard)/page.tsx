@@ -24,6 +24,7 @@ import { RecentActivity } from '@/components/recent-activity';
 import { LiquidationHealth } from '@/components/liquidation-health';
 import { Collectibles } from '@/components/collectibles';
 import { FirstRunHero } from '@/components/first-run-hero';
+import { WidgetErrorBoundary } from '@/components/widget-error-boundary';
 
 export default function DashboardPage() {
   const wallets = useWalletStore(s => s.wallets);
@@ -207,17 +208,23 @@ export default function DashboardPage() {
             </div>
 
             {(evmAddresses.length > 0 || solAddresses.length > 0 || stxAddresses.length > 0) && (
-              <LiquidationHealth
-                addressesByChain={{ eth: evmAddresses, sol: solAddresses, stx: stxAddresses }}
-                hideBalance={hideBalance}
-              />
+              <WidgetErrorBoundary label="Liquidation health">
+                <LiquidationHealth
+                  addressesByChain={{ eth: evmAddresses, sol: solAddresses, stx: stxAddresses }}
+                  hideBalance={hideBalance}
+                />
+              </WidgetErrorBoundary>
             )}
 
             {stxAddresses.length > 0 && (
-              <Collectibles addressesByChain={{ stx: stxAddresses }} hideBalance={hideBalance} />
+              <WidgetErrorBoundary label="Collectibles">
+                <Collectibles addressesByChain={{ stx: stxAddresses }} hideBalance={hideBalance} />
+              </WidgetErrorBoundary>
             )}
 
-            <RecentActivity wallets={allWallets} />
+            <WidgetErrorBoundary label="Recent activity">
+              <RecentActivity wallets={allWallets} />
+            </WidgetErrorBoundary>
           </>
         )}
       </main>
