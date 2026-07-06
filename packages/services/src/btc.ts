@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
@@ -29,6 +30,7 @@ const BlockstreamAddressSchema = z.object({
 });
 
 export async function fetchBtcBalance(address: string): Promise<Balance> {
+  assertValidAddress('btc', address);
   const res = await fetch(`${BLOCKSTREAM_API}/address/${encodeURIComponent(address)}`);
 
   if (!res.ok) {

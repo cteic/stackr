@@ -36,6 +36,7 @@ export {
   resolveEtherscanBase,
 } from './etherscan-config.js';
 export { STOCKS_PROXY_PATH, stocksPublicBase, resolveStocksBase } from './stocks-config.js';
+export { assertValidAddress } from './address-guard.js';
 export { parseOrThrow } from './validate.js';
 export { ServiceException, isServiceException, type ServiceError } from './service-error.js';
 export { safeFetch } from './fetch-wrapper.js';

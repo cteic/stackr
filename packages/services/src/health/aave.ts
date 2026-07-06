@@ -1,4 +1,5 @@
 import { createPublicClient, getAddress, http, maxUint256, type PublicClient } from 'viem';
+import { assertValidAddress } from '../address-guard.js';
 import { mainnet } from 'viem/chains';
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
 import { HealthPositionSchema } from '@stackr/models';
@@ -145,6 +146,7 @@ export async function fetchAavePosition(
   address: string,
   read: (address: string) => Promise<AaveAccountData> = readUserAccountData,
 ): Promise<HealthPosition | null> {
+  assertValidAddress('eth', address);
   return normalizeAaveAccountData(address, await read(address));
 }
 

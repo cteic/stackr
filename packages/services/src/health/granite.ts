@@ -1,4 +1,5 @@
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
+import { assertValidAddress } from '../address-guard.js';
 import { HealthPositionSchema } from '@stackr/models';
 import type { HealthAdapter } from '../ports.js';
 import { parseOrThrow } from '../validate.js';
@@ -217,6 +218,7 @@ export async function fetchGranitePosition(
   address: string,
   deps: CallReadDeps = {},
 ): Promise<HealthPosition | null> {
+  assertValidAddress('stx', address);
   const collateralRaw = await readCollateralValue(address, deps);
   const position = await readUserPosition(address, deps);
 

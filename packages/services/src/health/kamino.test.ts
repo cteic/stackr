@@ -132,10 +132,10 @@ describe('fetchKaminoPosition', () => {
     }));
     vi.stubGlobal('fetch', fn);
 
-    await fetchKaminoPosition('SoLwallet');
+    await fetchKaminoPosition('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF');
 
     expect(fn).toHaveBeenCalledWith(
-      'https://api.kamino.finance/kamino-market/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF/users/SoLwallet/obligations',
+      'https://api.kamino.finance/kamino-market/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF/users/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF/obligations',
     );
   });
 
@@ -151,16 +151,16 @@ describe('fetchKaminoPosition', () => {
       ],
     );
 
-    const position = await fetchKaminoPosition('SoLwallet', fetchObligations);
+    const position = await fetchKaminoPosition('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF', fetchObligations);
 
-    expect(fetchObligations).toHaveBeenCalledWith('SoLwallet');
+    expect(fetchObligations).toHaveBeenCalledWith('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF');
     expect(position?.liquidationRisk).toBe(0.625); // 0.5 / 0.8
     expect(position?.collateralValueUsd).toBe(2_000);
   });
 
   it('returns null when the wallet has no obligations', async () => {
     const fetchObligations = vi.fn(async (): Promise<KaminoObligation[]> => []);
-    expect(await fetchKaminoPosition('SoLwallet', fetchObligations)).toBeNull();
+    expect(await fetchKaminoPosition('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF', fetchObligations)).toBeNull();
   });
 
   it('propagates an upstream error so the hook surfaces it (no swallowing)', async () => {
@@ -168,7 +168,7 @@ describe('fetchKaminoPosition', () => {
       throw new Error('Kamino API error: 503 Service Unavailable');
     });
 
-    await expect(fetchKaminoPosition('SoLwallet', fetchObligations)).rejects.toThrow(
+    await expect(fetchKaminoPosition('7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF', fetchObligations)).rejects.toThrow(
       'Kamino API error: 503',
     );
   });

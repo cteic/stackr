@@ -1,18 +1,10 @@
 import { defineWorkspace } from 'vitest/config';
 
+// Glob discovery: a new app or package brings its own vitest.config.ts and is
+// picked up automatically — no more one-line edits to a shared file from every
+// parallel branch (the #1 source of the conflict treadmill).
 export default defineWorkspace([
-  'apps/alerts/vitest.config.ts',
-  'apps/web/vitest.config.ts',
-  'apps/mobile/vitest.config.ts',
-  'packages/analytics/vitest.config.ts',
-  'packages/models/vitest.config.ts',
-  'packages/charts/vitest.config.ts',
-  'packages/services/vitest.config.ts',
-  'packages/signer/vitest.config.ts',
-  'packages/queries/vitest.config.ts',
-  'packages/wallet-link/vitest.config.ts',
-  'packages/controllers/vitest.config.ts',
-  'packages/features/vitest.config.ts',
-  'packages/wallet-ui/vitest.config.ts',
+  'apps/*/vitest.config.ts',
+  'packages/*/vitest.config.ts',
   'scripts/vitest.config.ts',
 ]);

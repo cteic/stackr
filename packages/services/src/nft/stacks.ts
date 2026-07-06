@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from '../address-guard.js';
 import type { Money, NftAsset, NftAttribute } from '@stackr/models';
 import { NftAssetSchema, chainMeta } from '@stackr/models';
 import type { NftAdapter } from '../ports.js';
@@ -271,6 +272,7 @@ export async function fetchStacksNfts(
   address: string,
   deps: StacksNftDeps = {},
 ): Promise<NftAsset[]> {
+  assertValidAddress('stx', address);
   const fetchImpl = deps.fetchImpl ?? fetch;
   const gateway = deps.gateway ?? DEFAULT_IPFS_GATEWAY;
   const stacksApiUrl = deps.stacksApiUrl ?? resolveHiroBase();

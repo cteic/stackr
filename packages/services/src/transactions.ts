@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Chain, Transaction } from '@stackr/models';
 import { TransactionSchema } from '@stackr/models';
 import type { TransactionAdapter } from './ports.js';
@@ -11,6 +12,7 @@ import { resolveSolanaRpcUrl } from './sol-rpc.js';
 const TransactionListSchema = z.array(TransactionSchema);
 
 export async function fetchTransactions(chain: Chain, address: string): Promise<Transaction[]> {
+  assertValidAddress(chain, address);
   switch (chain) {
     case 'btc':
       return fetchBtcTransactions(address);
