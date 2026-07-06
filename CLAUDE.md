@@ -8,7 +8,7 @@ Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL/SUI 
 
 - **Monorepo**: pnpm workspaces + Turborepo
 - **Web**: Next.js (App Router) deployed to Cloudflare via @opennextjs/cloudflare
-- **Mobile** (planned): Capacitor wrap of the web app, watch-only mode. Native RN scaffold removed.
+- **Mobile**: Stackr Wallet, a native signer app — Expo + Tamagui + Privy (ADR 0020), sharing `@stackr/models`/`@stackr/services`/`@stackr/features` with the web app. Supersedes the earlier Capacitor watch-only wrap (ADR 0014).
 - **Styling**: Tailwind v4 + hand-rolled `@stackr/ui` (Radix headless primitives, styled by us)
 - **State**: TanStack React Query (server) + Zustand (client/persisted wallet list)
 - **Testing**: Vitest (unit) + Playwright (e2e)
@@ -28,6 +28,8 @@ Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL/SUI 
 - `packages/ui` — Shared React components (Radix-based, hand-styled)
 - `packages/charts` — Custom SVG charting library (Kraken-inspired, Fritsch-Carlson monotone interpolation)
 - `apps/web` — Next.js web app
+- `apps/mobile` — Stackr Wallet, native signer app (Expo + Tamagui + Privy)
+- `apps/alerts` — Cron worker delivering liquidation web-push alerts
 
 ## Common Commands
 
