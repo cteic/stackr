@@ -8,7 +8,7 @@ export const contentType = 'image/png';
 
 // The image is built from static content (no request data), so it is always
 // statically generated — the web build already prerenders it as a static asset.
-// Declaring it explicitly is also what the Capacitor static export requires
+// Declaring it explicitly keeps the route static-export-safe
 // (`output: 'export'` rejects metadata image routes without static config).
 export const dynamic = 'force-static';
 

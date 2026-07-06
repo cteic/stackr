@@ -2,7 +2,12 @@ import { describe as feature, it as scenario, expect } from 'vitest';
 import type { Price } from '@stackr/models';
 import { bdd } from './bdd';
 const { given, when, then, and } = bdd;
-import { aggregateCryptoPositions, type CryptoPosition } from './portfolio-aggregation';
+import {
+  aggregateCryptoPositions,
+  sumAssetValue,
+  sumGoldValue,
+  type CryptoPosition,
+} from './portfolio-aggregation';
 
 function price(chain: Price['chain'], fiatPrice: number, change24h = 0): Price {
   return {
@@ -100,5 +105,34 @@ feature('crypto portfolio aggregation', () => {
     and('the weighted change is undefined', () => {
       expect(result.weightedChange).toBeUndefined();
     });
+  });
+});
+
+feature('sumGoldValue', () => {
+  scenario('prices grams and ounces against the per-ounce spot', () => {
+    const total = sumGoldValue(
+      [
+        { quantity: 2, unit: 'oz' },
+        { quantity: 31.1034768, unit: 'g' }, // exactly one troy ounce
+      ],
+      2000,
+    );
+
+    expect(total).toBeCloseTo(6000, 6);
+  });
+
+  scenario('is zero while the spot price has not loaded', () => {
+    expect(sumGoldValue([{ quantity: 5, unit: 'oz' }], undefined)).toBe(0);
+    expect(sumGoldValue([{ quantity: 5, unit: 'oz' }], 0)).toBe(0);
+  });
+});
+
+feature('sumAssetValue', () => {
+  scenario('sums self-valued assets as entered', () => {
+    expect(sumAssetValue([{ value: 250_000 }, { value: 12_500 }])).toBe(262_500);
+  });
+
+  scenario('is zero with no assets', () => {
+    expect(sumAssetValue([])).toBe(0);
   });
 });

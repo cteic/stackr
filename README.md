@@ -43,8 +43,8 @@ configuring a key.
   stackr never signs transactions. Optional product analytics are PII-free by
   design: no addresses, balances, fiat amounts, or names ever leave the device,
   autocapture and session replay are off, and Do Not Track is respected.
-- **Mobile-first** — designed for 375px and up; native iOS + Android wrappers
-  via Capacitor are planned.
+- **Mobile-first** — designed for 375px and up; a native iOS + Android wallet
+  app (Expo) is in development in `apps/mobile`.
 
 ## Tech
 

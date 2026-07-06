@@ -1,4 +1,5 @@
-import type { Chain, Price } from '@stackr/models';
+import type { AssetHolding, Chain, GoldHolding, Price } from '@stackr/models';
+import { toTroyOunces } from './gold';
 
 /**
  * A priced crypto position. Wallet balances and manual holdings both reduce to
@@ -57,4 +58,24 @@ export function aggregateCryptoPositions(
     perChain,
     weightedChange: cryptoTotal > 0 ? changeNumerator / cryptoTotal : undefined,
   };
+}
+
+/**
+ * Fiat value of physical gold holdings against the spot price of one troy
+ * ounce. Zero until the price loads, so the total settles rather than jumps.
+ */
+export function sumGoldValue(
+  holdings: Pick<GoldHolding, 'quantity' | 'unit'>[],
+  fiatPerOunce: number | undefined,
+): number {
+  if (!fiatPerOunce) return 0;
+  return holdings.reduce((sum, h) => sum + toTroyOunces(h.quantity, h.unit) * fiatPerOunce, 0);
+}
+
+/**
+ * Self-valued assets summed as entered. Like cash, values are summed in their
+ * own currency (no FX feed yet) — the shared cross-currency limitation.
+ */
+export function sumAssetValue(holdings: Pick<AssetHolding, 'value'>[]): number {
+  return holdings.reduce((sum, h) => sum + h.value, 0);
 }
