@@ -29,6 +29,7 @@ export {
   normalizeMarketChart,
   coinGeckoPriceAdapter,
 } from './prices.js';
+export { fetchGoldPrice, normalizeGoldPrice, type GoldPrice } from './gold.js';
 export { ETH_PROXY_PATH, ethPublicRpcUrl, resolveEthRpcUrl } from './eth-rpc.js';
 export {
   ETHERSCAN_PROXY_PATH,
