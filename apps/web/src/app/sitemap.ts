@@ -5,7 +5,7 @@ const SITE_URL = 'https://stackr.ie';
 
 // Public static routes only: /api/* is machine-facing, /labs is an unlisted
 // sandbox, /charts is a permanent redirect to /market, and the wallet detail
-// routes (/wallet/[chain]/[address], /wallet/view) are an unbounded
+// routes (/wallet/[chain]/[address]) are an unbounded
 // address-keyed space that does not belong in a sitemap.
 const PUBLIC_ROUTES = [
   '/',

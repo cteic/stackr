@@ -7,7 +7,7 @@ import { supabaseConfig } from './config';
 /**
  * The browser Supabase client, or null when the project isn't configured.
  *
- * Deliberately browser-only: the Capacitor target builds this app as a static
+ * Deliberately browser-only: keeping auth client-side means the app stays a static
  * export, which rules out middleware and dynamic route handlers, so auth runs
  * entirely client-side (PKCE magic-link, exchanged on /auth/callback). Server
  * components never read the session — the account surface is a client island.

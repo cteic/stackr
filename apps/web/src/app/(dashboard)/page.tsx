@@ -10,7 +10,13 @@ import { formatFiat } from '@stackr/services';
 import { maskFiat } from '@/lib/mask-fiat';
 import type { Chain, Wallet } from '@stackr/models';
 import { Header } from '@/components/header';
-import { aggregateCryptoPositions, type CryptoPosition } from '@/lib/portfolio-aggregation';
+import {
+  aggregateCryptoPositions,
+  sumAssetValue,
+  sumGoldValue,
+  type CryptoPosition,
+} from '@/lib/portfolio-aggregation';
+import { useGoldPrice } from '@/lib/gold-price-queries';
 import { WalletCard } from '@/components/wallet-card';
 import { PortfolioSummary } from '@/components/portfolio-summary';
 import { PortfolioBreakdown } from '@/components/portfolio-breakdown';
@@ -18,6 +24,7 @@ import { RecentActivity } from '@/components/recent-activity';
 import { LiquidationHealth } from '@/components/liquidation-health';
 import { Collectibles } from '@/components/collectibles';
 import { FirstRunHero } from '@/components/first-run-hero';
+import { WidgetErrorBoundary } from '@/components/widget-error-boundary';
 
 export default function DashboardPage() {
   const wallets = useWalletStore(s => s.wallets);
@@ -102,7 +109,18 @@ export default function DashboardPage() {
     return sum + (quote ? quote.price * h.shares : 0);
   }, 0);
 
-  const totalFiat = cryptoTotal + cashTotal + stockTotal;
+  // Gold and self-valued assets — the rest of "all you stack"
+  const goldHoldings = holdings.filter(
+    (h): h is Extract<typeof h, { type: 'gold' }> => h.type === 'gold',
+  );
+  const assetHoldings = holdings.filter(
+    (h): h is Extract<typeof h, { type: 'asset' }> => h.type === 'asset',
+  );
+  const { data: goldPrice } = useGoldPrice(currency, goldHoldings.length > 0);
+  const goldTotal = sumGoldValue(goldHoldings, goldPrice?.fiatPerOunce);
+  const assetTotal = sumAssetValue(assetHoldings);
+
+  const totalFiat = cryptoTotal + cashTotal + stockTotal + goldTotal + assetTotal;
 
   const allLoaded = balanceQueries.every(q => !q.isLoading);
 
@@ -190,17 +208,23 @@ export default function DashboardPage() {
             </div>
 
             {(evmAddresses.length > 0 || solAddresses.length > 0 || stxAddresses.length > 0) && (
-              <LiquidationHealth
-                addressesByChain={{ eth: evmAddresses, sol: solAddresses, stx: stxAddresses }}
-                hideBalance={hideBalance}
-              />
+              <WidgetErrorBoundary label="Liquidation health">
+                <LiquidationHealth
+                  addressesByChain={{ eth: evmAddresses, sol: solAddresses, stx: stxAddresses }}
+                  hideBalance={hideBalance}
+                />
+              </WidgetErrorBoundary>
             )}
 
             {stxAddresses.length > 0 && (
-              <Collectibles addressesByChain={{ stx: stxAddresses }} hideBalance={hideBalance} />
+              <WidgetErrorBoundary label="Collectibles">
+                <Collectibles addressesByChain={{ stx: stxAddresses }} hideBalance={hideBalance} />
+              </WidgetErrorBoundary>
             )}
 
-            <RecentActivity wallets={allWallets} />
+            <WidgetErrorBoundary label="Recent activity">
+              <RecentActivity wallets={allWallets} />
+            </WidgetErrorBoundary>
           </>
         )}
       </main>

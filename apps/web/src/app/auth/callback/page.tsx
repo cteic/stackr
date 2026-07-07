@@ -8,7 +8,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 /**
  * Lands the magic link. The PKCE code exchange runs client-side (this page,
- * not a route handler) so the Capacitor static export keeps building — the
+ * not a route handler) so the page needs no server runtime — the
  * mobile target has no server to run middleware or dynamic routes on.
  */
 export default function AuthCallbackPage() {

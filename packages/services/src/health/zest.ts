@@ -1,4 +1,5 @@
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
+import { assertValidAddress } from '../address-guard.js';
 import { HealthPositionSchema } from '@stackr/models';
 import type { HealthAdapter } from '../ports.js';
 import { parseOrThrow } from '../validate.js';
@@ -191,6 +192,7 @@ export async function fetchZestPosition(
   address: string,
   deps: CallReadDeps = {},
 ): Promise<HealthPosition | null> {
+  assertValidAddress('stx', address);
   const result = await callReadOnly(
     {
       contractAddress: ZEST_DEPLOYER,

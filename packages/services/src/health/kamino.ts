@@ -1,4 +1,5 @@
 import { parseUnits } from 'viem';
+import { assertValidAddress } from '../address-guard.js';
 import { z } from 'zod';
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
 import { HealthPositionSchema } from '@stackr/models';
@@ -163,6 +164,7 @@ export async function fetchKaminoPosition(
   address: string,
   fetchObligations: (address: string) => Promise<KaminoObligation[]> = fetchKaminoObligations,
 ): Promise<HealthPosition | null> {
+  assertValidAddress('sol', address);
   return normalizeKaminoObligations(address, await fetchObligations(address));
 }
 

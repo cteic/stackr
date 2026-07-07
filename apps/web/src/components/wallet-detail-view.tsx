@@ -32,7 +32,7 @@ import { useActivityState, useTrackWallet } from '@/lib/controllers/activity-con
 
 // Shared wallet-detail UI, rendered both by the server route
 // `/wallet/[chain]/[address]` (web) and the static query-param route
-// `/wallet/view` (Capacitor). Chain/address arrive as plain strings from
+// Chain/address arrive as plain strings from
 // whichever resolution the active build target uses.
 export function WalletDetailView({
   chain: chainParam,

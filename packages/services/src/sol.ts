@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
@@ -22,6 +23,7 @@ const SolanaBalanceSchema = z.object({
 });
 
 export async function fetchSolBalance(address: string): Promise<Balance> {
+  assertValidAddress('sol', address);
   const res = await fetch(resolveSolanaRpcUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
