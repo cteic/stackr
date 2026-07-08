@@ -92,8 +92,7 @@ export const light: SemanticColors = {
 
 /**
  * Chain brand colors, dark-canvas variants (matching the web dark themes).
- * SUI has no web token yet — the value is the Sui brand blue; when the web
- * adds `--color-chain-sui`, keep the two in sync.
+ * Kept in sync with the web's `--color-chain-*` tokens in `globals.css`.
  */
 export const chainColors: Record<Chain, string> = {
   btc: '#f7931a',

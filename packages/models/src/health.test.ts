@@ -39,6 +39,6 @@ describe('HealthPositionSchema', () => {
   });
 
   it('pins the first-slice protocol union', () => {
-    expect(ProtocolSchema.options).toEqual(['aave-v3', 'kamino', 'zest', 'granite']);
+    expect(ProtocolSchema.options).toEqual(['aave-v3', 'kamino', 'zest', 'granite', 'arkadiko']);
   });
 });
