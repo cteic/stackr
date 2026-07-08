@@ -37,12 +37,12 @@ export function BackupInterstitial({ onBackupNow, onLater }: BackupInterstitialP
         </Text>
       </YStack>
       <YStack gap="$2">
-        <Button backgroundColor="$accent" onPress={onBackupNow}>
+        <Button testID="interstitial-backup-now" backgroundColor="$accent" onPress={onBackupNow}>
           <Text color="$accentText" fontSize="$4" fontWeight="700">
             Back up now
           </Text>
         </Button>
-        <Button chromeless onPress={onLater}>
+        <Button testID="interstitial-later" chromeless onPress={onLater}>
           <Text color="$textMuted" fontSize="$3">
             Later
           </Text>

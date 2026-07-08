@@ -1,0 +1,15 @@
+# Implements: tests/features/first-run.feature
+#   @mobile "Email onboarding reaches a working wallet"
+# Fresh install → email + OTP → backup warning shown once → balance screen.
+appId: ie.stackr.wallet
+---
+- launchApp:
+    clearState: true
+- runFlow: common/login.yaml
+# The one-time warning is honest about the three device-only chains.
+- assertVisible: 'Back up now'
+- tapOn:
+    id: 'interstitial-later'
+# Dismissing lands on a working wallet: balance tab + the recurring nudge.
+- assertVisible: 'Balance'
+- assertVisible: 'Back up your wallet'

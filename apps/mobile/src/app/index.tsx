@@ -67,6 +67,7 @@ function EmailLogin() {
       {stage === 'email' ? (
         <YStack gap="$3">
           <Input
+            testID="login-email"
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
@@ -77,7 +78,12 @@ function EmailLogin() {
             borderColor="$border"
             color="$text"
           />
-          <Button backgroundColor="$accent" disabled={email.length === 0} onPress={submitEmail}>
+          <Button
+            testID="login-continue"
+            backgroundColor="$accent"
+            disabled={email.length === 0}
+            onPress={submitEmail}
+          >
             <Text color="$accentText" fontSize="$4" fontWeight="700">
               Continue with email
             </Text>
@@ -89,6 +95,7 @@ function EmailLogin() {
             Enter the 6-digit code sent to {email}
           </Text>
           <Input
+            testID="login-code"
             value={code}
             onChangeText={setCode}
             placeholder="123456"
@@ -99,7 +106,12 @@ function EmailLogin() {
             color="$text"
             fontFamily="$mono"
           />
-          <Button backgroundColor="$accent" disabled={code.length !== 6} onPress={submitCode}>
+          <Button
+            testID="login-submit"
+            backgroundColor="$accent"
+            disabled={code.length !== 6}
+            onPress={submitCode}
+          >
             <Text color="$accentText" fontSize="$4" fontWeight="700">
               Sign in
             </Text>
