@@ -1,16 +1,13 @@
 import { useSyncExternalStore } from 'react';
-import {
-  createSignRequestQueue,
-  createStubTransport,
-  type SignRequestQueueState,
-} from './sign-requests';
+import { createSignRequestQueue, type SignRequestQueueState } from './sign-requests';
+import { getLinkSignBridge } from './link-singleton';
 
 /**
- * One queue for the app. The stub transport delivers nothing on its own —
- * the wallet-link workstream swaps in the paired-channel transport here, and
- * only here.
+ * One queue for the app, fed by the Stackr Link bridge: requests relayed from
+ * a paired portfolio land here, and the sheet's approve/reject flows back
+ * through the same bridge to the encrypted channel.
  */
-const queue = createSignRequestQueue(createStubTransport());
+const queue = createSignRequestQueue(getLinkSignBridge().transport);
 
 export function useSignQueue(): SignRequestQueueState {
   return useSyncExternalStore(queue.subscribe, queue.getState, queue.getState);
