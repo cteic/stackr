@@ -18,12 +18,15 @@ const chainColors: Record<ChainType, string> = {
   sui: '#4DA2FF',
 };
 
+// Full tickers, not initials: BTC/STX/SOL/SUI all start with the same
+// letter-ish sound, so a single-character label left Solana, Stacks, and Sui
+// visually identical. Every ticker here happens to be three characters.
 const chainLabels: Record<ChainType, string> = {
-  btc: 'B',
-  stx: 'S',
-  eth: 'E',
-  sol: 'S',
-  sui: 'S',
+  btc: 'BTC',
+  stx: 'STX',
+  eth: 'ETH',
+  sol: 'SOL',
+  sui: 'SUI',
 };
 
 const sizeMap: Record<AvatarSize, number> = {
@@ -55,9 +58,10 @@ export const ChainAvatar = forwardRef<SVGSVGElement, ChainAvatarProps>(
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          fontFamily="system-ui, sans-serif"
+          fontFamily="ui-monospace, 'IBM Plex Mono', monospace"
           fontWeight="700"
-          fontSize="16"
+          fontSize="11"
+          letterSpacing="-0.3"
         >
           {label}
         </text>
