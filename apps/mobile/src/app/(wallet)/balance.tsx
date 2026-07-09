@@ -90,6 +90,13 @@ export default function BalanceScreen() {
               </Button>
             </Link>
           )}
+          <Link href="/link" asChild>
+            <Button size="$3" chromeless>
+              <Text color="$textMuted" fontSize="$3">
+                Link web
+              </Text>
+            </Button>
+          </Link>
           <Button size="$3" chromeless onPress={() => void logout()}>
             <Text color="$textMuted" fontSize="$3">
               Sign out
