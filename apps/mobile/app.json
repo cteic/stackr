@@ -34,6 +34,12 @@
         {
           "faceIDPermission": "Stackr uses Face ID to protect your recovery phrase."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Stackr uses the camera to scan the pairing code shown on stackr.ie."
+        }
       ]
     ],
     "experiments": {
