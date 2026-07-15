@@ -48,7 +48,10 @@ export default function CollectiblesPage() {
             <p className="mb-2 text-base">No collectibles to show</p>
             <p className="text-sm">
               Add or connect a Stacks wallet to see its collectibles here.{' '}
-              <Link href="/wallet/add" className="text-primary hover:underline">
+              <Link
+                href="/wallet/add"
+                className="rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
                 Add a wallet
               </Link>
             </p>
