@@ -42,9 +42,9 @@ feature('liquidation health', () => {
       });
     });
     when('the card renders', () => render(<LiquidationHealth addressesByChain={{}} />));
-    then('it surfaces the failure instead of "no lending positions detected"', () => {
+    then('it surfaces the failure alone, without a redundant empty-state message', () => {
       expect(screen.getByRole('alert').textContent).toMatch(/couldn't check lending positions/i);
-      expect(screen.queryByText('No lending positions detected')).toBeNull();
+      expect(screen.queryByText(/no lending positions/i)).toBeNull();
     });
   });
 
