@@ -51,11 +51,7 @@ export function WalletCard({
           titleLeft={
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-semibold text-foreground">{view.title}</span>
-              {connected && (
-                <Badge variant="info" className="px-1.5 py-0 text-[10px]">
-                  Connected
-                </Badge>
-              )}
+              {connected && <Badge variant="info">Connected</Badge>}
             </div>
           }
           captionLeft={
