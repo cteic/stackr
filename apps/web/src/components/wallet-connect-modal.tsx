@@ -10,10 +10,33 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@stackr/ui';
-import { chainMeta, ChainSchema } from '@stackr/models';
+import { chainMeta, ChainSchema, type Chain } from '@stackr/models';
 import { useWalletConnections, type WalletId } from '@/lib/use-wallet-connections';
 import { useStackrLinkConnection } from '@/lib/stackr-link';
 import { StackrLinkPane } from '@/components/stackr-link-pane';
+
+// Overlapping icons beyond this crowd the row and push the wallet name onto
+// a second line in the dialog's narrow width — most visibly for the Stackr
+// Wallet entry, which lists every supported chain until it's paired.
+const MAX_VISIBLE_CHAIN_ICONS = 2;
+
+function ChainIconStack({ chains }: { chains: readonly Chain[] }) {
+  const visible = chains.slice(0, MAX_VISIBLE_CHAIN_ICONS);
+  const overflow = chains.length - visible.length;
+
+  return (
+    <div className="flex shrink-0 items-center -space-x-2">
+      {visible.map(chain => (
+        <ChainAvatar key={chain} chain={chain} size="sm" />
+      ))}
+      {overflow > 0 && (
+        <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted text-[10px] font-semibold text-muted-foreground">
+          +{overflow}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export function WalletConnectModal() {
   const wallets = useWalletConnections();
@@ -57,14 +80,12 @@ export function WalletConnectModal() {
         ) : (
           <ul className="mt-4 flex flex-col gap-2">
             <li className="rounded-lg border p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    {(stackrLink.connected ? stackrLink.chains : ChainSchema.options).map(chain => (
-                      <ChainAvatar key={chain} chain={chain} size="sm" />
-                    ))}
-                  </div>
-                  <div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <ChainIconStack
+                    chains={stackrLink.connected ? stackrLink.chains : ChainSchema.options}
+                  />
+                  <div className="min-w-0">
                     <div className="text-sm font-semibold text-foreground">Stackr Wallet</div>
                     <div className="text-xs text-muted-foreground">
                       {stackrLink.connected
@@ -75,15 +96,25 @@ export function WalletConnectModal() {
                 </div>
 
                 {stackrLink.connected ? (
-                  <Button size="sm" variant="ghost" onClick={stackrLink.disconnect}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="shrink-0"
+                    onClick={stackrLink.disconnect}
+                  >
                     Disconnect
                   </Button>
                 ) : stackrLink.available ? (
-                  <Button size="sm" onClick={() => setView('link')} disabled={pending !== null}>
+                  <Button
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setView('link')}
+                    disabled={pending !== null}
+                  >
                     Pair
                   </Button>
                 ) : (
-                  <Button size="sm" variant="outline" disabled>
+                  <Button size="sm" variant="outline" className="shrink-0" disabled>
                     Unavailable
                   </Button>
                 )}
@@ -96,14 +127,10 @@ export function WalletConnectModal() {
             </li>
             {wallets.map(wallet => (
               <li key={wallet.id} className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                      {wallet.chains.map(chain => (
-                        <ChainAvatar key={chain} chain={chain} size="sm" />
-                      ))}
-                    </div>
-                    <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <ChainIconStack chains={wallet.chains} />
+                    <div className="min-w-0">
                       <div className="text-sm font-semibold text-foreground">{wallet.name}</div>
                       <div className="text-xs text-muted-foreground">
                         {wallet.chains.map(c => chainMeta[c].symbol).join(' · ')}
@@ -115,6 +142,7 @@ export function WalletConnectModal() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="shrink-0"
                       onClick={() => run(wallet.id, wallet.disconnect)}
                       disabled={pending === wallet.id}
                     >
@@ -123,13 +151,14 @@ export function WalletConnectModal() {
                   ) : wallet.installed ? (
                     <Button
                       size="sm"
+                      className="shrink-0"
                       onClick={() => run(wallet.id, wallet.connect)}
                       disabled={pending !== null}
                     >
                       {pending === wallet.id ? 'Connecting…' : 'Connect'}
                     </Button>
                   ) : (
-                    <Button asChild size="sm" variant="outline">
+                    <Button asChild size="sm" variant="outline" className="shrink-0">
                       <a href={wallet.installUrl} target="_blank" rel="noopener noreferrer">
                         Install
                       </a>
