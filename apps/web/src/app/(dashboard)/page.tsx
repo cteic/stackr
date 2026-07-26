@@ -136,7 +136,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-7">
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Portfolio</h1>
           <div className="flex gap-2">
