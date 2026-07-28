@@ -35,8 +35,7 @@ export default function AccountPage() {
         <h1 className="text-2xl font-bold">Account</h1>
         {supabase === null ? (
           <Callout variant="warning">
-            Accounts aren&apos;t configured in this environment. Set NEXT_PUBLIC_SUPABASE_URL and
-            NEXT_PUBLIC_SUPABASE_ANON_KEY to enable sign-in and alerts.
+            Sign-in and liquidation alerts aren&apos;t available in this environment yet.
           </Callout>
         ) : (
           <AccountBody supabase={supabase} />

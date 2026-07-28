@@ -44,10 +44,7 @@ export default function LoginPage() {
         </p>
 
         {supabase === null ? (
-          <Callout variant="warning">
-            Accounts aren&apos;t configured in this environment. Set NEXT_PUBLIC_SUPABASE_URL and
-            NEXT_PUBLIC_SUPABASE_ANON_KEY to enable sign-in.
-          </Callout>
+          <Callout variant="warning">Sign-in isn&apos;t available in this environment yet.</Callout>
         ) : state.phase === 'sent' ? (
           <Callout variant="info">
             Check your email — we sent a sign-in link to {email}. Open it on this device.
