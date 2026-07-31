@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Skeleton } from '@stackr/ui';
+import { Button, Callout, Card, Skeleton } from '@stackr/ui';
 import { useNftHoldings, type NftAddressesByChain } from '@stackr/queries';
 import { createNftCardView } from '@stackr/features';
 import { NftMedia } from './nft-media';
@@ -16,7 +16,7 @@ interface CollectiblesProps {
 }
 
 export function Collectibles({ addressesByChain, hideBalance = false }: CollectiblesProps) {
-  const { assets, isLoading, isFetching, refresh } = useNftHoldings(addressesByChain);
+  const { assets, isLoading, isFetching, isError, refresh } = useNftHoldings(addressesByChain);
   const cards = assets.map(asset => createNftCardView(asset, { hideBalance }));
 
   return (
@@ -31,6 +31,14 @@ export function Collectibles({ addressesByChain, hideBalance = false }: Collecti
         Floor values are estimates and aren&apos;t included in your portfolio total.
       </p>
 
+      {isError && (
+        <Callout variant="error" className="mb-3">
+          {cards.length === 0
+            ? "Couldn't load collectibles — one or more chain reads failed."
+            : 'Some chain reads failed — collectibles below may be incomplete.'}
+        </Callout>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           <Skeleton height="11em" />
@@ -39,7 +47,9 @@ export function Collectibles({ addressesByChain, hideBalance = false }: Collecti
           <Skeleton height="11em" />
         </div>
       ) : cards.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">No collectibles found</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {isError ? 'No collectibles confirmed.' : 'No collectibles found'}
+        </p>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {cards.map(card => (
