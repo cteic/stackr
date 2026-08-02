@@ -38,7 +38,7 @@ export function Orderbook({ orderbook }: OrderbookProps) {
           return (
             <div
               key={`ask-${i}`}
-              className="grid grid-cols-3 px-3 py-0.5 relative cursor-pointer font-mono text-xs transition-colors"
+              className={`grid grid-cols-3 px-3 py-0.5 relative cursor-pointer font-mono text-xs transition-colors ${isHovered ? 'bg-destructive/8' : ''}`}
               onMouseEnter={() => {
                 setHoveredIndex(i);
                 setHoveredSide('ask');
@@ -47,14 +47,10 @@ export function Orderbook({ orderbook }: OrderbookProps) {
                 setHoveredIndex(null);
                 setHoveredSide(null);
               }}
-              style={{ background: isHovered ? 'rgba(229, 57, 53, 0.08)' : undefined }}
             >
               <div
-                className="absolute right-0 top-0 bottom-0 pointer-events-none"
-                style={{
-                  width: `${fillPct}%`,
-                  background: 'rgba(229, 57, 53, 0.06)',
-                }}
+                className="absolute right-0 top-0 bottom-0 pointer-events-none bg-destructive/6"
+                style={{ width: `${fillPct}%` }}
               />
               <span className="text-destructive">{formatUsd(order.price)}</span>
               <span className="text-right">{order.amount.toFixed(4)}</span>
@@ -84,7 +80,7 @@ export function Orderbook({ orderbook }: OrderbookProps) {
           return (
             <div
               key={`bid-${i}`}
-              className="grid grid-cols-3 px-3 py-0.5 relative cursor-pointer font-mono text-xs transition-colors"
+              className={`grid grid-cols-3 px-3 py-0.5 relative cursor-pointer font-mono text-xs transition-colors ${isHovered ? 'bg-success/8' : ''}`}
               onMouseEnter={() => {
                 setHoveredIndex(i);
                 setHoveredSide('bid');
@@ -93,14 +89,10 @@ export function Orderbook({ orderbook }: OrderbookProps) {
                 setHoveredIndex(null);
                 setHoveredSide(null);
               }}
-              style={{ background: isHovered ? 'rgba(0, 178, 117, 0.08)' : undefined }}
             >
               <div
-                className="absolute right-0 top-0 bottom-0 pointer-events-none"
-                style={{
-                  width: `${fillPct}%`,
-                  background: 'rgba(0, 178, 117, 0.06)',
-                }}
+                className="absolute right-0 top-0 bottom-0 pointer-events-none bg-success/6"
+                style={{ width: `${fillPct}%` }}
               />
               <span className="text-success">{formatUsd(order.price)}</span>
               <span className="text-right">{order.amount.toFixed(4)}</span>
