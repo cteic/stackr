@@ -2,11 +2,15 @@
 
 import { CurrencySchema, currencyMeta } from '@stackr/models';
 import type { Currency } from '@stackr/models';
-import { Card } from '@stackr/ui';
+import { Card, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@stackr/ui';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
+
+function isCurrency(value: string): value is Currency {
+  return (currencies as readonly string[]).includes(value);
+}
 
 export default function SettingsPage() {
   const currency = useSettingsStore(s => s.currency);
@@ -21,21 +25,24 @@ export default function SettingsPage() {
         <Card className="p-4">
           <h2 className="text-sm font-semibold mb-3">Display</h2>
           <div className="space-y-1.5">
-            <label htmlFor="currency" className="text-sm font-medium text-muted-foreground">
-              Currency
-            </label>
-            <select
-              id="currency"
+            <span className="text-sm font-medium text-muted-foreground">Currency</span>
+            <Select
               value={currency}
-              onChange={e => setCurrency(e.target.value as Currency)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              onValueChange={value => {
+                if (isCurrency(value)) setCurrency(value);
+              }}
             >
-              {currencies.map(c => (
-                <option key={c} value={c}>
-                  {currencyMeta[c].symbol} {currencyMeta[c].name} ({c.toUpperCase()})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger aria-label="Currency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map(c => (
+                  <SelectItem key={c} value={c}>
+                    {currencyMeta[c].symbol} {currencyMeta[c].name} ({c.toUpperCase()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </Card>
       </main>
