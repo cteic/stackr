@@ -64,7 +64,8 @@
       "axios": ">=1.18.0",
       "js-yaml": ">=4.3.0 <5.0.0",
       "sharp": ">=0.35.0",
-      "socket.io-parser": ">=4.2.7"
+      "socket.io-parser": ">=4.2.7",
+      "nanoid": ">=3.3.18"
     },
     "auditConfig": {
       "//": "Baseline allowlist for the CI `pnpm audit --prod --audit-level high` gate. Each entry is a high/critical advisory with NO fix reachable from our direct deps without a major/minor upgrade (deferred to per-package PRs under #69). The gate fails the build on any NEW high/critical so the baseline can't grow silently. Burn this list down as upgrades land; never add to it to silence a fixable advisory.",
@@ -85,7 +86,9 @@
         "GHSA-c4j6-fc7j-m34r",
         "GHSA-492v-c6pp-mqqv",
         "GHSA-267c-6grr-h53f",
-        "GHSA-36qx-fr4f-26g5"
+        "GHSA-36qx-fr4f-26g5",
+        "GHSA-w3rx-r6r6-pgpr",
+        "GHSA-5p2g-fcmc-qvqq"
       ]
     },
     "packageExtensions": {
