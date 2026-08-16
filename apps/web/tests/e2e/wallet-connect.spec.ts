@@ -1,79 +1,25 @@
 import { test, expect } from '@playwright/test';
 
+// Kept in sync with `E2E_MOCK_ACCOUNT` in `src/lib/wagmi-config.ts` — that's
+// the address wagmi's connector-level mock actually connects, driven by the
+// `NEXT_PUBLIC_E2E_MOCK_WALLET` flag the webServer sets for this test run.
 const MOCK_ADDRESS = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 const TRUNCATED = `${MOCK_ADDRESS.slice(0, 6)}…${MOCK_ADDRESS.slice(-4)}`;
 
 /*
- * Injects a minimal EIP-1193 window.ethereum mock before any page script runs,
- * so the RainbowKit/wagmi MetaMask connector takes its injected-extension path
- * (rainbowkit's `isMetaMask(window.ethereum)` runs at config-creation time and
- * the MetaMask SDK then drives the injected provider directly — no real
- * extension needed). The app's own connect modal (`WalletConnectModal`, not
- * RainbowKit's) is then clicked through, and the assertions follow the state
- * the whole way: wagmi connect → WalletConnectionBridge → wallet-store →
- * modal row, header trigger, and the dashboard's connected-wallet card.
+ * Only stands in for extension *detection* (`'ethereum' in window`, see
+ * `wallet-detect.ts`) so the MetaMask row offers Connect instead of Install.
+ * The connection itself never touches this object: wagmi is configured with
+ * a connector-level mock in this test run, which is what actually resolves
+ * the connect flow — a window-level EIP-1193 stub can't, because the real
+ * MetaMask connector's SDK probes transport methods no stub answers.
  */
-function installEthereumMock({ mockAddress }: { mockAddress: string }) {
-  type Listener = (...args: unknown[]) => void;
-  const listeners = new Map<string, Set<Listener>>();
-
-  function on(event: string, listener: Listener) {
-    const set = listeners.get(event) ?? new Set<Listener>();
-    set.add(listener);
-    listeners.set(event, set);
-  }
-
-  function removeListener(event: string, listener: Listener) {
-    listeners.get(event)?.delete(listener);
-  }
-
-  function emit(event: string, ...args: unknown[]) {
-    for (const listener of listeners.get(event) ?? []) listener(...args);
-  }
-
-  let accounts: string[] = [];
-
-  const provider = {
-    isMetaMask: true,
-    chainId: '0x1',
-    networkVersion: '1',
-    selectedAddress: null as string | null,
-    request: async ({ method }: { method: string }) => {
-      switch (method) {
-        case 'eth_requestAccounts':
-          accounts = [mockAddress];
-          provider.selectedAddress = mockAddress;
-          emit('accountsChanged', accounts);
-          return accounts;
-        case 'eth_accounts':
-          return accounts;
-        case 'eth_chainId':
-          return '0x1';
-        case 'net_version':
-          return '1';
-        case 'wallet_getPermissions':
-        case 'wallet_requestPermissions':
-          return accounts.length > 0 ? [{ parentCapability: 'eth_accounts' }] : [];
-        default:
-          return null;
-      }
-    },
-    on,
-    once: on,
-    removeListener,
-    off: removeListener,
-    emit,
-  };
-
-  Object.defineProperty(window, 'ethereum', { value: provider, configurable: true });
+function installEthereumStub() {
+  Object.defineProperty(window, 'ethereum', { value: {}, configurable: true });
 }
 
-// Skipped: the injected EIP-1193 mock satisfies detection but the MetaMask SDK
-// connector probes transport methods the mock does not answer, so the connect
-// flow never resolves in CI. Revisit with a connector-level mock (wagmi mock
-// connector wired behind a test flag) rather than a window-level one.
-test.skip('connects MetaMask wallet and surfaces the address across the app', async ({ page }) => {
-  await page.addInitScript(installEthereumMock, { mockAddress: MOCK_ADDRESS });
+test('connects MetaMask wallet and surfaces the address across the app', async ({ page }) => {
+  await page.addInitScript(installEthereumStub);
 
   await page.goto('/');
 
