@@ -12,7 +12,7 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
   ({ width, height = '1em', borderRadius, className, style, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('animate-pulse rounded-md bg-muted', className)}
+      className={cn('animate-pulse rounded-md border border-border bg-muted', className)}
       style={{
         width,
         height,

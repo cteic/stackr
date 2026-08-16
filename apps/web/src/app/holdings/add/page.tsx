@@ -229,7 +229,7 @@ export default function AddHoldingPage() {
                             setSelectedStock({ symbol: r.symbol, name: r.name });
                             setStockQuery(r.symbol);
                           }}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         >
                           <span>
                             <span className="font-mono font-semibold">{r.symbol}</span>
