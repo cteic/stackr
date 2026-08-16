@@ -44,6 +44,7 @@
   --color-chain-eth: #627eea;
   --color-chain-stx: #5546ff;
   --color-chain-sol: #9945ff;
+  --color-chain-sui: #4da2ff;
 
   --radius-sm: 0;
   --radius-md: 0;
@@ -80,6 +81,7 @@
   --color-chain-eth: #849eff;
   --color-chain-stx: #7f80ff;
   --color-chain-sol: #b97cff;
+  --color-chain-sui: #4da2ff;
 }
 
 /* A — Terminal: pure-black, monospace, green/red signal, sharp edges */

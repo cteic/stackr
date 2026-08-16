@@ -5,7 +5,8 @@ function request(overrides: Partial<SignRequest>): SignRequest {
   return {
     id: 'req-1',
     chain: 'eth',
-    origin: 'stackr.ie',
+    origin: 'Paired device · abcd1234',
+    originVerified: false,
     kind: 'message',
     display: 'Sign in to Stackr',
     payload: { message: 'hello' },

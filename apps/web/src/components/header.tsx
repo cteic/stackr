@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@stackr/ui';
 import { ChainStatusIndicators } from '@/components/chain-status-indicators';
@@ -9,9 +10,18 @@ import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
 
+const NAV_LINKS = [
+  { href: '/holdings', label: 'Holdings' },
+  { href: '/market', label: 'Markets' },
+  { href: '/collectibles', label: 'Collectibles' },
+  { href: '/account', label: 'Account' },
+  { href: '/settings', label: 'Settings' },
+];
+
 export function Header() {
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const toggleHideBalance = useSettingsStore(s => s.toggleHideBalance);
+  const pathname = usePathname();
 
   return (
     <header className="flex items-center justify-between border-b px-4 py-3 md:px-5">
@@ -22,40 +32,28 @@ export function Header() {
         <div className="hidden items-center gap-5 md:flex">
           <Link
             href="/wallet/add"
-            className="text-xs font-medium uppercase tracking-widest text-primary transition-colors"
+            aria-current={pathname === '/wallet/add' ? 'page' : undefined}
+            className="border-b border-transparent py-1 text-xs font-medium uppercase tracking-widest text-primary transition-colors"
           >
             Add Wallet
           </Link>
-          <Link
-            href="/holdings"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Holdings
-          </Link>
-          <Link
-            href="/market"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Markets
-          </Link>
-          <Link
-            href="/collectibles"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Collectibles
-          </Link>
-          <Link
-            href="/account"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Account
-          </Link>
-          <Link
-            href="/settings"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Settings
-          </Link>
+          {NAV_LINKS.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={`border-b py-1 text-xs font-medium uppercase tracking-widest transition-colors ${
+                  active
+                    ? 'border-foreground text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
         <div className="md:hidden">
           <MobileNav />
