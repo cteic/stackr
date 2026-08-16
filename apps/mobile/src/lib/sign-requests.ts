@@ -10,8 +10,19 @@ import type { Chain } from '@stackr/models';
 export interface SignRequest {
   id: string;
   chain: Chain;
-  /** Where the request came from, e.g. `stackr.ie` or a dapp origin. */
+  /**
+   * A label for where the request came from. Over Stackr Link this is a
+   * session-derived identifier, never a claimed domain: the pairing handshake
+   * carries no authenticated origin, so the wallet must not assert who the peer
+   * is. `originVerified` says whether the label can be trusted as an identity.
+   */
   origin: string;
+  /**
+   * True only when `origin` is a cryptographically verified identity (e.g. a
+   * future WalletConnect dapp with a verified domain). Stackr Link pairings are
+   * always `false` today — the sheet shows an explicit "unverified" warning.
+   */
+  originVerified: boolean;
   kind: 'message' | 'transaction';
   /** Human-readable rendering of what is being signed. */
   display: string;
