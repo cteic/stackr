@@ -7,6 +7,8 @@ import { useLiveTicks, useOrderbook, usePriceHistory, useStockPriceHistory } fro
 import { formatChange, formatFiat } from '@stackr/services';
 import type { Chain, Currency } from '@stackr/models';
 import {
+  Button,
+  Callout,
   Card,
   Select,
   SelectContent,
@@ -37,14 +39,28 @@ import {
 
 interface ChartBodyProps {
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   points: DataPoint[];
   currency: Currency;
   rangeDays: number;
 }
 
-function ChartBody({ isLoading, points, currency, rangeDays }: ChartBodyProps) {
+function ChartBody({ isLoading, isError, onRetry, points, currency, rangeDays }: ChartBodyProps) {
   if (isLoading) {
     return <Skeleton width="100%" height={360} />;
+  }
+  if (isError) {
+    return (
+      <div className="flex h-[360px] flex-col items-center justify-center gap-3 px-4">
+        <Callout variant="error" className="w-full">
+          Couldn&apos;t load price history — the data source failed to respond.
+        </Callout>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      </div>
+    );
   }
   if (points.length < 2) {
     return (
@@ -227,6 +243,8 @@ export default function MarketsPage() {
 
             <ChartBody
               isLoading={activeQuery.isLoading}
+              isError={activeQuery.isError}
+              onRetry={() => activeQuery.refetch()}
               points={points}
               currency={currency}
               rangeDays={rangeDays}
