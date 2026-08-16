@@ -15,15 +15,15 @@ interface PortfolioBreakdownProps {
   currency: Currency;
 }
 
-// Design tokens (`globals.css`) don't have a `--color-chain-sui` entry yet,
-// so SUI falls back to a literal until that token lands — every other chain
-// sources its color from the theme, same as the error pages' chain bars.
+// Every chain sources its color from the theme tokens in `globals.css`, same
+// as the error pages' chain bars — so the bars follow the light/dark palettes
+// instead of drifting from a second, hardcoded copy.
 const chainBarClasses: Record<Chain, string> = {
   btc: 'bg-chain-btc',
   eth: 'bg-chain-eth',
   stx: 'bg-chain-stx',
   sol: 'bg-chain-sol',
-  sui: 'bg-[#4DA2FF]',
+  sui: 'bg-chain-sui',
 };
 
 export function PortfolioBreakdown({ allocations }: PortfolioBreakdownProps) {
