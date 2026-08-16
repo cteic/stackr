@@ -20,7 +20,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "turbo run test:e2e --filter=@stackr/web",
     "clean": "turbo run clean && rm -rf node_modules",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e:mobile": "maestro test apps/mobile/.maestro"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",

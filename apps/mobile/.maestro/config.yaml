@@ -1,0 +1,3 @@
+# Only top-level flows are runnable entry points; common/ holds subflows.
+flows:
+  - '*.yaml'

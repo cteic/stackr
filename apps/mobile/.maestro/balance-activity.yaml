@@ -1,0 +1,13 @@
+# Smoke: the two product tabs render after login and switch cleanly.
+appId: ie.stackr.wallet
+---
+- launchApp:
+    clearState: true
+- runFlow: common/login.yaml
+- tapOn:
+    id: 'interstitial-later'
+- assertVisible: 'Balance'
+- tapOn: 'Activity'
+- assertVisible: 'Activity'
+- tapOn: 'Balance'
+- assertVisible: 'Back up your wallet'

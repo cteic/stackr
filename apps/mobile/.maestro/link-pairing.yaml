@@ -1,0 +1,16 @@
+# Implements: tests/features/stackr-link-pairing.feature
+#   @mobile "Scanning the web QR announces the wallet's addresses"
+#     (up to the scanner — a real QR on a second screen is a manual step;
+#      the encrypted round-trip itself is covered by unit tests against the
+#      in-memory relay in apps/mobile/src/lib/*.test.ts)
+appId: ie.stackr.wallet
+---
+- launchApp:
+    clearState: true
+    permissions:
+      camera: allow
+- runFlow: common/login.yaml
+- tapOn:
+    id: 'interstitial-later'
+- tapOn: 'Link web'
+- assertVisible: 'Scan'
