@@ -9,6 +9,7 @@ import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
+import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
 
 const NAV_LINKS = [
   { href: '/holdings', label: 'Holdings' },
@@ -32,23 +33,19 @@ export function Header() {
         <div className="hidden items-center gap-5 md:flex">
           <Link
             href="/wallet/add"
-            aria-current={pathname === '/wallet/add' ? 'page' : undefined}
+            aria-current={isNavLinkActive(pathname, '/wallet/add') ? 'page' : undefined}
             className="border-b border-transparent py-1 text-xs font-medium uppercase tracking-widest text-primary transition-colors"
           >
             Add Wallet
           </Link>
           {NAV_LINKS.map(({ href, label }) => {
-            const active = pathname === href;
+            const active = isNavLinkActive(pathname, href);
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? 'page' : undefined}
-                className={`border-b py-1 text-xs font-medium uppercase tracking-widest transition-colors ${
-                  active
-                    ? 'border-foreground text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
+                className={NAV_LINK_CLASS(active)}
               >
                 {label}
               </Link>

@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@stackr/ui';
+import { isNavLinkActive } from '@/lib/nav-active';
 
 const LINKS: { href: string; label: string; primary?: boolean }[] = [
   { href: '/wallet/add', label: 'Add Wallet', primary: true },
@@ -32,7 +33,7 @@ export function MobileNav() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
         {LINKS.map(link => {
-          const active = pathname === link.href;
+          const active = isNavLinkActive(pathname, link.href);
           return (
             <DropdownMenuItem key={link.href} asChild>
               <Link
