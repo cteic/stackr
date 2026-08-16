@@ -9,6 +9,7 @@ import {
   type SupabaseServiceConfig,
 } from './supabase.js';
 import { runSweep } from './sweep.js';
+import { reportHeartbeat } from './heartbeat.js';
 import { sendWebPush } from './webpush/send.js';
 
 /**
@@ -22,6 +23,9 @@ const EnvSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().min(1),
   VAPID_PRIVATE_KEY: z.string().min(1),
   VAPID_SUBJECT: z.string().default('mailto:pete@cteic.ie'),
+  // Optional observability + scale knobs (see #141 H2/H3).
+  ALERTS_HEARTBEAT_URL: z.string().url().optional(),
+  ALERTS_MAX_POSITION_READS: z.coerce.number().int().positive().optional(),
 });
 
 // Typed structurally rather than against @cloudflare/workers-types (see
@@ -50,27 +54,28 @@ const worker = {
       subject: parsed.data.VAPID_SUBJECT,
     };
 
-    const summary = await runSweep({
-      listSubscriptions: () => fetchSweepSubscriptions(config),
-      listPushSubscriptions: userIds => fetchPushSubscriptions(config, userIds),
-      readPosition,
-      sendPush: (target, payload) =>
-        sendWebPush(
-          { endpoint: target.endpoint, p256dh: target.p256dh, authKey: target.auth_key },
-          JSON.stringify(payload),
-          vapid,
-          new Date(),
-        ),
-      saveState: (subscriptionId, state) => saveSubscriptionState(config, subscriptionId, state),
-      logEvents: events => insertAlertEvents(config, events),
-      removePushSubscription: pushSubscriptionId =>
-        deletePushSubscription(config, pushSubscriptionId),
-      now: () => new Date(),
-    });
-
-    console.log(
-      `alerts: sweep done — ${summary.subscriptions} subscriptions, ${summary.notified} notified, ${summary.deliveries} delivered, ${summary.failures} failures`,
+    const summary = await runSweep(
+      {
+        listSubscriptions: () => fetchSweepSubscriptions(config),
+        listPushSubscriptions: userIds => fetchPushSubscriptions(config, userIds),
+        readPosition,
+        sendPush: (target, payload) =>
+          sendWebPush(
+            { endpoint: target.endpoint, p256dh: target.p256dh, authKey: target.auth_key },
+            JSON.stringify(payload),
+            vapid,
+            new Date(),
+          ),
+        saveState: (subscriptionId, state) => saveSubscriptionState(config, subscriptionId, state),
+        logEvents: events => insertAlertEvents(config, events),
+        removePushSubscription: pushSubscriptionId =>
+          deletePushSubscription(config, pushSubscriptionId),
+        now: () => new Date(),
+      },
+      { maxPositionReads: parsed.data.ALERTS_MAX_POSITION_READS },
     );
+
+    await reportHeartbeat(summary, { url: parsed.data.ALERTS_HEARTBEAT_URL });
   },
 };
 
