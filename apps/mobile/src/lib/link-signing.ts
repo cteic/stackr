@@ -14,8 +14,19 @@ import type { Signer } from './contracts/signer';
 
 const LOCAL_CHAINS = ['btc', 'stx', 'sui'] as const;
 
-/** The link pairs with exactly one origin today. */
-export const LINK_ORIGIN = 'stackr.ie';
+/**
+ * An honest, session-derived label for the paired peer.
+ *
+ * The Stackr Link handshake carries no authenticated origin — the web side is
+ * an anonymous ephemeral X25519 key, so the wallet has no proof the peer is
+ * stackr.ie or anyone else. Asserting a domain here would manufacture trust a
+ * phishing site could borrow. Instead we surface the channel id (the only thing
+ * that actually identifies the session) and mark it unverified; the sheet warns
+ * the user to only approve a pairing they started on their own screen.
+ */
+export function peerLabel(channel: string): string {
+  return `Paired device · ${channel.slice(0, 8)}`;
+}
 
 function isLocalChain(chain: string): chain is (typeof LOCAL_CHAINS)[number] {
   return (LOCAL_CHAINS as readonly string[]).includes(chain);
