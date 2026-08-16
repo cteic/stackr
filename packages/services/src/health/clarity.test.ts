@@ -105,6 +105,19 @@ describe('serializeClarityArg', () => {
     expect(deserializeClarityHex(hex)).toEqual({ kind: 'uint', value: 123_456_789n });
   });
 
+  it('encodes a string-ascii (0x0d + length + bytes) and round-trips it', () => {
+    const hex = serializeClarityArg({ kind: 'string-ascii', value: 'STX' });
+    // 0d + len(00000003) + "STX"(535458) — the shape the Arkadiko oracle takes.
+    expect(hex).toBe('0x0d00000003535458');
+    expect(deserializeClarityHex(hex)).toEqual({ kind: 'string', value: 'STX' });
+  });
+
+  it('refuses a non-ASCII string-ascii payload', () => {
+    expect(() => serializeClarityArg({ kind: 'string-ascii', value: 'stäckr' })).toThrow(
+      'not ASCII',
+    );
+  });
+
   it('round-trips a list of tuples through encode → decode', () => {
     const hex = serializeClarityArg({
       kind: 'list',

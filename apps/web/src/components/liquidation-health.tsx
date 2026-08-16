@@ -13,6 +13,7 @@ const protocolLabels: Record<Protocol, string> = {
   kamino: 'Kamino',
   zest: 'Zest',
   granite: 'Granite',
+  arkadiko: 'Arkadiko',
 };
 
 function maskAddress(address: string): string {

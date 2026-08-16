@@ -5,7 +5,7 @@ describe('protocolsForChain', () => {
   it('maps each chain to the protocols the health adapters actually serve', () => {
     expect(protocolsForChain('eth')).toEqual(['aave-v3']);
     expect(protocolsForChain('sol')).toEqual(['kamino']);
-    expect(protocolsForChain('stx')).toEqual(['zest', 'granite']);
+    expect(protocolsForChain('stx')).toEqual(['zest', 'granite', 'arkadiko']);
   });
 
   it('returns no protocols for chains without lending adapters', () => {

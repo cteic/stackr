@@ -9,9 +9,9 @@ import { ChainSchema } from './chain.js';
  * This is deliberately its own union, separate from `Chain`: a protocol is not
  * a chain (several can live on one chain), and the set grows on a different
  * cadence — the first slice ships `aave-v3`; later stages add `kamino` (SOL),
- * then `zest` and `granite` (STX).
+ * then `zest`, `granite` and `arkadiko` (STX).
  */
-export const ProtocolSchema = z.enum(['aave-v3', 'kamino', 'zest', 'granite']);
+export const ProtocolSchema = z.enum(['aave-v3', 'kamino', 'zest', 'granite', 'arkadiko']);
 
 export type Protocol = z.infer<typeof ProtocolSchema>;
 
@@ -29,8 +29,10 @@ export const HealthPositionNativeSchema = z.object({
   ltv: z.number().optional(),
   /** Liquidation-threshold LTV, as a fraction (0..1). */
   liquidationLtv: z.number().optional(),
-  /** CDP collateral ratio, as a fraction (Arkadiko). */
+  /** CDP collateral ratio, as a fraction (Arkadiko: 1.4 = 140%). */
   collateralRatio: z.number().optional(),
+  /** CDP liquidation ratio the position is measured against, as a fraction. */
+  liquidationRatio: z.number().optional(),
 });
 
 export type HealthPositionNative = z.infer<typeof HealthPositionNativeSchema>;
