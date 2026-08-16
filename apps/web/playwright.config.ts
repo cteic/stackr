@@ -27,5 +27,8 @@ export default defineConfig({
     // Cold-start compile of the grown workspace can exceed the 60s default
     // on a busy CI shard.
     timeout: 180_000,
+    // Swaps the MetaMask connector for wagmi's connector-level mock — see
+    // `wagmi-config.ts`. Playwright merges this on top of `process.env`.
+    env: { NEXT_PUBLIC_E2E_MOCK_WALLET: 'true' },
   },
 });
