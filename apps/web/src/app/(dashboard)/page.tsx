@@ -70,7 +70,7 @@ export default function DashboardPage() {
   const uniqueChains = [
     ...new Set([...allWallets.map(w => w.chain), ...cryptoHoldings.map(h => h.chain)]),
   ] as Chain[];
-  const { data: prices } = usePrices(uniqueChains, currency);
+  const { data: prices, isError: pricesError } = usePrices(uniqueChains, currency);
 
   const primaryChain = uniqueChains[0];
   const { data: priceHistory } = usePriceHistory(primaryChain ?? 'btc', 7, currency);
@@ -124,6 +124,12 @@ export default function DashboardPage() {
 
   const allLoaded = balanceQueries.every(q => !q.isLoading);
 
+  // Only flag the summary as failed when the total genuinely couldn't be
+  // computed — a partial total (e.g. cash priced fine, one wallet's balance
+  // read failed) is still a real, useful number, not a dash.
+  const summaryError =
+    allLoaded && totalFiat === 0 && (pricesError || balanceQueries.some(q => q.isError));
+
   const allocations = perChain.map(({ chain, fiatValue }) => ({
     chain,
     fiatValue,
@@ -159,6 +165,7 @@ export default function DashboardPage() {
               change24h={allLoaded ? weightedChange : undefined}
               sparklineData={sparklineValues}
               isLoading={!allLoaded}
+              isError={summaryError}
               hideBalance={hideBalance}
             />
 
