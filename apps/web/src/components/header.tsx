@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@stackr/ui';
 import { ChainStatusIndicators } from '@/components/chain-status-indicators';
@@ -8,8 +9,18 @@ import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
+import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
+
+const DESTINATIONS = [
+  { href: '/holdings', label: 'Holdings' },
+  { href: '/market', label: 'Markets' },
+  { href: '/collectibles', label: 'Collectibles' },
+  { href: '/account', label: 'Account' },
+  { href: '/settings', label: 'Settings' },
+] as const;
 
 export function Header() {
+  const pathname = usePathname();
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const toggleHideBalance = useSettingsStore(s => s.toggleHideBalance);
 
@@ -26,36 +37,16 @@ export function Header() {
           >
             Add Wallet
           </Link>
-          <Link
-            href="/holdings"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Holdings
-          </Link>
-          <Link
-            href="/market"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Markets
-          </Link>
-          <Link
-            href="/collectibles"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Collectibles
-          </Link>
-          <Link
-            href="/account"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Account
-          </Link>
-          <Link
-            href="/settings"
-            className="text-xs font-medium uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Settings
-          </Link>
+          {DESTINATIONS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isNavLinkActive(pathname, href) ? 'page' : undefined}
+              className={NAV_LINK_CLASS(isNavLinkActive(pathname, href))}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
         <div className="md:hidden">
           <MobileNav />

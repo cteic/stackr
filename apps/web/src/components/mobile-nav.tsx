@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import {
   Button,
@@ -9,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@stackr/ui';
+import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
 
 const LINKS: { href: string; label: string; primary?: boolean }[] = [
   { href: '/wallet/add', label: 'Add Wallet', primary: true },
@@ -20,6 +22,8 @@ const LINKS: { href: string; label: string; primary?: boolean }[] = [
 ];
 
 export function MobileNav() {
+  const pathname = usePathname();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -32,9 +36,11 @@ export function MobileNav() {
           <DropdownMenuItem key={link.href} asChild>
             <Link
               href={link.href}
+              aria-current={isNavLinkActive(pathname, link.href) ? 'page' : undefined}
               className={
-                'text-xs font-medium uppercase tracking-widest ' +
-                (link.primary ? 'text-primary' : '')
+                link.primary
+                  ? 'text-xs font-medium uppercase tracking-widest text-primary'
+                  : NAV_LINK_CLASS(isNavLinkActive(pathname, link.href))
               }
             >
               {link.label}
