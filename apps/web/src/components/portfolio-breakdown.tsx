@@ -15,12 +15,15 @@ interface PortfolioBreakdownProps {
   currency: Currency;
 }
 
-const chainBarColors: Record<Chain, string> = {
-  btc: '#F7931A',
-  eth: '#627EEA',
-  stx: '#5546FF',
-  sol: '#9945FF',
-  sui: '#4DA2FF',
+// Every chain sources its color from the theme tokens in `globals.css`, same
+// as the error pages' chain bars — so the bars follow the light/dark palettes
+// instead of drifting from a second, hardcoded copy.
+const chainBarClasses: Record<Chain, string> = {
+  btc: 'bg-chain-btc',
+  eth: 'bg-chain-eth',
+  stx: 'bg-chain-stx',
+  sol: 'bg-chain-sol',
+  sui: 'bg-chain-sui',
 };
 
 export function PortfolioBreakdown({ allocations }: PortfolioBreakdownProps) {
@@ -37,10 +40,8 @@ export function PortfolioBreakdown({ allocations }: PortfolioBreakdownProps) {
         {sorted.map(a => (
           <div
             key={a.chain}
-            style={{
-              width: `${a.percentage}%`,
-              backgroundColor: chainBarColors[a.chain],
-            }}
+            className={chainBarClasses[a.chain]}
+            style={{ width: `${a.percentage}%` }}
           />
         ))}
       </div>
@@ -49,10 +50,7 @@ export function PortfolioBreakdown({ allocations }: PortfolioBreakdownProps) {
       <div className="flex flex-wrap gap-3">
         {sorted.map(a => (
           <div key={a.chain} className="flex items-center gap-1">
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: chainBarColors[a.chain] }}
-            />
+            <div className={`h-2 w-2 rounded-full ${chainBarClasses[a.chain]}`} />
             <span className="text-xs text-muted-foreground">
               {chainMeta[a.chain].symbol} {a.percentage.toFixed(1)}%
             </span>
