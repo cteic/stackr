@@ -21,7 +21,7 @@ export function ChainStatusIndicators() {
         return (
           <Tooltip key={chain}>
             <TooltipTrigger asChild>
-              <span className={connected ? 'opacity-100' : 'opacity-30'}>
+              <span className={connected ? 'opacity-100' : 'opacity-50'}>
                 <ChainAvatar chain={chain} size="sm" />
               </span>
             </TooltipTrigger>
