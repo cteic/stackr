@@ -48,7 +48,7 @@ export function createLinkSessionStore(deps: LinkSessionDeps): StoreApi<LinkSess
       try {
         const transport = await transportOrNull;
         const joined = await deps.join(transport, qrPayloadRaw);
-        joined.onSignRequest = request => deps.bridge.handleSessionRequest(request);
+        joined.onSignRequest = request => deps.bridge.handleSessionRequest(request, joined.channel);
         joined.onPeerDisconnect = () => {
           deps.bridge.failPending('portfolio disconnected');
           session = null;

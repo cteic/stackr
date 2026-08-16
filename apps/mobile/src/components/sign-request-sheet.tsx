@@ -45,6 +45,25 @@ export function SignRequestSheet({
         </Text>
       </YStack>
 
+      {request.originVerified ? null : (
+        <YStack
+          backgroundColor="$background"
+          borderColor="$warning"
+          borderWidth={1}
+          borderRadius="$3"
+          padding="$3"
+          gap="$1"
+        >
+          <Text color="$warning" fontSize="$2" fontWeight="700" textTransform="uppercase">
+            Unverified requester
+          </Text>
+          <Text color="$textMuted" fontSize="$2">
+            Stackr can’t confirm who sent this. Only approve if you started this request on a device
+            you trust.
+          </Text>
+        </YStack>
+      )}
+
       <YStack
         backgroundColor="$background"
         borderColor="$border"
