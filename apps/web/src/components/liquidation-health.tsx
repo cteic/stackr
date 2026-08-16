@@ -61,9 +61,11 @@ export function LiquidationHealth({
           <Skeleton height="3.5em" />
         </div>
       ) : positions.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {isError ? 'No lending positions confirmed.' : 'No lending positions detected'}
-        </p>
+        isError ? null : (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No lending positions detected
+          </p>
+        )
       ) : (
         <ul className="flex flex-col gap-2">
           {positions.map(position => (
