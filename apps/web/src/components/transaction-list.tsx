@@ -56,7 +56,7 @@ export function TransactionList({ transactions, chain, isLoading }: TransactionL
           href={getExplorerUrl(chain, 'tx', tx.hash)}
           target="_blank"
           rel="noopener noreferrer"
-          className="block p-3 rounded-md transition-colors hover:bg-muted/50"
+          className="block p-3 rounded-md transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <ItemLayout
             titleLeft={

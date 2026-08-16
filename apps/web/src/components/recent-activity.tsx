@@ -60,7 +60,7 @@ export function RecentActivity({ wallets }: { wallets: Wallet[] }) {
                     href={getExplorerUrl(chain, 'tx', activity.hash)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-3 rounded-md p-3 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-between gap-3 rounded-md p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <ChainAvatar chain={chain} size="sm" />
