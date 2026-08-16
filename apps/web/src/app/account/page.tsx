@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
-import { Badge, Button, Callout, Card } from '@stackr/ui';
+import {
+  Badge,
+  Button,
+  Callout,
+  Card,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@stackr/ui';
 import { Header } from '@/components/header';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { vapidPublicKey } from '@/lib/supabase/config';
@@ -307,19 +317,18 @@ function SubscriptionsSection({ supabase, userId }: SectionProps) {
             <label htmlFor="alert-wallet" className="text-sm font-medium text-muted-foreground">
               Watch a wallet
             </label>
-            <select
-              id="alert-wallet"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={selectedWalletId}
-              onChange={e => setSelectedWalletId(e.target.value)}
-            >
-              <option value="">Choose a wallet…</option>
-              {alertableWallets.map(wallet => (
-                <option key={wallet.id} value={wallet.id}>
-                  {wallet.label} ({wallet.chain})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+              <SelectTrigger id="alert-wallet">
+                <SelectValue placeholder="Choose a wallet…" />
+              </SelectTrigger>
+              <SelectContent>
+                {alertableWallets.map(wallet => (
+                  <SelectItem key={wallet.id} value={wallet.id}>
+                    {wallet.label} ({wallet.chain})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button disabled={busy || selectedWalletId === ''} onClick={() => void watchSelected()}>
             Watch

@@ -34,7 +34,8 @@ export default function SignScreen() {
                 enqueue({
                   id: `demo-${Date.now()}`,
                   chain: 'stx',
-                  origin: 'stackr.ie',
+                  origin: 'Paired device · demo0000',
+                  originVerified: false,
                   kind: 'message',
                   display: 'Sign in to Stackr\n\nnonce: 8f3a-demo',
                   payload: { message: 'demo' },
