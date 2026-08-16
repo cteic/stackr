@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import {
   Button,
@@ -20,6 +21,8 @@ const LINKS: { href: string; label: string; primary?: boolean }[] = [
 ];
 
 export function MobileNav() {
+  const pathname = usePathname();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,19 +31,26 @@ export function MobileNav() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
-        {LINKS.map(link => (
-          <DropdownMenuItem key={link.href} asChild>
-            <Link
-              href={link.href}
-              className={
-                'text-xs font-medium uppercase tracking-widest ' +
-                (link.primary ? 'text-primary' : '')
-              }
-            >
-              {link.label}
-            </Link>
-          </DropdownMenuItem>
-        ))}
+        {LINKS.map(link => {
+          const active = pathname === link.href;
+          return (
+            <DropdownMenuItem key={link.href} asChild>
+              <Link
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                className={`text-xs font-medium uppercase tracking-widest ${
+                  link.primary
+                    ? 'text-primary'
+                    : active
+                      ? 'text-foreground font-semibold'
+                      : 'text-muted-foreground'
+                }`}
+              >
+                {link.label}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
