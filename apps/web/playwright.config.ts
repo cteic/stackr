@@ -11,7 +11,7 @@ const webServerEnv: Record<string, string> = {};
 for (const [key, value] of Object.entries(process.env)) {
   if (value !== undefined) webServerEnv[key] = value;
 }
-webServerEnv.NEXT_PUBLIC_E2E_WALLET_MOCK = '1';
+webServerEnv.NEXT_PUBLIC_E2E_MOCK_WALLET = 'true';
 
 export default defineConfig({
   testDir: './tests/e2e',

@@ -36,7 +36,7 @@ defineStep(/^no wallet extensions are installed$/, async () => {
 defineStep(/^the MetaMask extension is installed$/, async ({ page }) => {
   // Detection marker only (`'ethereum' in window` — see wallet-detect.ts).
   // The actual connect transport is wagmi's mock connector, enabled by the
-  // web server's NEXT_PUBLIC_E2E_WALLET_MOCK flag, so no SDK probing happens.
+  // web server's NEXT_PUBLIC_E2E_MOCK_WALLET flag, so no SDK probing happens.
   await page.addInitScript(() => {
     Object.defineProperty(window, 'ethereum', { value: { isMetaMask: true }, configurable: true });
   });

@@ -1,6 +1,6 @@
 import type { SignResult, WalletSignRequest } from '@stackr/wallet-link';
 import type { SignDecision, SignRequest, SignRequestTransport } from './sign-requests';
-import { LINK_ORIGIN, renderSignDisplay } from './link-signing';
+import { peerLabel, renderSignDisplay } from './link-signing';
 
 /**
  * The switchboard between a paired `WalletLinkSession` and the app's sign
@@ -24,8 +24,12 @@ interface PendingRequest {
 
 export interface LinkSignBridge {
   transport: SignRequestTransport;
-  /** Wire as `session.onSignRequest`. */
-  handleSessionRequest(request: WalletSignRequest): Promise<SignResult>;
+  /**
+   * Wire as `session.onSignRequest`. `channel` is the paired session's channel
+   * id; it becomes the sheet's (unverified) peer label, so the displayed origin
+   * always reflects the real session rather than a hardcoded domain.
+   */
+  handleSessionRequest(request: WalletSignRequest, channel: string): Promise<SignResult>;
   /** Fail everything in flight (peer disconnect / session close). */
   failPending(reason: string): void;
   pendingCount(): number;
@@ -55,7 +59,7 @@ export function createLinkSignBridge(executor: Executor): LinkSignBridge {
       },
     },
 
-    handleSessionRequest(request: WalletSignRequest): Promise<SignResult> {
+    handleSessionRequest(request: WalletSignRequest, channel: string): Promise<SignResult> {
       return new Promise<SignResult>(resolve => {
         if (deliver === null) {
           resolve({ status: 'rejected', reason: 'signer unavailable' });
@@ -65,7 +69,9 @@ export function createLinkSignBridge(executor: Executor): LinkSignBridge {
         deliver({
           id: request.id,
           chain: request.chain,
-          origin: LINK_ORIGIN,
+          // Never claim a domain the handshake can't prove — see peerLabel.
+          origin: peerLabel(channel),
+          originVerified: false,
           kind: request.kind,
           display: renderSignDisplay(request),
           payload: request.payload,

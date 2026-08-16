@@ -27,7 +27,7 @@ No test may touch the network:
   (`SecureStorage`, `LinkTransport`'s in-memory hub, the signer's injectable
   fetchers).
 - **Web e2e** runs against the dev server with the wagmi **mock connector**:
-  the Playwright web server sets `NEXT_PUBLIC_E2E_WALLET_MOCK=1`
+  the Playwright web server sets `NEXT_PUBLIC_E2E_MOCK_WALLET=true`
   (`playwright.config.ts`), which swaps the MetaMask connector stack for
   wagmi's in-memory mock (`src/lib/wagmi-config.ts`). Wallet-extension
   _detection_ is satisfied per-test with a one-line `window.ethereum` marker.

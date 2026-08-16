@@ -8,6 +8,7 @@ import {
 } from 'next/font/google';
 import { Providers } from '@/lib/providers';
 import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
+import { Footer } from '@/components/footer';
 import './globals.css';
 
 // Per-theme typefaces, exposed as CSS variables that each theme class picks up.
@@ -72,9 +73,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${fontVars}`} suppressHydrationWarning>
-      <body>
+      <body className="flex min-h-screen flex-col">
         <ServiceWorkerRegistrar />
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="flex flex-1 flex-col">{children}</div>
+        </Providers>
+        <Footer />
       </body>
     </html>
   );

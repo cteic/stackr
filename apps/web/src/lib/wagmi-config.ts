@@ -12,33 +12,34 @@ import { resolveEthRpcUrl } from '@stackr/services';
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'stackr-dev';
 
 /**
- * E2E-only escape hatch: with NEXT_PUBLIC_E2E_WALLET_MOCK=1 the config swaps
- * the real MetaMask connector stack for wagmi's in-memory mock connector, so
- * the connect flow can be exercised end-to-end without a browser extension
- * (the MetaMask SDK probes transport methods a window-level stub cannot
- * satisfy). The flag is set only by the Playwright web server — it must never
- * be set in a deployed environment.
+ * Playwright's `webServer` sets this — the real MetaMask connector drives the
+ * MetaMask SDK, which probes transport methods no `window.ethereum` stub can
+ * answer, so a real browser extension is the only thing that satisfies it.
+ * The e2e config swaps in wagmi's connector-level mock instead, which
+ * resolves a connection with no extension and no SDK involved. Never set
+ * outside that one webServer invocation.
  */
-const e2eWalletMock = process.env.NEXT_PUBLIC_E2E_WALLET_MOCK === '1';
+export const E2E_MOCK_ACCOUNT = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
-export const wagmiConfig = e2eWalletMock
-  ? createConfig({
-      chains: [mainnet],
-      transports: {
-        [mainnet.id]: http(resolveEthRpcUrl()),
-      },
-      connectors: [mock({ accounts: ['0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'] })],
-      ssr: true,
-    })
-  : getDefaultConfig({
-      appName: 'Stackr',
-      projectId,
-      chains: [mainnet],
-      transports: {
-        // Same-origin proxy in the browser (keeps the Alchemy key server-side),
-        // public RPC during SSR. See `resolveEthRpcUrl`.
-        [mainnet.id]: http(resolveEthRpcUrl()),
-      },
-      wallets: [{ groupName: 'Recommended', wallets: [metaMaskWallet] }],
-      ssr: true,
-    });
+const transports = {
+  // Same-origin proxy in the browser (keeps the Alchemy key server-side),
+  // public RPC during SSR. See `resolveEthRpcUrl`.
+  [mainnet.id]: http(resolveEthRpcUrl()),
+};
+
+export const wagmiConfig =
+  process.env.NEXT_PUBLIC_E2E_MOCK_WALLET === 'true'
+    ? createConfig({
+        chains: [mainnet],
+        connectors: [mock({ accounts: [E2E_MOCK_ACCOUNT] })],
+        transports,
+        ssr: true,
+      })
+    : getDefaultConfig({
+        appName: 'Stackr',
+        projectId,
+        chains: [mainnet],
+        transports,
+        wallets: [{ groupName: 'Recommended', wallets: [metaMaskWallet] }],
+        ssr: true,
+      });
