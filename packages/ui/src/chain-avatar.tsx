@@ -10,12 +10,16 @@ export interface ChainAvatarProps extends Omit<SVGAttributes<SVGSVGElement>, 'ch
   size?: AvatarSize;
 }
 
-const chainColors: Record<ChainType, string> = {
-  btc: '#F7931A',
-  stx: '#5546FF',
-  eth: '#627EEA',
-  sol: '#9945FF',
-  sui: '#4DA2FF',
+// Sourced from the `--color-chain-*` design tokens (globals.css) rather than
+// duplicated here, so avatars pick up the same brand colour every consumer
+// of the token already renders with (e.g. the 404/500 logo mark) instead of
+// silently drifting from it.
+const chainColorVars: Record<ChainType, string> = {
+  btc: 'var(--color-chain-btc)',
+  stx: 'var(--color-chain-stx)',
+  eth: 'var(--color-chain-eth)',
+  sol: 'var(--color-chain-sol)',
+  sui: 'var(--color-chain-sui)',
 };
 
 // Full tickers, not initials: BTC/STX/SOL/SUI all start with the same
@@ -38,7 +42,7 @@ const sizeMap: Record<AvatarSize, number> = {
 export const ChainAvatar = forwardRef<SVGSVGElement, ChainAvatarProps>(
   ({ chain, size = 'md', className, ...props }, ref) => {
     const px = sizeMap[size];
-    const color = chainColors[chain];
+    const color = chainColorVars[chain];
     const label = chainLabels[chain];
 
     return (
