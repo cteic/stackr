@@ -11,4 +11,7 @@
   // Secrets (set with `wrangler secret put`, per .dev.vars.example):
   //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VAPID_PUBLIC_KEY,
   //   VAPID_PRIVATE_KEY, and optionally VAPID_SUBJECT + HIRO_API_KEY.
+  // Optional (see #141 H2/H3): ALERTS_HEARTBEAT_URL (dead-man's-switch /
+  //   log drain for sweep health) and ALERTS_MAX_POSITION_READS (per-run
+  //   subrequest budget; default 20, raise on the paid plan).
 }

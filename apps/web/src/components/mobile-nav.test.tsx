@@ -50,4 +50,18 @@ feature('mobile nav', () => {
       ).toBeNull();
     });
   });
+
+  scenario('marks the parent route when on a nested page', async () => {
+    usePathnameMock.mockReturnValue('/holdings/add');
+    given('the mobile nav is open on a page nested under Holdings', async () => {
+      render(<MobileNav />);
+      fireEvent.keyDown(screen.getByLabelText('Open menu'), { key: 'Enter' });
+      await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Holdings' })).toBeTruthy());
+    });
+    then('the Holdings item is still marked as the current page', () => {
+      expect(screen.getByRole('menuitem', { name: 'Holdings' }).getAttribute('aria-current')).toBe(
+        'page',
+      );
+    });
+  });
 });

@@ -11,18 +11,18 @@ import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
 import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
 
-const DESTINATIONS = [
+const NAV_LINKS = [
   { href: '/holdings', label: 'Holdings' },
   { href: '/market', label: 'Markets' },
   { href: '/collectibles', label: 'Collectibles' },
   { href: '/account', label: 'Account' },
   { href: '/settings', label: 'Settings' },
-] as const;
+];
 
 export function Header() {
-  const pathname = usePathname();
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const toggleHideBalance = useSettingsStore(s => s.toggleHideBalance);
+  const pathname = usePathname();
 
   return (
     <header className="flex items-center justify-between border-b px-4 py-3 md:px-5">
@@ -33,20 +33,24 @@ export function Header() {
         <div className="hidden items-center gap-5 md:flex">
           <Link
             href="/wallet/add"
-            className="text-xs font-medium uppercase tracking-widest text-primary transition-colors"
+            aria-current={isNavLinkActive(pathname, '/wallet/add') ? 'page' : undefined}
+            className="border-b border-transparent py-1 text-xs font-medium uppercase tracking-widest text-primary transition-colors"
           >
             Add Wallet
           </Link>
-          {DESTINATIONS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={isNavLinkActive(pathname, href) ? 'page' : undefined}
-              className={NAV_LINK_CLASS(isNavLinkActive(pathname, href))}
-            >
-              {label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(({ href, label }) => {
+            const active = isNavLinkActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={NAV_LINK_CLASS(active)}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
         <div className="md:hidden">
           <MobileNav />

@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@stackr/ui';
-import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
+import { isNavLinkActive } from '@/lib/nav-active';
 
 const LINKS: { href: string; label: string; primary?: boolean }[] = [
   { href: '/wallet/add', label: 'Add Wallet', primary: true },
@@ -32,21 +32,26 @@ export function MobileNav() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-40">
-        {LINKS.map(link => (
-          <DropdownMenuItem key={link.href} asChild>
-            <Link
-              href={link.href}
-              aria-current={isNavLinkActive(pathname, link.href) ? 'page' : undefined}
-              className={
-                link.primary
-                  ? 'text-xs font-medium uppercase tracking-widest text-primary'
-                  : NAV_LINK_CLASS(isNavLinkActive(pathname, link.href))
-              }
-            >
-              {link.label}
-            </Link>
-          </DropdownMenuItem>
-        ))}
+        {LINKS.map(link => {
+          const active = isNavLinkActive(pathname, link.href);
+          return (
+            <DropdownMenuItem key={link.href} asChild>
+              <Link
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                className={`text-xs font-medium uppercase tracking-widest ${
+                  link.primary
+                    ? 'text-primary'
+                    : active
+                      ? 'text-foreground font-semibold'
+                      : 'text-muted-foreground'
+                }`}
+              >
+                {link.label}
+              </Link>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
