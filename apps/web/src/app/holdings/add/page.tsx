@@ -14,7 +14,20 @@ import {
 } from '@stackr/models';
 import type { Currency, Chain, GoldUnit, AssetCategory } from '@stackr/models';
 import { useStockSearch } from '@stackr/queries';
-import { Button, Input, Card, Tabs, TabsList, TabsTrigger, TabsContent } from '@stackr/ui';
+import {
+  Button,
+  Input,
+  Card,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@stackr/ui';
 import { useHoldingsStore } from '@/lib/holdings-store';
 import { Header } from '@/components/header';
 
@@ -176,18 +189,21 @@ export default function AddHoldingPage() {
                   >
                     Currency
                   </label>
-                  <select
-                    id="cash-currency"
+                  <Select
                     value={cashCurrency}
-                    onChange={e => setCashCurrency(e.target.value as Currency)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setCashCurrency(value as Currency)}
                   >
-                    {currencies.map(c => (
-                      <option key={c} value={c}>
-                        {currencyMeta[c].symbol} {currencyMeta[c].name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="cash-currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {currencyMeta[c].symbol} {currencyMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Interest Rate (APY %)"
@@ -282,18 +298,21 @@ export default function AddHoldingPage() {
                   >
                     Chain
                   </label>
-                  <select
-                    id="crypto-chain"
+                  <Select
                     value={cryptoChain}
-                    onChange={e => setCryptoChain(ChainSchema.parse(e.target.value))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setCryptoChain(ChainSchema.parse(value))}
                   >
-                    {chains.map(c => (
-                      <option key={c} value={c}>
-                        {chainMeta[c].name} ({chainMeta[c].symbol})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="crypto-chain">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chains.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {chainMeta[c].name} ({chainMeta[c].symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Quantity"
@@ -335,18 +354,21 @@ export default function AddHoldingPage() {
                   <label htmlFor="gold-unit" className="text-sm font-medium text-muted-foreground">
                     Unit
                   </label>
-                  <select
-                    id="gold-unit"
+                  <Select
                     value={goldUnit}
-                    onChange={e => setGoldUnit(GoldUnitSchema.parse(e.target.value))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setGoldUnit(GoldUnitSchema.parse(value))}
                   >
-                    {goldUnits.map(u => (
-                      <option key={u} value={u}>
-                        {goldUnitMeta[u].name} ({goldUnitMeta[u].abbrev})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="gold-unit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {goldUnits.map(u => (
+                        <SelectItem key={u} value={u}>
+                          {goldUnitMeta[u].name} ({goldUnitMeta[u].abbrev})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Label (optional)"
@@ -381,18 +403,21 @@ export default function AddHoldingPage() {
                   >
                     Category
                   </label>
-                  <select
-                    id="asset-category"
+                  <Select
                     value={assetCategory}
-                    onChange={e => setAssetCategory(AssetCategorySchema.parse(e.target.value))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setAssetCategory(AssetCategorySchema.parse(value))}
                   >
-                    {assetCategories.map(c => (
-                      <option key={c} value={c}>
-                        {assetCategoryMeta[c].name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="asset-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assetCategories.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {assetCategoryMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Current Value"
@@ -411,18 +436,21 @@ export default function AddHoldingPage() {
                   >
                     Currency
                   </label>
-                  <select
-                    id="asset-currency"
+                  <Select
                     value={assetCurrency}
-                    onChange={e => setAssetCurrency(CurrencySchema.parse(e.target.value))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setAssetCurrency(CurrencySchema.parse(value))}
                   >
-                    {currencies.map(c => (
-                      <option key={c} value={c}>
-                        {currencyMeta[c].symbol} {currencyMeta[c].name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="asset-currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {currencyMeta[c].symbol} {currencyMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Notes (optional)"
