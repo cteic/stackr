@@ -91,8 +91,8 @@ export const light: SemanticColors = {
 };
 
 /**
- * Chain brand colors, dark-canvas variants (matching the web dark themes).
- * Kept in sync with the web's `--color-chain-*` tokens in `globals.css`.
+ * Chain brand colors, dark-canvas variants (matching the web dark themes,
+ * `--color-chain-*` in `apps/web/src/app/globals.css`).
  */
 export const chainColors: Record<Chain, string> = {
   btc: '#f7931a',

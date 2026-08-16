@@ -106,7 +106,14 @@ const SUBSCRIPTION_SELECT =
 export async function fetchSweepSubscriptions(
   config: SupabaseServiceConfig,
 ): Promise<SweepSubscription[]> {
-  const data = await request(config, 'GET', `alert_subscriptions?select=${SUBSCRIPTION_SELECT}`);
+  // Least-recently-alerted first (never-alerted rows lead): when a sweep is
+  // capped by the per-invocation read budget, the deferred tail rotates to the
+  // front next tick, so no subscription starves.
+  const data = await request(
+    config,
+    'GET',
+    `alert_subscriptions?select=${SUBSCRIPTION_SELECT}&order=last_alerted_at.asc.nullsfirst`,
+  );
   return z.array(SweepSubscriptionSchema).parse(data);
 }
 

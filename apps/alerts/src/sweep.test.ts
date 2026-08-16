@@ -70,7 +70,14 @@ describe('runSweep', () => {
     const deps = makeDeps();
     const summary = await runSweep(deps);
 
-    expect(summary).toEqual({ subscriptions: 1, notified: 1, deliveries: 1, failures: 0 });
+    expect(summary).toEqual({
+      subscriptions: 1,
+      positionsRead: 1,
+      notified: 1,
+      deliveries: 1,
+      failures: 0,
+      skipped: 0,
+    });
     expect(deps.sendPush).toHaveBeenCalledTimes(1);
     expect(deps.saveState).toHaveBeenCalledWith(SUB, {
       band: 'warn',
@@ -158,6 +165,92 @@ describe('runSweep', () => {
 
     expect(listPushSubscriptions).toHaveBeenCalledTimes(1);
     expect(listPushSubscriptions).toHaveBeenCalledWith([USER]);
+  });
+
+  // #141 H2 — bound subrequests: dedup identical reads, cap reads per run.
+  const SUB2 = '44444444-4444-4444-8444-444444444444';
+
+  it('deduplicates identical positions — one read serves every subscription on it', async () => {
+    const readPosition = vi.fn(async () => position(0.9));
+    const deps = makeDeps({
+      listSubscriptions: async () => [subscription({ id: SUB }), subscription({ id: SUB2 })],
+      readPosition,
+    });
+
+    const summary = await runSweep(deps);
+
+    expect(readPosition).toHaveBeenCalledTimes(1); // shared position read once
+    expect(summary.positionsRead).toBe(1);
+    expect(summary.notified).toBe(2); // both subscriptions still evaluated
+  });
+
+  it('defers subscriptions past the per-invocation read budget without touching their state', async () => {
+    const readPosition = vi.fn(async () => position(0.9));
+    const saveState = vi.fn(async () => undefined);
+    const deps = makeDeps({
+      listSubscriptions: async () => [
+        subscription({ id: SUB, protocol: 'zest' }),
+        subscription({ id: SUB2, protocol: 'granite' }), // distinct position key
+      ],
+      readPosition,
+      saveState,
+    });
+
+    const summary = await runSweep(deps, { maxPositionReads: 1 });
+
+    expect(readPosition).toHaveBeenCalledTimes(1);
+    expect(summary.positionsRead).toBe(1);
+    expect(summary.skipped).toBe(1);
+    expect(summary.notified).toBe(1);
+    // Only the processed subscription's dedupe state advances.
+    expect(saveState).toHaveBeenCalledTimes(1);
+    expect(saveState).toHaveBeenCalledWith(SUB, expect.anything());
+  });
+
+  it('a shared read failure defers every subscription on that position, no state written', async () => {
+    const readPosition = vi.fn(async () => {
+      throw new Error('Hiro API error: 503');
+    });
+    const deps = makeDeps({
+      listSubscriptions: async () => [subscription({ id: SUB }), subscription({ id: SUB2 })],
+      readPosition,
+    });
+
+    const summary = await runSweep(deps);
+
+    expect(readPosition).toHaveBeenCalledTimes(1); // deduped read, one call
+    expect(summary.failures).toBe(2); // both subscriptions on it couldn't evaluate
+    expect(deps.saveState).not.toHaveBeenCalled();
+    expect(deps.sendPush).not.toHaveBeenCalled();
+  });
+
+  it('reads within the concurrency bound never exceed the configured limit', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    const readPosition = vi.fn(async () => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise(resolve => setTimeout(resolve, 1));
+      inFlight--;
+      return position(0.1);
+    });
+    const subs = Array.from({ length: 6 }, (_, i) =>
+      subscription({
+        id: `5${i}000000-0000-4000-8000-000000000000`,
+        protocol: i % 2 === 0 ? 'zest' : 'granite',
+        watched_wallets: {
+          chain: 'stx',
+          address: `SP${i}00000000000000000000000000000000000`,
+          label: null,
+        },
+      }),
+    );
+    const deps = makeDeps({ listSubscriptions: async () => subs, readPosition });
+
+    await runSweep(deps, { readConcurrency: 2 });
+
+    expect(readPosition).toHaveBeenCalledTimes(6);
+    expect(peak).toBeLessThanOrEqual(2);
   });
 });
 
