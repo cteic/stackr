@@ -17,3 +17,14 @@ VAPID_SUBJECT=mailto:pete@cteic.ie
 # Optional: lifts Hiro (Stacks) reads from 50 rpm to 500 rpm for the Zest and
 # Granite adapters. Keyless works at this sweep cadence.
 HIRO_API_KEY=
+
+# Optional observability: a URL the worker POSTs a JSON sweep summary to each
+# run. Point it at a dead-man's-switch (e.g. a healthchecks.io ping URL) so a
+# MISSING heartbeat alerts you to a worker that stopped running, and an
+# unhealthy payload (failures / nothing delivered) alerts on a broken run.
+ALERTS_HEARTBEAT_URL=
+
+# Optional scale knob: max unique positions read per 5-minute invocation. Bounds
+# Cloudflare subrequests; the default (20) suits the free tier. Deferred
+# subscriptions are swept on the next tick. Raise it on the paid plan.
+ALERTS_MAX_POSITION_READS=

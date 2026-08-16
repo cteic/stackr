@@ -6,7 +6,19 @@ import type { DataPoint } from '@stackr/charts';
 import { useLiveTicks, useOrderbook, usePriceHistory, useStockPriceHistory } from '@stackr/queries';
 import { formatChange, formatFiat } from '@stackr/services';
 import type { Chain, Currency } from '@stackr/models';
-import { Button, Callout, Card, Skeleton } from '@stackr/ui';
+import {
+  Button,
+  Callout,
+  Card,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+} from '@stackr/ui';
 import { Header } from '@/components/header';
 import { Orderbook } from '@/components/orderbook';
 import { useWalletStore } from '@/lib/wallet-store';
@@ -145,28 +157,34 @@ export default function MarketsPage() {
         <div className="mb-6 flex items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">Markets</h1>
           <div className="flex items-center gap-2">
-            <select
+            <Select
               value={selected ? assetId(selected) : ''}
-              onChange={e => setSelectedId(e.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold"
+              onValueChange={value => setSelectedId(value)}
             >
-              <optgroup label="Crypto">
-                {cryptoOptions.map(option => (
-                  <option key={assetId(option)} value={assetId(option)}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-              {stockOptions.length > 0 && (
-                <optgroup label="Stocks">
-                  {stockOptions.map(option => (
-                    <option key={assetId(option)} value={assetId(option)}>
+              <SelectTrigger className="h-10 w-auto gap-2 text-sm font-semibold" aria-label="Asset">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Crypto</SelectLabel>
+                  {cryptoOptions.map(option => (
+                    <SelectItem key={assetId(option)} value={assetId(option)}>
                       {option.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </optgroup>
-              )}
-            </select>
+                </SelectGroup>
+                {stockOptions.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Stocks</SelectLabel>
+                    {stockOptions.map(option => (
+                      <SelectItem key={assetId(option)} value={assetId(option)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
             {isCrypto && (
               <button
                 onClick={() => setMode(m => (m === 'mock' ? 'live' : 'mock'))}

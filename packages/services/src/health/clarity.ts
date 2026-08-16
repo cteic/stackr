@@ -258,6 +258,21 @@ export function tupleUint(value: ClarityValue, field: string): bigint {
   return member.value;
 }
 
+/** Read a required string member off a decoded tuple. */
+export function tupleString(value: ClarityValue, field: string): string {
+  if (value.kind !== 'tuple') {
+    throw new Error(`clarity: expected a tuple, got ${value.kind}`);
+  }
+  const member = value.data[field];
+  if (member === undefined) {
+    throw new Error(`clarity: tuple is missing field "${field}"`);
+  }
+  if (member.kind !== 'string') {
+    throw new Error(`clarity: tuple field "${field}" is ${member.kind}, expected a string`);
+  }
+  return member.value;
+}
+
 // --- c32 address decoding (Stacks "SP…" → version + hash160) ----------------
 
 /**
@@ -358,6 +373,7 @@ export type ClarityArg =
   | { kind: 'contract-principal'; contractId: string }
   | { kind: 'tuple'; data: Record<string, ClarityArg> }
   | { kind: 'list'; values: ClarityArg[] }
+  | { kind: 'string-ascii'; value: string }
   | { kind: 'raw'; serialized: Uint8Array };
 
 function uint32BE(value: number): Uint8Array {
@@ -421,6 +437,13 @@ function encodeArg(arg: ClarityArg): Uint8Array {
         chunks.push(encodeArg(value));
       }
       return prefixed(TYPE_LIST, concatBytes(...chunks));
+    }
+    case 'string-ascii': {
+      const bytes = new TextEncoder().encode(arg.value);
+      if (bytes.length !== arg.value.length) {
+        throw new Error(`clarity: "${arg.value}" is not ASCII`);
+      }
+      return prefixed(TYPE_STRING_ASCII, concatBytes(uint32BE(bytes.length), bytes));
     }
     case 'raw':
       return arg.serialized;

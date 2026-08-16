@@ -96,6 +96,13 @@ export {
 } from './health/kamino.js';
 export { fetchZestPosition, normalizeZestGlobalData, zestHealthAdapter } from './health/zest.js';
 export {
+  fetchArkadikoPosition,
+  normalizeArkadikoVaults,
+  arkadikoRatioBps,
+  arkadikoHealthAdapter,
+  type ArkadikoVaultInputs,
+} from './health/arkadiko.js';
+export {
   fetchGranitePosition,
   normalizeGranitePosition,
   graniteHealthAdapter,
@@ -105,6 +112,7 @@ import { aaveHealthAdapter } from './health/aave.js';
 import { kaminoHealthAdapter } from './health/kamino.js';
 import { zestHealthAdapter } from './health/zest.js';
 import { graniteHealthAdapter } from './health/granite.js';
+import { arkadikoHealthAdapter } from './health/arkadiko.js';
 import type { HealthAdapter, NftAdapter } from './ports.js';
 
 export { toIpfsGatewayUrl, DEFAULT_IPFS_GATEWAY } from './nft/ipfs-url.js';
@@ -140,13 +148,14 @@ export const nftAdapters: readonly NftAdapter[] = [stacksNftAdapter];
  * All liquidation-health adapters, one per protocol. The `useHealthPositions`
  * hook fans out across these (filtered to the adapters whose chain it has
  * addresses for) and merges the non-null results. Ships Aave v3 (EVM), Kamino
- * (SOL) and the Stacks moat — Zest and Granite (STX).
+ * (SOL) and the Stacks moat — Zest, Granite and Arkadiko (STX).
  */
 export const healthAdapters: readonly HealthAdapter[] = [
   aaveHealthAdapter,
   kaminoHealthAdapter,
   zestHealthAdapter,
   graniteHealthAdapter,
+  arkadikoHealthAdapter,
 ];
 
 /**
