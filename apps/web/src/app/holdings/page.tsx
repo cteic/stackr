@@ -14,6 +14,11 @@ import { useHoldingsStore } from '@/lib/holdings-store';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm';
+const REMOVE_BUTTON_CLASS = `text-xs text-muted-foreground hover:text-destructive transition-colors ${FOCUS_RING}`;
+const LINK_BUTTON_CLASS = `text-xs text-muted-foreground hover:text-foreground transition-colors ${FOCUS_RING}`;
+
 export default function HoldingsPage() {
   const holdings = useHoldingsStore(s => s.holdings);
   const removeHolding = useHoldingsStore(s => s.removeHolding);
@@ -167,7 +172,7 @@ export default function HoldingsPage() {
                           </div>
                           <button
                             onClick={() => removeHolding(h.id)}
-                            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                            className={REMOVE_BUTTON_CLASS}
                           >
                             Remove
                           </button>
@@ -223,7 +228,7 @@ export default function HoldingsPage() {
                             </div>
                             <button
                               onClick={() => removeHolding(h.id)}
-                              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                              className={REMOVE_BUTTON_CLASS}
                             >
                               Remove
                             </button>
@@ -279,7 +284,7 @@ export default function HoldingsPage() {
                             </div>
                             <button
                               onClick={() => removeHolding(h.id)}
-                              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                              className={REMOVE_BUTTON_CLASS}
                             >
                               Remove
                             </button>
@@ -332,7 +337,7 @@ export default function HoldingsPage() {
                             </div>
                             <button
                               onClick={() => removeHolding(h.id)}
-                              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                              className={REMOVE_BUTTON_CLASS}
                             >
                               Remove
                             </button>
@@ -391,7 +396,7 @@ export default function HoldingsPage() {
                               <button
                                 type="button"
                                 onClick={() => setRevaluingId(null)}
-                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                className={LINK_BUTTON_CLASS}
                               >
                                 Cancel
                               </button>
@@ -408,13 +413,13 @@ export default function HoldingsPage() {
                                   setRevaluingId(h.id);
                                   setRevaluedInput(String(h.value));
                                 }}
-                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                className={LINK_BUTTON_CLASS}
                               >
                                 Update value
                               </button>
                               <button
                                 onClick={() => removeHolding(h.id)}
-                                className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                                className={REMOVE_BUTTON_CLASS}
                               >
                                 Remove
                               </button>
