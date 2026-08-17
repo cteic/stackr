@@ -1,0 +1,18 @@
+{
+  "autoMode": {
+    "environment": [
+      "### This repository",
+      "**Repository**: pete-watters/stackr — a multi-chain portfolio tracker web app. Origin is github.com:pete-watters/stackr.git, and it is the only remote.",
+      "**Visibility**: PUBLIC. Any push here is publishing. Only this repository's own work belongs here — content ported or first read from elsewhere is not cleared for commit or push.",
+      "**Branches**: default branch is `dev`; `main` is production and auto-deploys to Cloudflare on push. Treat `main` as protected even though no ruleset is configured server-side.",
+      "**Deploy target**: Cloudflare, via `@opennextjs/cloudflare` and a GitHub Actions Deploy workflow on push to `main`.",
+      "**Secrets**: GitHub Actions repository secrets `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (names only — values are never present in the working tree).",
+      "**Credential-bearing paths**: `apps/mobile/.env.development`, `apps/mobile/.env.example`, `apps/mobile/.env.production`, `apps/web/.env.example`, `apps/web/.env.production`, plus the machine-wide `.env*` and `.private/` rules.",
+      "**Protected deployment**: the `main` branch and its Cloudflare production deploy."
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(git push origin main:*) — direct or force push to the production branch"
+    ]
+  }
+}
