@@ -20,6 +20,17 @@ jobs:
 
       - uses: ./.github/actions/provision
 
+      # PR size (advisory): the dotfiles size checker, brought into the
+      # repo so it has a call site. Non-blocking by design — a blocking size
+      # check gets bypassed; the value is the split conversation on the PR.
+      - name: PR size (advisory)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch --no-tags --quiet origin "$BASE:refs/remotes/origin/$BASE" || true
+          bash scripts/pr-size-check.sh || true
+
       - name: Lint
         run: pnpm lint
 
