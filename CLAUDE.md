@@ -1,5 +1,19 @@
 # Stackr — Multi-Chain Portfolio Tracker
 
+## Scoped instruction files
+
+This is the only instruction file in the repo. The packages here share one set
+of rules, so don't add a directory-scoped `CLAUDE.md` or `AGENTS.md` — a second
+file would only drift from this one. If a package ever earns genuinely
+different hard rules, add its file then and state the boundary in it.
+
+`AGENTS.md` is a symlink to this file, so tools reading either name get the same
+rules.
+
+Standing rules that apply everywhere — attribution, commit authorship,
+confidentiality, secrets, verification before "done" — are global and are
+deliberately not repeated here.
+
 ## Project Overview
 
 Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL/SUI wallet addresses and view balances, activity, liquidation health, and NFTs (Stacks first). Installable web app (manifest only — no service worker/offline yet), dark theme.
@@ -56,5 +70,4 @@ pnpm test:e2e       # Run Playwright e2e tests
 - **`feat/...`, `fix/...`, `chore/...`, `docs/...`** — short-lived branches off `dev`. Merge back into `dev` via PR.
 - **`hotfix/...`** — branches off `main` for urgent production fixes. PR to `main`, then cherry-pick into `dev` (see `.claude/commands/hotfix.md`).
 - **Releases:** PR `dev → main` with a merge commit + tag.
-- No `Co-Authored-By` trailers, no AI / "Generated with..." footers in commits, PR bodies, ADRs, or anywhere public.
 - See `.github/pull_request_template.md` for PR body shape (`Closes #N` or `Type:` tag).
