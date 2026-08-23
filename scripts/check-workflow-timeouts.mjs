@@ -12,22 +12,24 @@
 // Deliberately dependency-free: it runs from a bare checkout with nothing
 // installed, the same as everything else in the quality gate.
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
-const DIR = ".github/workflows";
+const DIR = '.github/workflows';
 const MAX_SANE_MINUTES = 60;
 
 if (!existsSync(DIR)) {
-  console.log("no .github/workflows directory — nothing to check");
+  console.log('no .github/workflows directory — nothing to check');
   process.exit(0);
 }
 
 const problems = [];
 let checked = 0;
 
-for (const file of readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).sort()) {
-  const lines = readFileSync(join(DIR, file), "utf8").split("\n");
+for (const file of readdirSync(DIR)
+  .filter(f => /\.ya?ml$/.test(f))
+  .sort()) {
+  const lines = readFileSync(join(DIR, file), 'utf8').split('\n');
 
   let inJobs = false;
   let job = null;
@@ -54,8 +56,16 @@ for (const file of readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).sort()) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    if (/^jobs:\s*$/.test(line)) { inJobs = true; continue; }
-    if (inJobs && /^\S/.test(line)) { finish(); job = null; inJobs = false; continue; }
+    if (/^jobs:\s*$/.test(line)) {
+      inJobs = true;
+      continue;
+    }
+    if (inJobs && /^\S/.test(line)) {
+      finish();
+      job = null;
+      inJobs = false;
+      continue;
+    }
     if (!inJobs) continue;
 
     const start = line.match(/^ {2}([A-Za-z0-9_-]+):\s*$/);
@@ -72,13 +82,16 @@ for (const file of readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).sort()) {
     if (job === null) continue;
     if (/^ {4}uses:/.test(line)) isReusable = true;
     const t = line.match(/^ {4}timeout-minutes:\s*(\d+)/);
-    if (t) { hasTimeout = true; timeoutValue = Number(t[1]); }
+    if (t) {
+      hasTimeout = true;
+      timeoutValue = Number(t[1]);
+    }
   }
   finish();
 }
 
 if (problems.length > 0) {
-  console.error("Workflow jobs without a runtime cap:\n");
+  console.error('Workflow jobs without a runtime cap:\n');
   for (const p of problems) console.error(`  ${p}`);
   console.error(
     `\nAdd \`timeout-minutes: <n>\` beside each job's \`runs-on:\`, sized to roughly` +
