@@ -12,6 +12,7 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,6 +32,8 @@ jobs:
           git fetch --no-tags --quiet origin "$BASE:refs/remotes/origin/$BASE" || true
           bash scripts/pr-size-check.sh || true
 
+      - name: Workflow timeouts
+        run: node scripts/check-workflow-timeouts.mjs
       - name: Lint
         run: pnpm lint
 
