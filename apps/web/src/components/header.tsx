@@ -9,7 +9,7 @@ import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
 import { useSettingsStore } from '@/lib/settings-store';
-import { isNavLinkActive, NAV_LINK_CLASS } from '@/lib/nav-active';
+import { isNavLinkActive, NAV_LINK_CLASS, NAV_LINK_FOCUS_CLASS } from '@/lib/nav-active';
 
 const NAV_LINKS = [
   { href: '/holdings', label: 'Holdings' },
@@ -34,7 +34,7 @@ export function Header() {
           <Link
             href="/wallet/add"
             aria-current={isNavLinkActive(pathname, '/wallet/add') ? 'page' : undefined}
-            className="border-b border-transparent py-1 text-xs font-medium uppercase tracking-widest text-primary transition-colors"
+            className={`border-b border-transparent py-1 text-xs font-medium uppercase tracking-widest text-primary transition-colors ${NAV_LINK_FOCUS_CLASS}`}
           >
             Add Wallet
           </Link>
