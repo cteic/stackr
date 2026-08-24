@@ -221,7 +221,7 @@ export default function MarketsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
           <Card className={`p-4 ${isCrypto ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className="mb-3 flex items-baseline justify-between">
               <div className="text-sm font-semibold">{selected?.label ?? '—'}</div>
