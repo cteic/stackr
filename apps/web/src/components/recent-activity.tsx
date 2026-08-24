@@ -36,7 +36,7 @@ export function RecentActivity({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <Card className="mt-4 overflow-hidden">
-      <div className="border-b p-4 text-sm font-semibold">Recent activity</div>
+      <h2 className="border-b p-4 text-sm font-semibold">Recent activity</h2>
       <div className="p-2">
         {stillLoading ? (
           <div className="flex flex-col gap-2">

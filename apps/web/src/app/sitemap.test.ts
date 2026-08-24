@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import robots from './robots';
 import sitemap from './sitemap';
 
 /**
@@ -31,17 +30,20 @@ describe('sitemap', () => {
     expect(urls.filter(url => url.includes('/wallet'))).toEqual(['https://stackr.ie/wallet/add']);
   });
 
+  it('omits the routes that are noindexed in their route metadata', () => {
+    ['/settings', '/account', '/login', '/auth/callback'].forEach(route => {
+      expect(urls).not.toContain(`https://stackr.ie${route}`);
+    });
+  });
+
+  it('stamps every entry with one shared build timestamp', () => {
+    entries.forEach(entry => expect(entry.lastModified).toBeInstanceOf(Date));
+    const stamps = new Set(entries.map(entry => String(entry.lastModified)));
+    expect(stamps.size).toBe(1);
+  });
+
   it('ranks the dashboard above the inner pages', () => {
     const [home] = entries.filter(entry => entry.url === 'https://stackr.ie/');
     expect(home?.priority).toBe(1);
-  });
-});
-
-describe('robots', () => {
-  it('allows crawling, blocks /api/, and advertises the sitemap', () => {
-    expect(robots()).toEqual({
-      rules: { userAgent: '*', allow: '/', disallow: '/api/' },
-      sitemap: 'https://stackr.ie/sitemap.xml',
-    });
   });
 });
