@@ -47,7 +47,7 @@ export default function AddWalletPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Add Wallet</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

@@ -55,7 +55,7 @@ export default function AuthCallbackPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         {error === null ? (
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Spinner /> Signing you in…

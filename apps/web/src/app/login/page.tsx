@@ -36,7 +36,7 @@ export default function LoginPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         <h1 className="text-2xl font-bold mb-2">Sign in</h1>
         <p className="text-sm text-muted-foreground mb-6">
           An account powers liquidation alerts — your portfolio itself stays on this device, no

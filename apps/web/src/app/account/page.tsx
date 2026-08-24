@@ -41,7 +41,7 @@ export default function AccountPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6 space-y-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6 space-y-6">
         <h1 className="text-2xl font-bold">Account</h1>
         {supabase === null ? (
           <Callout variant="warning">
