@@ -12,6 +12,7 @@ interface WalletCardProps {
   wallet: Wallet;
   balance?: Balance;
   isLoading?: boolean;
+  isError?: boolean;
   price?: Price;
   sparklineData?: number[];
   currency?: Currency;
@@ -23,6 +24,7 @@ export function WalletCard({
   wallet,
   balance,
   isLoading,
+  isError = false,
   price,
   sparklineData,
   currency = 'usd',
@@ -90,6 +92,8 @@ export function WalletCard({
                   </span>
                 )}
               </span>
+            ) : isError ? (
+              <span className="text-xs text-muted-foreground">Couldn&apos;t load</span>
             ) : undefined
           }
         />

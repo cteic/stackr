@@ -206,6 +206,7 @@ export default function DashboardPage() {
                   wallet={wallet}
                   balance={balanceQueries[i]?.data}
                   isLoading={balanceQueries[i]?.isLoading}
+                  isError={balanceQueries[i]?.isError || pricesError}
                   price={priceMap.get(wallet.chain)}
                   currency={currency}
                   connected={connectedAddressSet.has(wallet.address.toLowerCase())}
