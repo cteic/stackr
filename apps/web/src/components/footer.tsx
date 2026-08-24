@@ -22,7 +22,7 @@ export function Footer() {
         href="https://github.com/pete-watters/stackr"
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+        className="flex items-center gap-1.5 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <Github className="h-3.5 w-3.5" aria-hidden="true" />
         Source

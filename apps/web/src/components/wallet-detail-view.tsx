@@ -109,7 +109,10 @@ export function WalletDetailView({
     <>
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <Link href="/" className="text-sm font-semibold text-primary">
+        <Link
+          href="/"
+          className="rounded-sm text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           &larr; Back to Portfolio
         </Link>
 
