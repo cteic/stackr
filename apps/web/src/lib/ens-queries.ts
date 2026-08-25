@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
+import { resolveEthRpcUrl } from '@stackr/services';
 
 function getPublicClient() {
-  const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+  // Same-origin proxy in the browser (where these queries run), public RPC
+  // otherwise — the Alchemy key never reaches the client. See `resolveEthRpcUrl`.
   return createPublicClient({
     chain: mainnet,
-    transport: alchemyKey ? http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`) : http(),
+    transport: http(resolveEthRpcUrl()),
   });
 }
 

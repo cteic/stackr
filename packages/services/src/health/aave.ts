@@ -1,8 +1,10 @@
 import { createPublicClient, getAddress, http, maxUint256, type PublicClient } from 'viem';
+import { assertValidAddress } from '../address-guard.js';
 import { mainnet } from 'viem/chains';
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
 import { HealthPositionSchema } from '@stackr/models';
 import type { HealthAdapter } from '../ports.js';
+import { resolveEthRpcUrl } from '../eth-rpc.js';
 import { parseOrThrow } from '../validate.js';
 import { formatBaseUnits } from '../base-units.js';
 
@@ -58,16 +60,16 @@ const poolAbi = [
 export type AaveAccountData = readonly [bigint, bigint, bigint, bigint, bigint, bigint];
 
 /**
- * viem public client on mainnet. Uses the Alchemy RPC when
- * `NEXT_PUBLIC_ALCHEMY_API_KEY` is set, otherwise a public RPC — the same
- * optional-key / public-fallback pattern as `apps/web/src/lib/wagmi-config.ts`.
- * Without the key the read still works but may be slower / rate-limited.
+ * viem public client on mainnet. Targets the same-origin proxy in the browser
+ * (where this read runs inside its React Query `queryFn`), so the Alchemy key
+ * stays server-side; in SSR/tests it falls back to the public RPC. See
+ * `resolveEthRpcUrl`. Without a key the read still works but may be slower /
+ * rate-limited.
  */
 function getClient(): PublicClient {
-  const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
   return createPublicClient({
     chain: mainnet,
-    transport: alchemyKey ? http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`) : http(),
+    transport: http(resolveEthRpcUrl()),
   });
 }
 
@@ -144,6 +146,7 @@ export async function fetchAavePosition(
   address: string,
   read: (address: string) => Promise<AaveAccountData> = readUserAccountData,
 ): Promise<HealthPosition | null> {
+  assertValidAddress('eth', address);
   return normalizeAaveAccountData(address, await read(address));
 }
 

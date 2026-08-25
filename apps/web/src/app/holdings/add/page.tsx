@@ -2,23 +2,47 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CurrencySchema, currencyMeta, ChainSchema, chainMeta } from '@stackr/models';
-import type { Currency, Chain } from '@stackr/models';
+import {
+  CurrencySchema,
+  currencyMeta,
+  ChainSchema,
+  chainMeta,
+  GoldUnitSchema,
+  goldUnitMeta,
+  AssetCategorySchema,
+  assetCategoryMeta,
+} from '@stackr/models';
+import type { Currency, Chain, GoldUnit, AssetCategory } from '@stackr/models';
 import { useStockSearch } from '@stackr/queries';
-import { Button, Input, Card, Tabs, TabsList, TabsTrigger, TabsContent } from '@stackr/ui';
+import {
+  Button,
+  Input,
+  Card,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@stackr/ui';
 import { useHoldingsStore } from '@/lib/holdings-store';
-import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
 const chains = ChainSchema.options;
+const goldUnits = GoldUnitSchema.options;
+const assetCategories = AssetCategorySchema.options;
 
 export default function AddHoldingPage() {
   const router = useRouter();
   const addCashHolding = useHoldingsStore(s => s.addCashHolding);
   const addStockHolding = useHoldingsStore(s => s.addStockHolding);
   const addCryptoHolding = useHoldingsStore(s => s.addCryptoHolding);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
+  const addGoldHolding = useHoldingsStore(s => s.addGoldHolding);
+  const addAssetHolding = useHoldingsStore(s => s.addAssetHolding);
 
   // Cash form state
   const [cashLabel, setCashLabel] = useState('');
@@ -37,7 +61,19 @@ export default function AddHoldingPage() {
   const [cryptoQuantity, setCryptoQuantity] = useState('');
   const [cryptoLabel, setCryptoLabel] = useState('');
 
-  const { data: searchResults } = useStockSearch(stockQuery, alphaVantageApiKey);
+  // Gold form state
+  const [goldQuantity, setGoldQuantity] = useState('');
+  const [goldUnit, setGoldUnit] = useState<GoldUnit>('oz');
+  const [goldLabel, setGoldLabel] = useState('');
+
+  // Asset form state
+  const [assetName, setAssetName] = useState('');
+  const [assetCategory, setAssetCategory] = useState<AssetCategory>('property');
+  const [assetValue, setAssetValue] = useState('');
+  const [assetCurrency, setAssetCurrency] = useState<Currency>('usd');
+  const [assetNotes, setAssetNotes] = useState('');
+
+  const { data: searchResults } = useStockSearch(stockQuery);
 
   const handleCashSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,10 +111,36 @@ export default function AddHoldingPage() {
     router.push('/holdings');
   };
 
+  const handleGoldSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const quantity = parseFloat(goldQuantity);
+    if (!(quantity > 0)) return;
+    addGoldHolding({
+      quantity,
+      unit: goldUnit,
+      label: goldLabel.trim() || undefined,
+    });
+    router.push('/holdings');
+  };
+
+  const handleAssetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = parseFloat(assetValue);
+    if (!assetName.trim() || !(value > 0)) return;
+    addAssetHolding({
+      name: assetName.trim(),
+      category: assetCategory,
+      value,
+      currency: assetCurrency,
+      notes: assetNotes.trim() || undefined,
+    });
+    router.push('/holdings');
+  };
+
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Add Holding</h1>
 
         <Tabs defaultValue="cash">
@@ -91,6 +153,12 @@ export default function AddHoldingPage() {
             </TabsTrigger>
             <TabsTrigger value="crypto" className="flex-1">
               Crypto
+            </TabsTrigger>
+            <TabsTrigger value="gold" className="flex-1">
+              Gold
+            </TabsTrigger>
+            <TabsTrigger value="asset" className="flex-1">
+              Asset
             </TabsTrigger>
           </TabsList>
 
@@ -121,18 +189,21 @@ export default function AddHoldingPage() {
                   >
                     Currency
                   </label>
-                  <select
-                    id="cash-currency"
+                  <Select
                     value={cashCurrency}
-                    onChange={e => setCashCurrency(e.target.value as Currency)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setCashCurrency(value as Currency)}
                   >
-                    {currencies.map(c => (
-                      <option key={c} value={c}>
-                        {currencyMeta[c].symbol} {currencyMeta[c].name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="cash-currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {currencyMeta[c].symbol} {currencyMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Interest Rate (APY %)"
@@ -153,78 +224,67 @@ export default function AddHoldingPage() {
 
           <TabsContent value="stock">
             <Card className="p-4 mt-4">
-              {!alphaVantageApiKey ? (
-                <div className="text-sm text-muted-foreground text-center py-4">
-                  <p className="mb-2">An Alpha Vantage API key is required for stock search.</p>
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/settings">Go to Settings</a>
-                  </Button>
+              <form onSubmit={handleStockSubmit} className="flex flex-col gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-muted-foreground">Search Stock</label>
+                  <Input
+                    value={stockQuery}
+                    onChange={e => {
+                      setStockQuery(e.target.value);
+                      setSelectedStock(null);
+                    }}
+                    placeholder="Search by symbol or name..."
+                  />
+                  {searchResults && searchResults.length > 0 && !selectedStock && (
+                    <div className="border rounded-md max-h-48 overflow-auto">
+                      {searchResults.map(r => (
+                        <button
+                          key={r.symbol}
+                          type="button"
+                          onClick={() => {
+                            setSelectedStock({ symbol: r.symbol, name: r.name });
+                            setStockQuery(r.symbol);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        >
+                          <span>
+                            <span className="font-mono font-semibold">{r.symbol}</span>
+                            <span className="ml-2 text-muted-foreground">{r.name}</span>
+                          </span>
+                          <span className="text-xs text-muted-foreground">{r.region}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {selectedStock && (
+                    <div className="text-sm text-success">
+                      Selected: {selectedStock.symbol} — {selectedStock.name}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <form onSubmit={handleStockSubmit} className="flex flex-col gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Search Stock
-                    </label>
-                    <Input
-                      value={stockQuery}
-                      onChange={e => {
-                        setStockQuery(e.target.value);
-                        setSelectedStock(null);
-                      }}
-                      placeholder="Search by symbol or name..."
-                    />
-                    {searchResults && searchResults.length > 0 && !selectedStock && (
-                      <div className="border rounded-md max-h-48 overflow-auto">
-                        {searchResults.map(r => (
-                          <button
-                            key={r.symbol}
-                            type="button"
-                            onClick={() => {
-                              setSelectedStock({ symbol: r.symbol, name: r.name });
-                              setStockQuery(r.symbol);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center justify-between"
-                          >
-                            <span>
-                              <span className="font-mono font-semibold">{r.symbol}</span>
-                              <span className="ml-2 text-muted-foreground">{r.name}</span>
-                            </span>
-                            <span className="text-xs text-muted-foreground">{r.region}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {selectedStock && (
-                      <div className="text-sm text-success">
-                        Selected: {selectedStock.symbol} — {selectedStock.name}
-                      </div>
-                    )}
-                  </div>
-                  <Input
-                    label="Number of Shares"
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={shares}
-                    onChange={e => setShares(e.target.value)}
-                    placeholder="100"
-                    required
-                  />
-                  <Input
-                    label="Average Cost Basis (optional)"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={costBasis}
-                    onChange={e => setCostBasis(e.target.value)}
-                    placeholder="150.00"
-                  />
-                  <Button type="submit" className="mt-2" disabled={!selectedStock}>
-                    Add Stock Holding
-                  </Button>
-                </form>
-              )}
+                <Input
+                  label="Number of Shares"
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={shares}
+                  onChange={e => setShares(e.target.value)}
+                  placeholder="100"
+                  required
+                />
+                <Input
+                  label="Average Cost Basis (optional)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={costBasis}
+                  onChange={e => setCostBasis(e.target.value)}
+                  placeholder="150.00"
+                />
+                <Button type="submit" className="mt-2" disabled={!selectedStock}>
+                  Add Stock Holding
+                </Button>
+              </form>
             </Card>
           </TabsContent>
 
@@ -238,18 +298,21 @@ export default function AddHoldingPage() {
                   >
                     Chain
                   </label>
-                  <select
-                    id="crypto-chain"
+                  <Select
                     value={cryptoChain}
-                    onChange={e => setCryptoChain(ChainSchema.parse(e.target.value))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onValueChange={value => setCryptoChain(ChainSchema.parse(value))}
                   >
-                    {chains.map(c => (
-                      <option key={c} value={c}>
-                        {chainMeta[c].name} ({chainMeta[c].symbol})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="crypto-chain">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chains.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {chainMeta[c].name} ({chainMeta[c].symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Input
                   label="Quantity"
@@ -269,6 +332,141 @@ export default function AddHoldingPage() {
                 />
                 <Button type="submit" className="mt-2" disabled={!(parseFloat(cryptoQuantity) > 0)}>
                   Add Crypto Holding
+                </Button>
+              </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gold">
+            <Card className="p-4 mt-4">
+              <form onSubmit={handleGoldSubmit} className="flex flex-col gap-4">
+                <Input
+                  label="Weight"
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={goldQuantity}
+                  onChange={e => setGoldQuantity(e.target.value)}
+                  placeholder={goldUnit === 'oz' ? '2.5' : '100'}
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label htmlFor="gold-unit" className="text-sm font-medium text-muted-foreground">
+                    Unit
+                  </label>
+                  <Select
+                    value={goldUnit}
+                    onValueChange={value => setGoldUnit(GoldUnitSchema.parse(value))}
+                  >
+                    <SelectTrigger id="gold-unit">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {goldUnits.map(u => (
+                        <SelectItem key={u} value={u}>
+                          {goldUnitMeta[u].name} ({goldUnitMeta[u].abbrev})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  label="Label (optional)"
+                  value={goldLabel}
+                  onChange={e => setGoldLabel(e.target.value)}
+                  placeholder="e.g. Krugerrand coins"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Valued at spot gold (via PAX Gold) in your display currency.
+                </p>
+                <Button type="submit" className="mt-2" disabled={!(parseFloat(goldQuantity) > 0)}>
+                  Add Gold Holding
+                </Button>
+              </form>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="asset">
+            <Card className="p-4 mt-4">
+              <form onSubmit={handleAssetSubmit} className="flex flex-col gap-4">
+                <Input
+                  label="Name"
+                  value={assetName}
+                  onChange={e => setAssetName(e.target.value)}
+                  placeholder="e.g. Apartment"
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="asset-category"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Category
+                  </label>
+                  <Select
+                    value={assetCategory}
+                    onValueChange={value => setAssetCategory(AssetCategorySchema.parse(value))}
+                  >
+                    <SelectTrigger id="asset-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assetCategories.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {assetCategoryMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  label="Current Value"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={assetValue}
+                  onChange={e => setAssetValue(e.target.value)}
+                  placeholder="350000.00"
+                  required
+                />
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="asset-currency"
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    Currency
+                  </label>
+                  <Select
+                    value={assetCurrency}
+                    onValueChange={value => setAssetCurrency(CurrencySchema.parse(value))}
+                  >
+                    <SelectTrigger id="asset-currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map(c => (
+                        <SelectItem key={c} value={c}>
+                          {currencyMeta[c].symbol} {currencyMeta[c].name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input
+                  label="Notes (optional)"
+                  value={assetNotes}
+                  onChange={e => setAssetNotes(e.target.value)}
+                  placeholder="e.g. Last valued at purchase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Self-valued — there is no price feed, so update the value whenever it changes.
+                </p>
+                <Button
+                  type="submit"
+                  className="mt-2"
+                  disabled={!assetName.trim() || !(parseFloat(assetValue) > 0)}
+                >
+                  Add Asset
                 </Button>
               </form>
             </Card>

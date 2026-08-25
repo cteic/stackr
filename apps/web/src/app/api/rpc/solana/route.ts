@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { checkProxyRateLimit } from '../../proxy-limit';
 
 /**
  * Same-origin JSON-RPC proxy for Solana.
@@ -58,25 +59,6 @@ const ALLOWED_METHODS = new Set([
   'isBlockhashValid',
 ]);
 
-// Best-effort sliding-window rate limit. Worker isolates each hold their own
-// map, so this is a per-isolate ceiling rather than a global guarantee — a
-// durable KV/DO-backed limit is the follow-up tracked in the hardening backlog.
-const RATE_LIMIT_PER_MINUTE = 120;
-const rateWindow = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string, now: number): boolean {
-  const entry = rateWindow.get(ip);
-  if (!entry || entry.resetAt <= now) {
-    if (rateWindow.size > 10_000) {
-      rateWindow.clear();
-    }
-    rateWindow.set(ip, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > RATE_LIMIT_PER_MINUTE;
-}
-
 function collectMethods(parsed: unknown): string[] | null {
   const calls: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
   if (calls.length === 0 || calls.length > MAX_BATCH_SIZE) {
@@ -99,7 +81,11 @@ function collectMethods(parsed: unknown): string[] | null {
 function rpcError(status: number, code: number, message: string): Response {
   return Response.json(
     { jsonrpc: '2.0', id: null, error: { code, message } },
-    { status, headers: { 'Content-Type': 'application/json' } },
+    {
+      status,
+      // `no-store`: error bodies can reflect request shape; never cache them.
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    },
   );
 }
 
@@ -122,19 +108,23 @@ async function resolveHeliusApiKey(): Promise<string | undefined> {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  // Same-origin restriction: browsers send Origin on cross-origin (and all
-  // CORS) requests; a mismatch means another site is using us as a free relay.
+  // Same-origin restriction. A cross-origin Origin header is rejected, and we
+  // require Sec-Fetch-Site to positively assert `same-origin`. Legitimate
+  // first-party browser fetches always send it, and the app's own consumers
+  // only reach this route from the browser — server-side/SSR callers target the
+  // public RPC directly and never this proxy (see `resolveSolanaEndpoint`). So a
+  // request that doesn't carry that label — including one that omits the header
+  // entirely — is not first-party and is refused.
   const origin = request.headers.get('origin');
   if (origin !== null && origin !== new URL(request.url).origin) {
     return rpcError(403, -32000, 'cross-origin requests are not allowed');
   }
-  const fetchSite = request.headers.get('sec-fetch-site');
-  if (fetchSite !== null && fetchSite !== 'same-origin' && fetchSite !== 'none') {
+  if (request.headers.get('sec-fetch-site') !== 'same-origin') {
     return rpcError(403, -32000, 'cross-origin requests are not allowed');
   }
 
-  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-  if (isRateLimited(ip, Date.now())) {
+  // Per-client rate limit: in-isolate window + fleet limiter (proxy-limit.ts).
+  if ((await checkProxyRateLimit(request, 'solana')) !== 'allowed') {
     return rpcError(429, -32000, 'rate limit exceeded');
   }
 
@@ -160,7 +150,9 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const apiKey = await resolveHeliusApiKey();
-  const upstream = apiKey ? `${HELIUS_RPC}/?api-key=${apiKey}` : SOLANA_PUBLIC_RPC;
+  const upstream = apiKey
+    ? `${HELIUS_RPC}/?api-key=${encodeURIComponent(apiKey)}`
+    : SOLANA_PUBLIC_RPC;
 
   let upstreamRes: Response;
   try {
@@ -186,6 +178,9 @@ export async function POST(request: Request): Promise<Response> {
     status: upstreamRes.status,
     headers: {
       'Content-Type': 'application/json',
+      // Responses carry wallet/account data — never let a shared cache hold them.
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
       // Signal which upstream served the request, WITHOUT leaking the key. Lets
       // the client (or a future health check) observe whether the proxy is
       // key-backed; `absent` means we fell back to the public cluster.

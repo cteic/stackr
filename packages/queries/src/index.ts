@@ -14,6 +14,14 @@ export {
   type HealthAddressesByChain,
   type HealthQueryPair,
 } from './use-health-positions.js';
+export {
+  useNftHoldings,
+  nftQueryPairs,
+  mergeNftAssets,
+  type UseNftHoldingsResult,
+  type NftAddressesByChain,
+  type NftQueryPair,
+} from './use-nft-holdings.js';
 export { useStockSearch } from './use-stock-search.js';
 export { useStockQuotes } from './use-stock-quotes.js';
 export { useStockPriceHistory } from './use-stock-price-history.js';

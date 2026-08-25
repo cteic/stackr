@@ -2,18 +2,17 @@
 
 import Link from 'next/link';
 import type { Wallet, Balance, Price, Currency } from '@stackr/models';
-import { chainMeta } from '@stackr/models';
-import { formatFiat, formatChange } from '@stackr/services';
+import { createPortfolioRowView } from '@stackr/features';
 import { ChainAvatar, ItemLayout, Skeleton, Badge } from '@stackr/ui';
 import { Sparkline } from '@stackr/charts/react';
 import { useEnsName } from '@/lib/ens-queries';
-import { maskFiat } from '@/lib/mask-fiat';
 import { walletHref } from '@/lib/wallet-href';
 
 interface WalletCardProps {
   wallet: Wallet;
   balance?: Balance;
   isLoading?: boolean;
+  isError?: boolean;
   price?: Price;
   sparklineData?: number[];
   currency?: Currency;
@@ -25,20 +24,23 @@ export function WalletCard({
   wallet,
   balance,
   isLoading,
+  isError = false,
   price,
   sparklineData,
   currency = 'usd',
   connected = false,
   hideBalance = false,
 }: WalletCardProps) {
-  const meta = chainMeta[wallet.chain];
-  const truncatedAddress = `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`;
+  const view = createPortfolioRowView({
+    wallet,
+    balance,
+    price,
+    settings: { currency, hideBalance },
+  });
 
   const { data: ensName } = useEnsName(
     wallet.chain === 'eth' ? (wallet.address as `0x${string}`) : undefined,
   );
-
-  const fiatValue = balance && price ? parseFloat(balance.balance) * price.fiatPrice : undefined;
 
   return (
     <Link
@@ -50,30 +52,25 @@ export function WalletCard({
         <ItemLayout
           titleLeft={
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold text-foreground">{wallet.label}</span>
-              {connected && (
-                <Badge variant="info" className="px-1.5 py-0 text-[10px]">
-                  Connected
-                </Badge>
-              )}
+              <span className="text-sm font-semibold text-foreground">{view.title}</span>
+              {connected && <Badge variant="info">Connected</Badge>}
             </div>
           }
           captionLeft={
             <span className="text-xs text-muted-foreground">
-              {meta.name} &middot; <span className="font-mono">{ensName ?? truncatedAddress}</span>
+              {view.chainName} &middot;{' '}
+              <span className="font-mono">{ensName ?? view.truncatedAddress}</span>
             </span>
           }
           titleRight={
             isLoading ? (
               <Skeleton width={80} height="1.25em" />
-            ) : balance ? (
+            ) : view.symbolText !== null ? (
               <div className="flex items-center gap-2">
                 {sparklineData && sparklineData.length >= 2 && (
                   <Sparkline data={sparklineData} width={60} height={20} strokeWidth={1} />
                 )}
-                <span className="font-mono text-sm text-foreground">
-                  {balance.balance} {meta.symbol}
-                </span>
+                <span className="font-mono text-sm text-foreground">{view.symbolText}</span>
               </div>
             ) : (
               <span className="text-sm text-muted-foreground">&mdash;</span>
@@ -82,17 +79,21 @@ export function WalletCard({
           captionRight={
             isLoading ? (
               <Skeleton width={60} height="0.875em" />
-            ) : fiatValue !== undefined ? (
+            ) : view.fiatText !== null ? (
               <span className="text-xs text-muted-foreground">
-                {maskFiat(formatFiat(fiatValue, currency), hideBalance)}
-                {price && (
+                {view.fiatText}
+                {view.changeText !== null && (
                   <span
-                    className={`ml-1 ${price.change24h >= 0 ? 'text-success' : 'text-destructive'}`}
+                    className={`ml-1 ${
+                      view.changeDirection === 'positive' ? 'text-success' : 'text-destructive'
+                    }`}
                   >
-                    {formatChange(price.change24h)}
+                    {view.changeText}
                   </span>
                 )}
               </span>
+            ) : isError ? (
+              <span className="text-xs text-muted-foreground">Couldn&apos;t load</span>
             ) : undefined
           }
         />

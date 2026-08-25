@@ -20,27 +20,132 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "turbo run test:e2e --filter=@stackr/web",
     "clean": "turbo run clean && rm -rf node_modules",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e:mobile": "maestro test apps/mobile/.maestro"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@stackr/eslint-config": "workspace:*",
     "@stackr/prettier-config": "workspace:*",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^3.2.6",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.2",
     "turbo": "^2.3.3",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.6"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,yml,yaml,css}": [
+    "*.{json,yml,yaml,css}": [
+      "prettier --write"
+    ],
+    "!(AGENTS).md": [
       "prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "shell-quote": ">=1.9.0",
+      "node-forge": ">=1.4.0",
+      "flatted": ">=3.4.2",
+      "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
+      "ws@>=8.0.0 <8.21.0": "8.21.0",
+      "ws@>=7.0.0 <7.5.11": "7.5.11",
+      "ws@>=6.0.0 <6.2.4": "6.2.4",
+      "form-data@>=4.0.0 <4.0.6": "4.0.6",
+      "hono@<4.12.25": ">=4.12.25",
+      "tar": ">=7.5.19",
+      "@xmldom/xmldom": ">=0.8.13",
+      "fast-uri": ">=4.1.2",
+      "brace-expansion@1.1.12": "1.1.18",
+      "brace-expansion@2.0.2": "2.1.4",
+      "brace-expansion@5.0.4": "5.0.9",
+      "postcss": ">=8.5.18",
+      "axios": ">=1.18.0",
+      "js-yaml": ">=4.3.0 <5.0.0",
+      "sharp": ">=0.35.0",
+      "socket.io-parser": ">=4.2.7",
+      "nanoid": ">=3.3.18"
+    },
+    "auditConfig": {
+      "//": "Baseline allowlist for the CI `pnpm audit --prod --audit-level high` gate. Each entry is a high/critical advisory with NO fix reachable from our direct deps without a major/minor upgrade (deferred to per-package PRs under #69). The gate fails the build on any NEW high/critical so the baseline can't grow silently. Burn this list down as upgrades land; never add to it to silence a fixable advisory.",
+      "ignoreGhsas": [
+        "GHSA-fv7c-fp4j-7gwp",
+        "GHSA-25h7-pfq9-p65f",
+        "GHSA-rf6f-7fwh-wjgh",
+        "GHSA-2328-f5f3-gj25",
+        "GHSA-q67f-28xg-22rw",
+        "GHSA-5m6q-g25r-mvwx",
+        "GHSA-ppp5-5v6c-4jwp",
+        "GHSA-c2c7-rcm5-vvqj",
+        "GHSA-w7jw-789q-3m8p",
+        "GHSA-q4gf-8mx6-v5v3",
+        "GHSA-8h8q-6873-q5fj",
+        "GHSA-26hh-7cqf-hhc6",
+        "GHSA-mg66-mrh9-m8jx",
+        "GHSA-c4j6-fc7j-m34r",
+        "GHSA-492v-c6pp-mqqv",
+        "GHSA-267c-6grr-h53f",
+        "GHSA-36qx-fr4f-26g5",
+        "GHSA-w3rx-r6r6-pgpr",
+        "GHSA-5p2g-fcmc-qvqq"
+      ]
+    },
+    "packageExtensions": {
+      "next": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      },
+      "next-themes": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      },
+      "tamagui": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      },
+      "@tamagui/core": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      },
+      "@tamagui/web": {
+        "peerDependencies": {
+          "@types/react": "*"
+        },
+        "peerDependenciesMeta": {
+          "@types/react": {
+            "optional": true
+          }
+        }
+      }
+    }
   }
 }

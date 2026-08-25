@@ -23,6 +23,7 @@ import {
   CopyButton,
   Skeleton,
 } from '@stackr/ui';
+import { validateAddress } from '@stackr/models';
 import { useWalletStore } from '@/lib/wallet-store';
 import { useSettingsStore } from '@/lib/settings-store';
 import { Header } from '@/components/header';
@@ -31,7 +32,7 @@ import { useActivityState, useTrackWallet } from '@/lib/controllers/activity-con
 
 // Shared wallet-detail UI, rendered both by the server route
 // `/wallet/[chain]/[address]` (web) and the static query-param route
-// `/wallet/view` (Capacitor). Chain/address arrive as plain strings from
+// Chain/address arrive as plain strings from
 // whichever resolution the active build target uses.
 export function WalletDetailView({
   chain: chainParam,
@@ -43,6 +44,7 @@ export function WalletDetailView({
   const router = useRouter();
   const chainResult = ChainSchema.safeParse(chainParam);
   const chain: Chain = chainResult.success ? chainResult.data : 'btc';
+  const addressResult = chainResult.success ? validateAddress(chain, address) : null;
   const meta = chainMeta[chain];
 
   // Coarse, PII-free event: only the chain slug is recorded, never the
@@ -56,15 +58,8 @@ export function WalletDetailView({
   );
   const removeWallet = useWalletStore(s => s.removeWallet);
   const updateLabel = useWalletStore(s => s.updateLabel);
-  const etherscanApiKey = useSettingsStore(s => s.etherscanApiKey);
   const currency = useSettingsStore(s => s.currency);
-  const {
-    data: balance,
-    isLoading,
-    error,
-  } = useBalance(chain, address, {
-    ethApiKey: etherscanApiKey || undefined,
-  });
+  const { data: balance, isLoading, error } = useBalance(chain, address);
   const { data: prices } = usePrices([chain], currency);
   const price = prices?.[0];
   const fiatValue = balance && price ? parseFloat(balance.balance) * price.fiatPrice : undefined;
@@ -99,11 +94,25 @@ export function WalletDetailView({
     );
   }
 
+  if (addressResult && !addressResult.valid) {
+    return (
+      <>
+        <Header />
+        <main className="mx-auto max-w-3xl px-4 py-6 text-center">
+          <p className="text-destructive">Invalid address: {addressResult.error}</p>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <Link href="/" className="text-sm font-semibold text-primary">
+        <Link
+          href="/"
+          className="rounded-sm text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           &larr; Back to Portfolio
         </Link>
 

@@ -44,6 +44,7 @@
   --color-chain-eth: #627eea;
   --color-chain-stx: #5546ff;
   --color-chain-sol: #9945ff;
+  --color-chain-sui: #4da2ff;
 
   --radius-sm: 0;
   --radius-md: 0;
@@ -80,6 +81,7 @@
   --color-chain-eth: #849eff;
   --color-chain-stx: #7f80ff;
   --color-chain-sol: #b97cff;
+  --color-chain-sui: #4da2ff;
 }
 
 /* A — Terminal: pure-black, monospace, green/red signal, sharp edges */
@@ -88,7 +90,7 @@
   --color-foreground: #e8e8e8;
   --color-card: #060606;
   --color-card-foreground: #e8e8e8;
-  --color-popover: #0a0a0a;
+  --color-popover: #151515;
   --color-popover-foreground: #e8e8e8;
   --color-primary: #00d68f;
   --color-primary-foreground: #000000;
@@ -202,7 +204,7 @@
   --color-foreground: #ece7db;
   --color-card: #0c0e11;
   --color-card-foreground: #ece7db;
-  --color-popover: #0e1014;
+  --color-popover: #16181d;
   --color-popover-foreground: #ece7db;
   --color-primary: #e3b23c;
   --color-primary-foreground: #1a1505;

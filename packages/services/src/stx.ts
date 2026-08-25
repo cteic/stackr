@@ -1,11 +1,11 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
-
-const HIRO_API = 'https://api.hiro.so';
+import { resolveHiroBase } from './hiro-config.js';
 
 /**
  * Ingress schema for Hiro's STX balance endpoint. The micro-STX balance is a
@@ -16,7 +16,10 @@ const HiroStxBalanceSchema = z.object({
 });
 
 export async function fetchStxBalance(address: string): Promise<Balance> {
-  const res = await fetch(`${HIRO_API}/extended/v1/address/${address}/stx`);
+  assertValidAddress('stx', address);
+  const res = await fetch(
+    `${resolveHiroBase()}/extended/v1/address/${encodeURIComponent(address)}/stx`,
+  );
 
   if (!res.ok) {
     throw new Error(`Failed to fetch STX balance: ${res.status} ${res.statusText}`);
@@ -63,7 +66,9 @@ const HiroBnsNamesSchema = z.object({
  * no BNS names or the Hiro endpoint errors out.
  */
 export async function lookupStacksBnsName(address: string): Promise<string | null> {
-  const res = await fetch(`${HIRO_API}/v1/addresses/stacks/${address}`);
+  const res = await fetch(
+    `${resolveHiroBase()}/v1/addresses/stacks/${encodeURIComponent(address)}`,
+  );
   if (!res.ok) return null;
   // This lookup is best-effort UI sugar, so a malformed payload degrades to
   // `null` rather than throwing and breaking the surrounding render.

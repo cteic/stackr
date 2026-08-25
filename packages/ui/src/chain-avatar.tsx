@@ -10,20 +10,27 @@ export interface ChainAvatarProps extends Omit<SVGAttributes<SVGSVGElement>, 'ch
   size?: AvatarSize;
 }
 
-const chainColors: Record<ChainType, string> = {
-  btc: '#F7931A',
-  stx: '#5546FF',
-  eth: '#627EEA',
-  sol: '#9945FF',
-  sui: '#4DA2FF',
+// Sourced from the `--color-chain-*` design tokens (globals.css) rather than
+// duplicated here, so avatars pick up the same brand colour every consumer
+// of the token already renders with (e.g. the 404/500 logo mark) instead of
+// silently drifting from it.
+const chainColorVars: Record<ChainType, string> = {
+  btc: 'var(--color-chain-btc)',
+  stx: 'var(--color-chain-stx)',
+  eth: 'var(--color-chain-eth)',
+  sol: 'var(--color-chain-sol)',
+  sui: 'var(--color-chain-sui)',
 };
 
+// Full tickers, not initials: BTC/STX/SOL/SUI all start with the same
+// letter-ish sound, so a single-character label left Solana, Stacks, and Sui
+// visually identical. Every ticker here happens to be three characters.
 const chainLabels: Record<ChainType, string> = {
-  btc: 'B',
-  stx: 'S',
-  eth: 'E',
-  sol: 'S',
-  sui: 'S',
+  btc: 'BTC',
+  stx: 'STX',
+  eth: 'ETH',
+  sol: 'SOL',
+  sui: 'SUI',
 };
 
 const sizeMap: Record<AvatarSize, number> = {
@@ -35,7 +42,7 @@ const sizeMap: Record<AvatarSize, number> = {
 export const ChainAvatar = forwardRef<SVGSVGElement, ChainAvatarProps>(
   ({ chain, size = 'md', className, ...props }, ref) => {
     const px = sizeMap[size];
-    const color = chainColors[chain];
+    const color = chainColorVars[chain];
     const label = chainLabels[chain];
 
     return (
@@ -55,9 +62,10 @@ export const ChainAvatar = forwardRef<SVGSVGElement, ChainAvatarProps>(
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          fontFamily="system-ui, sans-serif"
+          fontFamily="ui-monospace, 'IBM Plex Mono', monospace"
           fontWeight="700"
-          fontSize="16"
+          fontSize="11"
+          letterSpacing="-0.3"
         >
           {label}
         </text>

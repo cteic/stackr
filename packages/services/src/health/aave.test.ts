@@ -27,7 +27,7 @@ function accountData(overrides: {
 describe('normalizeAaveAccountData', () => {
   it('normalizes a borrowing position (USD 8-dec, bps, 1e18 HF)', () => {
     const position = normalizeAaveAccountData(
-      '0xabc',
+      '0x00000000219ab540356cBB839Cbe05303d7705Fa',
       accountData({
         collateralBase: 10_000n * 10n ** 8n, // $10,000
         debtBase: 4_000n * 10n ** 8n, // $4,000
@@ -41,7 +41,7 @@ describe('normalizeAaveAccountData', () => {
     expect(position).toMatchObject({
       chain: 'eth',
       protocol: 'aave-v3',
-      address: '0xabc',
+      address: '0x00000000219ab540356cBB839Cbe05303d7705Fa',
       collateralValueUsd: 10_000,
       debtValueUsd: 4_000,
       oracle: 'aave-oracle',
@@ -53,7 +53,7 @@ describe('normalizeAaveAccountData', () => {
 
   it('maps a 1e18 health factor (HF 1.0) to risk exactly 1 (liquidatable boundary)', () => {
     const position = normalizeAaveAccountData(
-      '0xabc',
+      '0x00000000219ab540356cBB839Cbe05303d7705Fa',
       accountData({
         collateralBase: 1_000n * 10n ** 8n,
         debtBase: 800n * 10n ** 8n,
@@ -69,7 +69,7 @@ describe('normalizeAaveAccountData', () => {
 
   it('maps a MaxUint256 health factor (no debt) to risk 0 with HF omitted', () => {
     const position = normalizeAaveAccountData(
-      '0xabc',
+      '0x00000000219ab540356cBB839Cbe05303d7705Fa',
       accountData({
         collateralBase: 5_000n * 10n ** 8n, // supply-only: collateral but no debt
         debtBase: 0n,
@@ -86,7 +86,10 @@ describe('normalizeAaveAccountData', () => {
   });
 
   it('returns null when the account has no collateral and no debt', () => {
-    const position = normalizeAaveAccountData('0xabc', accountData({}));
+    const position = normalizeAaveAccountData(
+      '0x00000000219ab540356cBB839Cbe05303d7705Fa',
+      accountData({}),
+    );
     expect(position).toBeNull();
   });
 });
@@ -104,9 +107,9 @@ describe('fetchAavePosition', () => {
         }),
     );
 
-    const position = await fetchAavePosition('0xabc', read);
+    const position = await fetchAavePosition('0x00000000219ab540356cBB839Cbe05303d7705Fa', read);
 
-    expect(read).toHaveBeenCalledWith('0xabc');
+    expect(read).toHaveBeenCalledWith('0x00000000219ab540356cBB839Cbe05303d7705Fa');
     expect(position?.liquidationRisk).toBe(0.5); // 1 / 2.0
     expect(position?.collateralValueUsd).toBe(2_000);
   });

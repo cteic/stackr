@@ -10,7 +10,26 @@ vi.mock('@opennextjs/cloudflare', () => ({
 
 const { POST } = await import('./route');
 
+// A legitimate first-party browser fetch carries `sec-fetch-site: same-origin`
+// and, behind Cloudflare, a resolved `cf-connecting-ip`. Default both so the
+// happy-path cases model a real request; individual tests override as needed.
 function rpcRequest(body: unknown, headers: Record<string, string> = {}): Request {
+  return new Request('https://stackr.ie/api/rpc/solana', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'sec-fetch-site': 'same-origin',
+      'cf-connecting-ip': '203.0.113.10',
+      ...headers,
+    },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  });
+}
+
+// Build a request without the default provenance/IP headers, to exercise the
+// header-less paths. Any header passed here is the only one set (besides
+// content-type).
+function rawRpcRequest(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request('https://stackr.ie/api/rpc/solana', {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
@@ -75,6 +94,56 @@ describe('POST /api/rpc/solana', () => {
     const res = await POST(rpcRequest(getBalanceCall, { origin: 'https://stackr.ie' }));
 
     expect(res.status).toBe(200);
+  });
+
+  it('rejects requests that omit Sec-Fetch-Site', async () => {
+    const res = await POST(rawRpcRequest(getBalanceCall, { 'cf-connecting-ip': '203.0.113.10' }));
+
+    expect(res.status).toBe(403);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('sets Cache-Control: no-store on success responses', async () => {
+    const res = await POST(rpcRequest(getBalanceCall));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+
+  it('sets Cache-Control: no-store on error responses', async () => {
+    const res = await POST(rpcRequest(getBalanceCall, { origin: 'https://evil.example' }));
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+
+  it('fails closed when no client IP can be resolved', async () => {
+    const res = await POST(rawRpcRequest(getBalanceCall, { 'sec-fetch-site': 'same-origin' }));
+
+    expect(res.status).toBe(429);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('keys the rate limit off the forwarded-for chain when cf-connecting-ip is absent', async () => {
+    const res = await POST(
+      rawRpcRequest(getBalanceCall, {
+        'sec-fetch-site': 'same-origin',
+        'x-forwarded-for': '198.51.100.4, 70.41.3.18',
+      }),
+    );
+
+    expect(res.status).toBe(200);
+  });
+
+  it('never interpolates the api key into the upstream URL unencoded', async () => {
+    const key = 'sk live/with?special&chars';
+    vi.stubEnv('HELIUS_API_KEY', key);
+
+    await POST(rpcRequest(getBalanceCall));
+
+    const upstreamUrl = String(vi.mocked(fetch).mock.calls[0]?.[0]);
+    expect(upstreamUrl).toContain(encodeURIComponent(key));
+    expect(upstreamUrl).not.toContain(key);
   });
 
   it('rejects oversized bodies', async () => {

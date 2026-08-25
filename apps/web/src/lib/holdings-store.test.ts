@@ -1,5 +1,5 @@
 import { describe as feature, it as scenario, expect, beforeEach } from 'vitest';
-import { CryptoHoldingSchema } from '@stackr/models';
+import { AssetHoldingSchema, CryptoHoldingSchema, GoldHoldingSchema } from '@stackr/models';
 import { bdd } from './bdd';
 const { given, when, then, and } = bdd;
 import { useHoldingsStore } from './holdings-store';
@@ -96,6 +96,126 @@ feature('crypto quantity validation', () => {
   });
 });
 
+feature('gold holdings', () => {
+  scenario('a gold position round-trips through the store', () => {
+    when('a troy-ounce position is added with a label', () =>
+      useHoldingsStore.getState().addGoldHolding({ quantity: 2.5, unit: 'oz', label: 'Coins' }),
+    );
+    then('it is stored as a valid gold holding', () => {
+      const [holding, ...rest] = useHoldingsStore.getState().holdings;
+      expect(rest).toHaveLength(0);
+      const parsed = GoldHoldingSchema.parse(holding);
+      expect(parsed.type).toBe('gold');
+      expect(parsed.quantity).toBe(2.5);
+      expect(parsed.unit).toBe('oz');
+      expect(parsed.label).toBe('Coins');
+    });
+  });
+
+  scenario('the label is optional and grams are accepted', () => {
+    when('a gram position is added without a label', () =>
+      useHoldingsStore.getState().addGoldHolding({ quantity: 100, unit: 'g' }),
+    );
+    then('the holding has no label key and keeps its unit', () => {
+      const [holding] = useHoldingsStore.getState().holdings;
+      const parsed = GoldHoldingSchema.parse(holding);
+      expect(parsed.label).toBeUndefined();
+      expect(parsed.unit).toBe('g');
+    });
+  });
+
+  scenario('a non-positive weight is rejected', () => {
+    when('positions with zero and negative weights are added', () => {
+      useHoldingsStore.getState().addGoldHolding({ quantity: 0, unit: 'g' });
+      useHoldingsStore.getState().addGoldHolding({ quantity: -1, unit: 'oz' });
+    });
+    then('nothing is stored', () => {
+      expect(useHoldingsStore.getState().holdings).toHaveLength(0);
+    });
+  });
+});
+
+feature('manual asset holdings', () => {
+  scenario('an asset round-trips through the store', () => {
+    when('a property is added with notes', () =>
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Apartment',
+        category: 'property',
+        value: 350_000,
+        currency: 'eur',
+        notes: 'Purchase price',
+      }),
+    );
+    then('it is stored as a valid asset holding', () => {
+      const [holding, ...rest] = useHoldingsStore.getState().holdings;
+      expect(rest).toHaveLength(0);
+      const parsed = AssetHoldingSchema.parse(holding);
+      expect(parsed.type).toBe('asset');
+      expect(parsed.name).toBe('Apartment');
+      expect(parsed.category).toBe('property');
+      expect(parsed.value).toBe(350_000);
+      expect(parsed.currency).toBe('eur');
+      expect(parsed.notes).toBe('Purchase price');
+    });
+  });
+
+  scenario('notes are optional', () => {
+    when('a vehicle is added without notes', () =>
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Car',
+        category: 'vehicle',
+        value: 12_000,
+        currency: 'usd',
+      }),
+    );
+    then('the holding has no notes key', () => {
+      const [holding] = useHoldingsStore.getState().holdings;
+      expect(AssetHoldingSchema.parse(holding).notes).toBeUndefined();
+    });
+  });
+
+  scenario('a non-positive value is rejected', () => {
+    when('assets with zero and negative values are added', () => {
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Shed',
+        category: 'other',
+        value: 0,
+        currency: 'usd',
+      });
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Shed',
+        category: 'other',
+        value: -5,
+        currency: 'usd',
+      });
+    });
+    then('nothing is stored', () => {
+      expect(useHoldingsStore.getState().holdings).toHaveLength(0);
+    });
+  });
+
+  scenario('a self-valued asset can be re-valued in place', () => {
+    given('a stored property', () =>
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Apartment',
+        category: 'property',
+        value: 350_000,
+        currency: 'eur',
+      }),
+    );
+    when('its value is updated', () => {
+      const { id } = useHoldingsStore.getState().holdings[0];
+      useHoldingsStore.getState().updateHolding(id, { value: 380_000 });
+    });
+    then('the holding keeps its identity and carries the new value', () => {
+      const [holding] = useHoldingsStore.getState().holdings;
+      const parsed = AssetHoldingSchema.parse(holding);
+      expect(parsed.value).toBe(380_000);
+      expect(parsed.name).toBe('Apartment');
+    });
+  });
+});
+
 feature('persisted store migration', () => {
   scenario('a pre-crypto store rehydrates cleanly', async () => {
     const cash = {
@@ -125,6 +245,39 @@ feature('persisted store migration', () => {
       useHoldingsStore.getState().addCryptoHolding({ chain: 'stx', quantity: 100 });
       const types = useHoldingsStore.getState().holdings.map(h => h.type);
       expect(types).toEqual(['cash', 'crypto']);
+    });
+  });
+
+  scenario('a version 1 store rehydrates under the widened union', async () => {
+    const cryptoRecord = {
+      id: crypto.randomUUID(),
+      type: 'crypto',
+      chain: 'btc',
+      quantity: 0.25,
+      createdAt: new Date().toISOString(),
+    };
+    given('a version 1 store holding a crypto position', () =>
+      localStorage.setItem(
+        'stackr-holdings',
+        JSON.stringify({ state: { holdings: [cryptoRecord] }, version: 1 }),
+      ),
+    );
+    when('the store rehydrates under version 2', async () => {
+      await useHoldingsStore.persist.rehydrate();
+    });
+    then('the crypto holding survives', () => {
+      expect(useHoldingsStore.getState().holdings).toHaveLength(1);
+    });
+    and('gold and asset holdings can be added alongside it', () => {
+      useHoldingsStore.getState().addGoldHolding({ quantity: 1, unit: 'oz' });
+      useHoldingsStore.getState().addAssetHolding({
+        name: 'Apartment',
+        category: 'property',
+        value: 350_000,
+        currency: 'eur',
+      });
+      const types = useHoldingsStore.getState().holdings.map(h => h.type);
+      expect(types).toEqual(['crypto', 'gold', 'asset']);
     });
   });
 });

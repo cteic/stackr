@@ -1,0 +1,23 @@
+# Subflow: email sign-in with a Privy test account.
+# Requires: maestro test --env EMAIL=<test email> --env OTP=<test otp>
+# Configure the test account in the Privy dashboard (User management →
+# Test accounts) so the OTP is fixed and no real mail is sent.
+appId: ie.stackr.wallet
+---
+- assertVisible: 'Stackr Wallet'
+- tapOn:
+    id: 'login-email'
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'login-continue'
+- tapOn:
+    id: 'login-code'
+- inputText: ${OTP}
+- tapOn:
+    id: 'login-submit'
+# Silent seed generation runs right after auth; the one-time backup
+# interstitial is the first authenticated surface on a fresh install.
+- extendedWaitUntil:
+    visible:
+      id: 'interstitial-later'
+    timeout: 30000

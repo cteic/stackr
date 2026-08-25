@@ -28,12 +28,15 @@ export default defineConfig({
         '**/*.d.ts',
       ],
       // Thresholds act as a no-regression floor, set just below current
-      // actuals. Ratchet upward as the suite grows; never let coverage drop.
+      // actuals (measured 2026-06: statements 54.5 / branches 81.8 /
+      // functions 66.1 / lines 54.5) and enforced in CI via the "Coverage"
+      // step (`pnpm test:coverage`). Ratchet upward as the suite grows;
+      // never let coverage drop.
       thresholds: {
-        statements: 20,
-        branches: 60,
-        functions: 40,
-        lines: 20,
+        statements: 50,
+        branches: 80,
+        functions: 65,
+        lines: 50,
       },
     },
   },

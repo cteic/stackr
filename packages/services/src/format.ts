@@ -30,3 +30,12 @@ export function formatChange(change: number): string {
   const sign = change >= 0 ? '+' : '';
   return `${sign}${change.toFixed(2)}%`;
 }
+
+/**
+ * Masks an already-formatted fiat string when balances are hidden. Lives
+ * alongside the other formatters so the web app and the platform-independent
+ * @stackr/features layer share one masking convention.
+ */
+export function maskFiat(formatted: string, hidden: boolean): string {
+  return hidden ? '••••' : formatted;
+}

@@ -1,0 +1,18 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/provision
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high

@@ -9,12 +9,12 @@ import type { BalanceAdapter } from './ports.js';
 // Provider ports (the contracts the app depends on) and the concrete adapters.
 export type {
   BalanceAdapter,
-  BalanceAdapterOptions,
   PriceAdapter,
   TransactionAdapter,
   StockAdapter,
   OrderBookAdapter,
   HealthAdapter,
+  NftAdapter,
 } from './ports.js';
 
 export { fetchBtcBalance, btcBalanceAdapter } from './btc.js';
@@ -29,9 +29,20 @@ export {
   normalizeMarketChart,
   coinGeckoPriceAdapter,
 } from './prices.js';
+export { fetchGoldPrice, normalizeGoldPrice, type GoldPrice } from './gold.js';
+export { ETH_PROXY_PATH, ethPublicRpcUrl, resolveEthRpcUrl } from './eth-rpc.js';
+export {
+  ETHERSCAN_PROXY_PATH,
+  etherscanPublicBase,
+  resolveEtherscanBase,
+} from './etherscan-config.js';
+export { STOCKS_PROXY_PATH, stocksPublicBase, resolveStocksBase } from './stocks-config.js';
+export { assertValidAddress } from './address-guard.js';
 export { parseOrThrow } from './validate.js';
+export { ServiceException, isServiceException, type ServiceError } from './service-error.js';
+export { safeFetch } from './fetch-wrapper.js';
 export { formatBaseUnits } from './base-units.js';
-export { formatFiat, formatUsd, formatCrypto, formatChange } from './format.js';
+export { formatFiat, formatUsd, formatCrypto, formatChange, maskFiat } from './format.js';
 export {
   serializeOrderBook,
   generateMockOrderBook,
@@ -83,21 +94,69 @@ export {
   kaminoHealthAdapter,
   type KaminoObligation,
 } from './health/kamino.js';
+export { fetchZestPosition, normalizeZestGlobalData, zestHealthAdapter } from './health/zest.js';
+export {
+  fetchArkadikoPosition,
+  normalizeArkadikoVaults,
+  arkadikoRatioBps,
+  arkadikoHealthAdapter,
+  type ArkadikoVaultInputs,
+} from './health/arkadiko.js';
+export {
+  fetchGranitePosition,
+  normalizeGranitePosition,
+  graniteHealthAdapter,
+  type GranitePositionInputs,
+} from './health/granite.js';
 import { aaveHealthAdapter } from './health/aave.js';
 import { kaminoHealthAdapter } from './health/kamino.js';
-import type { HealthAdapter } from './ports.js';
+import { zestHealthAdapter } from './health/zest.js';
+import { graniteHealthAdapter } from './health/granite.js';
+import { arkadikoHealthAdapter } from './health/arkadiko.js';
+import type { HealthAdapter, NftAdapter } from './ports.js';
+
+export { toIpfsGatewayUrl, DEFAULT_IPFS_GATEWAY } from './nft/ipfs-url.js';
+export {
+  detectContentType,
+  contentTypeFromExtension,
+  SUPPORTED_NFT_CONTENT_TYPES,
+} from './nft/content-type.js';
+export {
+  fetchStacksNfts,
+  buildStacksNftAsset,
+  parseAssetIdentifier,
+  tokenIdFromRepr,
+  normalizeStxFloor,
+  parseHiroMetadata,
+  parseGammaMetadata,
+  mergeTokenMetadata,
+  stacksNftAdapter,
+  type StacksNftDeps,
+} from './nft/stacks.js';
+import { stacksNftAdapter } from './nft/stacks.js';
+
+/**
+ * All NFT adapters, one per chain × protocol. The `useNftHoldings` hook fans
+ * out across these (filtered to the adapters whose chain it has addresses for)
+ * and concatenates the results. Ships the Stacks SIP-9 adapter; the EVM
+ * (Alchemy), Bitcoin ordinals/runes/stamps and Solana (Helius) adapters
+ * register here in later phases of #93.
+ */
+export const nftAdapters: readonly NftAdapter[] = [stacksNftAdapter];
 
 /**
  * All liquidation-health adapters, one per protocol. The `useHealthPositions`
  * hook fans out across these (filtered to the adapters whose chain it has
- * addresses for) and merges the non-null results. Ships Aave v3 (EVM) and
- * Kamino (SOL); the Stacks protocols register here in later stages.
+ * addresses for) and merges the non-null results. Ships Aave v3 (EVM), Kamino
+ * (SOL) and the Stacks moat — Zest, Granite and Arkadiko (STX).
  */
-export const healthAdapters: readonly HealthAdapter[] = [aaveHealthAdapter, kaminoHealthAdapter];
-
-export interface FetchBalanceOptions {
-  ethApiKey?: string;
-}
+export const healthAdapters: readonly HealthAdapter[] = [
+  aaveHealthAdapter,
+  kaminoHealthAdapter,
+  zestHealthAdapter,
+  graniteHealthAdapter,
+  arkadikoHealthAdapter,
+];
 
 /**
  * Registry of per-chain balance adapters, keyed by chain. Replaces the old
@@ -113,12 +172,8 @@ const balanceAdapters = {
   sui: suiBalanceAdapter,
 } satisfies Record<Chain, BalanceAdapter>;
 
-export async function fetchBalance(
-  chain: Chain,
-  address: string,
-  options?: FetchBalanceOptions,
-): Promise<Balance> {
-  // `ethApiKey` is the public, app-facing name kept for back-compat with the
-  // query hooks and pages; it maps onto the adapter port's generic `apiKey`.
-  return balanceAdapters[chain].fetchBalance(address, { apiKey: options?.ethApiKey });
+export async function fetchBalance(chain: Chain, address: string): Promise<Balance> {
+  // The ETH adapter's Etherscan key is now app-owned and applied server-side by
+  // the `/api/etherscan` proxy, so no per-call key is threaded through.
+  return balanceAdapters[chain].fetchBalance(address);
 }

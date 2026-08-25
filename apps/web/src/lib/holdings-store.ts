@@ -6,6 +6,10 @@ import type {
   CashHolding,
   StockHolding,
   CryptoHolding,
+  GoldHolding,
+  GoldUnit,
+  AssetHolding,
+  AssetCategory,
   Currency,
   Chain,
 } from '@stackr/models';
@@ -25,14 +29,22 @@ interface HoldingsState {
     avgCostBasis?: number;
   }) => void;
   addCryptoHolding: (input: { chain: Chain; quantity: number; label?: string }) => void;
+  addGoldHolding: (input: { quantity: number; unit: GoldUnit; label?: string }) => void;
+  addAssetHolding: (input: {
+    name: string;
+    category: AssetCategory;
+    value: number;
+    currency: Currency;
+    notes?: string;
+  }) => void;
   removeHolding: (id: string) => void;
   updateHolding: (id: string, updates: Partial<Omit<Holding, 'id' | 'type' | 'createdAt'>>) => void;
 }
 
-// Bumped to 1 when the crypto variant landed. Earlier persisted stores only
-// ever held cash and stock holdings, which remain valid under the widened
-// union, so the migration just guarantees a holdings array is present.
-const PERSIST_VERSION = 1;
+// Bumped to 1 when the crypto variant landed and to 2 for the gold and asset
+// variants. Every earlier record remains valid under the widened union, so the
+// migration just guarantees a holdings array is present and re-validated.
+const PERSIST_VERSION = 2;
 
 export const useHoldingsStore = create<HoldingsState>()(
   persist(
@@ -77,6 +89,43 @@ export const useHoldingsStore = create<HoldingsState>()(
               type: 'crypto' as const,
               createdAt: new Date().toISOString(),
             } satisfies CryptoHolding,
+          ],
+        }));
+      },
+      addGoldHolding: input => {
+        // Physical metal is a strictly positive weight — drop a non-positive
+        // quantity rather than persist an invalid holding.
+        if (!(input.quantity > 0)) return;
+        set(state => ({
+          holdings: [
+            ...state.holdings,
+            {
+              quantity: input.quantity,
+              unit: input.unit,
+              ...(input.label ? { label: input.label } : {}),
+              id: crypto.randomUUID(),
+              type: 'gold' as const,
+              createdAt: new Date().toISOString(),
+            } satisfies GoldHolding,
+          ],
+        }));
+      },
+      addAssetHolding: input => {
+        // A self-valued asset with no positive value is meaningless — drop it.
+        if (!(input.value > 0)) return;
+        set(state => ({
+          holdings: [
+            ...state.holdings,
+            {
+              name: input.name,
+              category: input.category,
+              value: input.value,
+              currency: input.currency,
+              ...(input.notes ? { notes: input.notes } : {}),
+              id: crypto.randomUUID(),
+              type: 'asset' as const,
+              createdAt: new Date().toISOString(),
+            } satisfies AssetHolding,
           ],
         }));
       },

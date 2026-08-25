@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Stackr Wallet",
+    "slug": "stackr-wallet",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "stackr",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0b0d10",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ie.stackr.wallet",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Face ID protects access to your wallet keys."
+      }
+    },
+    "android": {
+      "package": "ie.stackr.wallet",
+      "versionCode": 1
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": false
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Stackr uses Face ID to protect your recovery phrase."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Stackr uses the camera to scan the pairing code shown on stackr.ie."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

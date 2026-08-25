@@ -1,19 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Chain } from '@stackr/models';
 import { fetchBalance } from '@stackr/services';
-import type { FetchBalanceOptions } from '@stackr/services';
 import { queryKeys } from './keys.js';
 
-export interface UseBalanceOptions extends FetchBalanceOptions {
+export interface UseBalanceOptions {
   enabled?: boolean;
 }
 
 export function useBalance(chain: Chain, address: string, options?: UseBalanceOptions) {
-  const { enabled = true, ...fetchOptions } = options ?? {};
+  const { enabled = true } = options ?? {};
 
   return useQuery({
     queryKey: queryKeys.balance(chain, address),
-    queryFn: () => fetchBalance(chain, address, fetchOptions),
+    queryFn: () => fetchBalance(chain, address),
     enabled: enabled && !!address,
     staleTime: 30_000,
     refetchInterval: 60_000,

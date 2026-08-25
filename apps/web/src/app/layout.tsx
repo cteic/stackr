@@ -7,6 +7,11 @@ import {
   Spline_Sans_Mono,
 } from 'next/font/google';
 import { Providers } from '@/lib/providers';
+import { ServiceWorkerRegistrar } from '@/components/service-worker-registrar';
+import { WebMcpRegistrar } from '@/components/web-mcp-registrar';
+import { Footer } from '@/components/footer';
+import { isProductionSiteUrl, resolveSiteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site';
+import { JsonLd, organizationSchema, webSiteSchema } from '@/lib/structured-data';
 import './globals.css';
 
 // Per-theme typefaces, exposed as CSS variables that each theme class picks up.
@@ -41,23 +46,32 @@ const fontVars = [
   splineMono.variable,
 ].join(' ');
 
+// The origin this build represents, resolved once (see lib/site.ts). Anything
+// other than the production custom domain is a preview Worker — and Workers,
+// unlike Pages, send no automatic `X-Robots-Tag: noindex` — so the root
+// metadata carries an explicit noindex there instead.
+const siteUrl = resolveSiteUrl();
+const isProduction = isProductionSiteUrl(siteUrl);
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://stackr.ie'),
-  title: 'Stackr — Multi-Chain Portfolio Tracker',
-  description:
-    'Cross-chain Web3 portfolio for self-custody. Track BTC, ETH, STX, and SOL wallet balances in one place.',
+  metadataBase: new URL(siteUrl),
+  title: `${SITE_NAME} — Multi-Chain Portfolio Tracker`,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   manifest: '/manifest.json',
+  alternates: { canonical: '/' },
+  robots: isProduction ? undefined : { index: false, follow: false },
   openGraph: {
     type: 'website',
-    url: 'https://stackr.ie',
-    siteName: 'Stackr',
-    title: 'Stackr — Multi-Chain Portfolio Tracker',
+    url: siteUrl,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — Multi-Chain Portfolio Tracker`,
     description: 'Cross-chain Web3 portfolio for self-custody.',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stackr — Multi-Chain Portfolio Tracker',
+    title: `${SITE_NAME} — Multi-Chain Portfolio Tracker`,
     description: 'Cross-chain Web3 portfolio for self-custody.',
   },
 };
@@ -71,8 +85,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${fontVars}`} suppressHydrationWarning>
-      <body>
-        <Providers>{children}</Providers>
+      <body className="flex min-h-screen flex-col">
+        <JsonLd schema={organizationSchema(siteUrl)} />
+        <JsonLd schema={webSiteSchema(siteUrl)} />
+        <ServiceWorkerRegistrar />
+        <WebMcpRegistrar />
+        <Providers>
+          <div className="flex flex-1 flex-col">{children}</div>
+        </Providers>
+        <Footer />
       </body>
     </html>
   );

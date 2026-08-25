@@ -1,18 +1,30 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DepthChart, PriceChart } from '@stackr/charts/react';
 import type { DataPoint } from '@stackr/charts';
 import { useLiveTicks, useOrderbook, usePriceHistory, useStockPriceHistory } from '@stackr/queries';
 import { formatChange, formatFiat } from '@stackr/services';
 import type { Chain, Currency } from '@stackr/models';
-import { Callout, Card, Skeleton } from '@stackr/ui';
+import {
+  Button,
+  Callout,
+  Card,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+} from '@stackr/ui';
 import { Header } from '@/components/header';
 import { Orderbook } from '@/components/orderbook';
 import { useWalletStore } from '@/lib/wallet-store';
 import { useHoldingsStore } from '@/lib/holdings-store';
 import { useSettingsStore } from '@/lib/settings-store';
+import { useLiveOrderbookFallback } from '@/lib/use-live-orderbook-fallback';
 import {
   CHART_RANGES,
   appendLiveTicks,
@@ -26,27 +38,29 @@ import {
 } from '@/lib/chart-assets';
 
 interface ChartBodyProps {
-  needsStockKey: boolean;
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
   points: DataPoint[];
   currency: Currency;
   rangeDays: number;
 }
 
-function ChartBody({ needsStockKey, isLoading, points, currency, rangeDays }: ChartBodyProps) {
-  if (needsStockKey) {
-    return (
-      <Callout variant="warning">
-        Add your Alpha Vantage API key in{' '}
-        <Link href="/settings" className="underline">
-          Settings
-        </Link>{' '}
-        to chart stock prices.
-      </Callout>
-    );
-  }
+function ChartBody({ isLoading, isError, onRetry, points, currency, rangeDays }: ChartBodyProps) {
   if (isLoading) {
     return <Skeleton width="100%" height={360} />;
+  }
+  if (isError) {
+    return (
+      <div className="flex h-[360px] flex-col items-center justify-center gap-3 px-4">
+        <Callout variant="error" className="w-full">
+          Couldn&apos;t load price history — the data source failed to respond.
+        </Callout>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      </div>
+    );
   }
   if (points.length < 2) {
     return (
@@ -72,7 +86,6 @@ export default function MarketsPage() {
   const connectedAddresses = useWalletStore(s => s.connectedAddresses);
   const holdings = useHoldingsStore(s => s.holdings);
   const currency = useSettingsStore(s => s.currency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
 
   const options = useMemo(() => {
     const walletChains = wallets.map(w => w.chain);
@@ -85,7 +98,7 @@ export default function MarketsPage() {
 
   const [selectedId, setSelectedId] = useState('');
   const [rangeDays, setRangeDays] = useState(7);
-  const [mode, setMode] = useState<'mock' | 'live'>('mock');
+  const [mode, setMode] = useState<'mock' | 'live'>('live');
 
   const selected = findAsset(options, selectedId) ?? options[0];
   const range = CHART_RANGES.find(r => r.days === rangeDays) ?? CHART_RANGES[1];
@@ -112,10 +125,15 @@ export default function MarketsPage() {
   const { orderbook } = useOrderbook({ pair, mode: bookMode, midPrice });
   const ticks = useLiveTicks(pair, liveEnabled);
 
+  // Live by default, but never a dead screen: an empty live book past the
+  // fallback delay drops the page to mock (the toggle stays for retrying).
+  const fallBackToMock = useCallback(() => setMode('mock'), []);
+  useLiveOrderbookFallback(liveEnabled, orderbook !== null, fallBackToMock);
+
   const cryptoQuery = usePriceHistory(cryptoChain ?? 'btc', rangeDays, currency, {
     enabled: isCrypto,
   });
-  const stockQuery = useStockPriceHistory(stockSymbol ?? '', alphaVantageApiKey, rangeDays);
+  const stockQuery = useStockPriceHistory(stockSymbol ?? '', rangeDays);
 
   const activeQuery = isStock ? stockQuery : cryptoQuery;
   const polledPoints = useMemo(
@@ -125,7 +143,6 @@ export default function MarketsPage() {
   // CoinGecko owns the history; Kraken supplies the live tail appended here.
   const points = useMemo(() => appendLiveTicks(polledPoints, ticks), [polledPoints, ticks]);
 
-  const needsStockKey = isStock && alphaVantageApiKey.length === 0;
   const last = points[points.length - 1]?.y;
   const first = points[0]?.y;
   const changePct = first && last ? ((last - first) / first) * 100 : undefined;
@@ -136,32 +153,38 @@ export default function MarketsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="w-full mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">Markets</h1>
           <div className="flex items-center gap-2">
-            <select
+            <Select
               value={selected ? assetId(selected) : ''}
-              onChange={e => setSelectedId(e.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold"
+              onValueChange={value => setSelectedId(value)}
             >
-              <optgroup label="Crypto">
-                {cryptoOptions.map(option => (
-                  <option key={assetId(option)} value={assetId(option)}>
-                    {option.label}
-                  </option>
-                ))}
-              </optgroup>
-              {stockOptions.length > 0 && (
-                <optgroup label="Stocks">
-                  {stockOptions.map(option => (
-                    <option key={assetId(option)} value={assetId(option)}>
+              <SelectTrigger className="h-10 w-auto gap-2 text-sm font-semibold" aria-label="Asset">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Crypto</SelectLabel>
+                  {cryptoOptions.map(option => (
+                    <SelectItem key={assetId(option)} value={assetId(option)}>
                       {option.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </optgroup>
-              )}
-            </select>
+                </SelectGroup>
+                {stockOptions.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Stocks</SelectLabel>
+                    {stockOptions.map(option => (
+                      <SelectItem key={assetId(option)} value={assetId(option)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
             {isCrypto && (
               <button
                 onClick={() => setMode(m => (m === 'mock' ? 'live' : 'mock'))}
@@ -198,7 +221,7 @@ export default function MarketsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
           <Card className={`p-4 ${isCrypto ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className="mb-3 flex items-baseline justify-between">
               <div className="text-sm font-semibold">{selected?.label ?? '—'}</div>
@@ -219,8 +242,9 @@ export default function MarketsPage() {
             </div>
 
             <ChartBody
-              needsStockKey={needsStockKey}
               isLoading={activeQuery.isLoading}
+              isError={activeQuery.isError}
+              onRetry={() => activeQuery.refetch()}
               points={points}
               currency={currency}
               rangeDays={rangeDays}
@@ -232,7 +256,10 @@ export default function MarketsPage() {
               {orderbook ? (
                 <Orderbook orderbook={orderbook} />
               ) : (
-                <Skeleton width="100%" height={400} />
+                <Card className="p-4">
+                  <div className="mb-3 text-sm font-semibold">Order Book — {pair}</div>
+                  <Skeleton width="100%" height={340} />
+                </Card>
               )}
               <Card className="p-4">
                 <div className="mb-3 text-sm font-semibold">Depth Chart — {selected?.label}</div>

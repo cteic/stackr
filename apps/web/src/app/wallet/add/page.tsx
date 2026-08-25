@@ -4,7 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Chain } from '@stackr/models';
 import { ChainSchema, chainMeta, validateAddress } from '@stackr/models';
-import { Button, Input } from '@stackr/ui';
+import {
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@stackr/ui';
 import { track } from '@stackr/analytics';
 import { useWalletStore } from '@/lib/wallet-store';
 import { Header } from '@/components/header';
@@ -39,7 +47,7 @@ export default function AddWalletPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Add Wallet</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -55,21 +63,24 @@ export default function AddWalletPage() {
             <label htmlFor="chain" className="text-sm font-medium text-muted-foreground">
               Chain
             </label>
-            <select
-              id="chain"
+            <Select
               value={chain}
-              onChange={e => {
-                setChain(e.target.value as Chain);
+              onValueChange={value => {
+                setChain(value as Chain);
                 setAddressError('');
               }}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              {chains.map(c => (
-                <option key={c} value={c}>
-                  {chainMeta[c].name} ({chainMeta[c].symbol})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="chain">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {chains.map(c => (
+                  <SelectItem key={c} value={c}>
+                    {chainMeta[c].name} ({chainMeta[c].symbol})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <Input

@@ -42,6 +42,7 @@ export { Skeleton, type SkeletonProps } from './skeleton.js';
 export { Spinner, type SpinnerProps } from './spinner.js';
 export { CopyButton, type CopyButtonProps } from './copy-button.js';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs.js';
+export { ErrorBoundary } from './error-boundary.js';
 export {
   DropdownMenu,
   DropdownMenuTrigger,

@@ -1,0 +1,53 @@
+name: Deploy
+
+# workflow_dispatch-only: the Cloudflare Workers Git integration is the live
+# production deploy pipeline (builds every PR preview and every push to
+# main). Keeping this workflow's own push trigger would race it on every
+# merge to main. This stays as a manual backup — see #139.
+on:
+  workflow_dispatch:
+
+# One deploy at a time, and never cancelled mid-flight — a killed deploy can
+# leave the worker and its static assets out of step. Later manual runs queue.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Fail loud before spending a build: without the token, wrangler would
+      # otherwise die minutes in with a generic auth error.
+      - name: Check deploy secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Deploy requires the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/provision
+
+      # Workspace deps only (`^...` excludes @stackr/web itself) — the OpenNext
+      # step below runs its own `next build`, so building the app here too
+      # would do it twice.
+      - name: Build workspace dependencies
+        run: pnpm turbo run build --filter=@stackr/web^...
+
+      - name: Build worker (OpenNext)
+        run: pnpm --filter @stackr/web run build:cf
+
+      # Runtime secrets (ALCHEMY_API_KEY etc.) live in Cloudflare via
+      # `wrangler secret put` — see SETUP.md; only the account credentials are
+      # needed here.
+      - name: Deploy to Cloudflare
+        run: pnpm --filter @stackr/web run deploy:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

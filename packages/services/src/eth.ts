@@ -1,11 +1,11 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
-import type { BalanceAdapter, BalanceAdapterOptions } from './ports.js';
+import type { BalanceAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
-
-const ETHERSCAN_API = 'https://api.etherscan.io/api';
+import { resolveEtherscanBase } from './etherscan-config.js';
 
 /**
  * Ingress schema for Etherscan's `account.balance` response. Etherscan wraps
@@ -19,7 +19,8 @@ const EtherscanBalanceSchema = z.object({
   result: z.string(),
 });
 
-export async function fetchEthBalance(address: string, apiKey?: string): Promise<Balance> {
+export async function fetchEthBalance(address: string): Promise<Balance> {
+  assertValidAddress('eth', address);
   const params = new URLSearchParams({
     module: 'account',
     action: 'balance',
@@ -27,11 +28,10 @@ export async function fetchEthBalance(address: string, apiKey?: string): Promise
     tag: 'latest',
   });
 
-  if (apiKey) {
-    params.set('apikey', apiKey);
-  }
-
-  const res = await fetch(`${ETHERSCAN_API}?${params}`);
+  // In the browser this resolves to the same-origin proxy, which appends the
+  // server-only `ETHERSCAN_API_KEY`; the client never carries a key. Outside
+  // the browser it hits the public base keyless (rate-limited, but functional).
+  const res = await fetch(`${resolveEtherscanBase()}?${params}`);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch ETH balance: ${res.status} ${res.statusText}`);
@@ -63,12 +63,11 @@ export async function fetchEthBalance(address: string, apiKey?: string): Promise
 }
 
 /**
- * Etherscan-backed implementation of the ETH balance port. This is the one
- * chain that consumes `options.apiKey` (the user's own Etherscan key, passed
- * down from the settings store).
+ * Etherscan-backed implementation of the ETH balance port. The Etherscan key is
+ * now app-owned and applied server-side by the `/api/etherscan` proxy, so the
+ * adapter no longer threads a caller-supplied key.
  */
 export const ethBalanceAdapter: BalanceAdapter = {
   chain: 'eth',
-  fetchBalance: (address, options?: BalanceAdapterOptions) =>
-    fetchEthBalance(address, options?.apiKey),
+  fetchBalance: address => fetchEthBalance(address),
 };

@@ -8,4 +8,22 @@
     "binding": "ASSETS",
   },
   "routes": [{ "pattern": "stackr.ie", "custom_domain": true }],
+  // Fleet-wide per-client rate limiting for the /api/* proxies (Workers Rate
+  // Limiting binding — "unsafe" is Cloudflare's namespace for beta bindings,
+  // not a safety judgement). Enforced atomically per colo, which actually
+  // bounds spend on the metered upstream keys when traffic fans out across
+  // isolates; the in-memory window in src/app/api/proxy-limit.ts remains the
+  // fallback wherever this binding is absent (next dev, tests). The
+  // namespace_id is an arbitrary per-worker identifier, not a provisioned
+  // resource — no dashboard setup is required.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "PROXY_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 120, "period": 60 },
+      },
+    ],
+  },
 }

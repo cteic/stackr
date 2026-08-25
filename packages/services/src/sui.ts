@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertValidAddress } from './address-guard.js';
 import type { Balance } from '@stackr/models';
 import { BalanceSchema, chainMeta } from '@stackr/models';
 import type { BalanceAdapter } from './ports.js';
@@ -24,6 +25,7 @@ const SuiBalanceSchema = z.object({
 });
 
 export async function fetchSuiBalance(address: string): Promise<Balance> {
+  assertValidAddress('sui', address);
   const res = await fetch(SUI_RPC, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -1,0 +1,25 @@
+# Implements: tests/features/backup-ceremony.feature
+#   @mobile "The recovery phrase is gated behind re-authentication"
+#   @mobile "Hold to reveal shows the phrase and the quiz retires the nudge"
+#     (up to the reveal — the quiz needs the actual words, which only a human
+#      can read off the screen; finishing the quiz is a manual step)
+# Simulators have no biometrics, so this exercises the unprotected-device
+# acknowledgement path — the gate itself is still proven (no words visible
+# before acknowledgement).
+appId: ie.stackr.wallet
+---
+- launchApp:
+    clearState: true
+- runFlow: common/login.yaml
+- tapOn:
+    id: 'interstitial-backup-now'
+# Warning copy first; the phrase must not be visible yet.
+- assertVisible: 'no passcode or biometrics'
+- assertNotVisible: 'Hold to reveal'
+- tapOn: 'I understand, continue'
+# The hold-to-reveal affordance guards the words. Maestro's long-press is
+# ~1s; the app requires 1200ms — if this step flakes, lower holdMs behind a
+# test flag rather than weakening the production hold.
+- assertVisible: 'Hold to reveal'
+- longPressOn: 'Hold to reveal'
+- assertVisible: 'Keep holding…'

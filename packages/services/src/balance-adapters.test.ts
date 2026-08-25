@@ -24,11 +24,11 @@ describe('balance adapters — normalization', () => {
       mempool_stats: { funded_txo_sum: 0, spent_txo_sum: 0 },
     });
 
-    const balance = await fetchBalance('btc', 'bc1qexample');
+    const balance = await fetchBalance('btc', 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4');
 
     expect(balance).toMatchObject({
       chain: 'btc',
-      address: 'bc1qexample',
+      address: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
       rawBalance: '100000000',
       balance: '1.00000000',
     });
@@ -39,7 +39,7 @@ describe('balance adapters — normalization', () => {
   it('normalizes an Etherscan ETH payload (18 decimals)', async () => {
     mockFetchOnce({ status: '1', message: 'OK', result: '1000000000000000000' });
 
-    const balance = await fetchBalance('eth', '0xabc');
+    const balance = await fetchBalance('eth', '0x00000000219ab540356cBB839Cbe05303d7705Fa');
 
     expect(balance).toMatchObject({
       chain: 'eth',
@@ -51,7 +51,7 @@ describe('balance adapters — normalization', () => {
   it('normalizes a Solana getBalance payload (9 decimals)', async () => {
     mockFetchOnce({ result: { context: { slot: 1 }, value: 2_000_000_000 } });
 
-    const balance = await fetchBalance('sol', 'SoLaddr');
+    const balance = await fetchBalance('sol', '7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF');
 
     expect(balance).toMatchObject({
       chain: 'sol',
@@ -75,7 +75,7 @@ describe('balance adapters — normalization', () => {
   it('normalizes a Hiro STX payload (6 decimals)', async () => {
     mockFetchOnce({ balance: '5000000' });
 
-    const balance = await fetchBalance('stx', 'SPaddr');
+    const balance = await fetchBalance('stx', 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7');
 
     expect(balance).toMatchObject({ chain: 'stx', rawBalance: '5000000', balance: '5.000000' });
   });
@@ -85,7 +85,7 @@ describe('balance adapters — boundary enforcement', () => {
   it('throws a context-tagged error when the vendor shape is wrong (ingress)', async () => {
     mockFetchOnce({ unexpected: true });
 
-    await expect(fetchBalance('btc', 'bc1qexample')).rejects.toThrow(
+    await expect(fetchBalance('btc', 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4')).rejects.toThrow(
       /btc\.fetchBalance\(ingress\)/,
     );
   });
@@ -93,15 +93,19 @@ describe('balance adapters — boundary enforcement', () => {
   it('surfaces Etherscan in-band errors (status !== "1")', async () => {
     mockFetchOnce({ status: '0', message: 'NOTOK', result: 'rate limited' });
 
-    await expect(fetchBalance('eth', '0xabc')).rejects.toThrow(/Etherscan API error: NOTOK/);
+    await expect(fetchBalance('eth', '0x00000000219ab540356cBB839Cbe05303d7705Fa')).rejects.toThrow(
+      /Etherscan API error: NOTOK/,
+    );
   });
 
-  it('threads the eth api key through to the Etherscan request', async () => {
+  it('never carries an api key in the ETH request — the proxy applies it server-side', async () => {
     const fn = mockFetchOnce({ status: '1', message: 'OK', result: '0' });
 
-    await fetchBalance('eth', '0xabc', { ethApiKey: 'SECRET_KEY' });
+    await fetchBalance('eth', '0x00000000219ab540356cBB839Cbe05303d7705Fa');
 
+    // Non-browser context (no window) → public base, and crucially no `apikey`
+    // is ever interpolated client-side. In the browser it targets the proxy.
     const calledUrl = String(fn.mock.calls[0]?.[0]);
-    expect(calledUrl).toContain('apikey=SECRET_KEY');
+    expect(calledUrl).not.toContain('apikey=');
   });
 });

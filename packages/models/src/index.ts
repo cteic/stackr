@@ -31,10 +31,20 @@ export {
   CashHoldingSchema,
   StockHoldingSchema,
   CryptoHoldingSchema,
+  GoldUnitSchema,
+  goldUnitMeta,
+  GoldHoldingSchema,
+  AssetCategorySchema,
+  assetCategoryMeta,
+  AssetHoldingSchema,
   HoldingSchema,
   type CashHolding,
   type StockHolding,
   type CryptoHolding,
+  type GoldUnit,
+  type GoldHolding,
+  type AssetCategory,
+  type AssetHolding,
   type Holding,
 } from './holding.js';
 export {
@@ -43,3 +53,17 @@ export {
   type StockSearchResult,
   type StockQuote,
 } from './stock.js';
+export {
+  MoneySchema,
+  NftProtocolSchema,
+  NftMediaSchema,
+  NftAttributeSchema,
+  NftCollectionSchema,
+  NftAssetSchema,
+  type Money,
+  type NftProtocol,
+  type NftMedia,
+  type NftAttribute,
+  type NftCollection,
+  type NftAsset,
+} from './nft.js';

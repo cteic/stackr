@@ -10,19 +10,26 @@ import { formatFiat } from '@stackr/services';
 import { maskFiat } from '@/lib/mask-fiat';
 import type { Chain, Wallet } from '@stackr/models';
 import { Header } from '@/components/header';
-import { aggregateCryptoPositions, type CryptoPosition } from '@/lib/portfolio-aggregation';
+import {
+  aggregateCryptoPositions,
+  sumAssetValue,
+  sumGoldValue,
+  type CryptoPosition,
+} from '@/lib/portfolio-aggregation';
+import { useGoldPrice } from '@/lib/gold-price-queries';
 import { WalletCard } from '@/components/wallet-card';
 import { PortfolioSummary } from '@/components/portfolio-summary';
 import { PortfolioBreakdown } from '@/components/portfolio-breakdown';
 import { RecentActivity } from '@/components/recent-activity';
 import { LiquidationHealth } from '@/components/liquidation-health';
+import { Collectibles } from '@/components/collectibles';
+import { FirstRunHero } from '@/components/first-run-hero';
+import { WidgetErrorBoundary } from '@/components/widget-error-boundary';
 
 export default function DashboardPage() {
   const wallets = useWalletStore(s => s.wallets);
   const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const etherscanApiKey = useSettingsStore(s => s.etherscanApiKey);
   const currency = useSettingsStore(s => s.currency);
-  const alphaVantageApiKey = useSettingsStore(s => s.alphaVantageApiKey);
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const holdings = useHoldingsStore(s => s.holdings);
 
@@ -44,13 +51,15 @@ export default function DashboardPage() {
   const connectedAddressSet = new Set((connectedAddresses.eth ?? []).map(a => a.toLowerCase()));
 
   // Addresses (watched + connected) feed the liquidation-health adapters,
-  // grouped by chain: EVM → Aave, Solana → Kamino.
+  // grouped by chain: EVM → Aave, Solana → Kamino, Stacks → Zest + Granite.
   const evmAddresses = [...new Set(allWallets.filter(w => w.chain === 'eth').map(w => w.address))];
   const solAddresses = [...new Set(allWallets.filter(w => w.chain === 'sol').map(w => w.address))];
 
-  const balanceQueries = useBalances(allWallets, {
-    ethApiKey: etherscanApiKey || undefined,
-  });
+  // STX addresses feed the SIP-9 NFT adapter (Collectibles section). More
+  // chains plug in here as their NFT adapters land (#93).
+  const stxAddresses = [...new Set(allWallets.filter(w => w.chain === 'stx').map(w => w.address))];
+
+  const balanceQueries = useBalances(allWallets);
 
   // Manual crypto positions are priced through the same feed as wallet balances,
   // so they need their chains in the price query too.
@@ -61,7 +70,7 @@ export default function DashboardPage() {
   const uniqueChains = [
     ...new Set([...allWallets.map(w => w.chain), ...cryptoHoldings.map(h => h.chain)]),
   ] as Chain[];
-  const { data: prices } = usePrices(uniqueChains, currency);
+  const { data: prices, isError: pricesError } = usePrices(uniqueChains, currency);
 
   const primaryChain = uniqueChains[0];
   const { data: priceHistory } = usePriceHistory(primaryChain ?? 'btc', 7, currency);
@@ -93,16 +102,33 @@ export default function DashboardPage() {
     (h): h is Extract<typeof h, { type: 'stock' }> => h.type === 'stock',
   );
   const stockSymbols = stockHoldings.map(h => h.symbol);
-  const { data: stockQuotes } = useStockQuotes(stockSymbols, alphaVantageApiKey);
+  const { data: stockQuotes } = useStockQuotes(stockSymbols);
   const quoteMap = new Map(stockQuotes?.map(q => [q.symbol, q]) ?? []);
   const stockTotal = stockHoldings.reduce((sum, h) => {
     const quote = quoteMap.get(h.symbol);
     return sum + (quote ? quote.price * h.shares : 0);
   }, 0);
 
-  const totalFiat = cryptoTotal + cashTotal + stockTotal;
+  // Gold and self-valued assets — the rest of "all you stack"
+  const goldHoldings = holdings.filter(
+    (h): h is Extract<typeof h, { type: 'gold' }> => h.type === 'gold',
+  );
+  const assetHoldings = holdings.filter(
+    (h): h is Extract<typeof h, { type: 'asset' }> => h.type === 'asset',
+  );
+  const { data: goldPrice } = useGoldPrice(currency, goldHoldings.length > 0);
+  const goldTotal = sumGoldValue(goldHoldings, goldPrice?.fiatPerOunce);
+  const assetTotal = sumAssetValue(assetHoldings);
+
+  const totalFiat = cryptoTotal + cashTotal + stockTotal + goldTotal + assetTotal;
 
   const allLoaded = balanceQueries.every(q => !q.isLoading);
+
+  // Only flag the summary as failed when the total genuinely couldn't be
+  // computed — a partial total (e.g. cash priced fine, one wallet's balance
+  // read failed) is still a real, useful number, not a dash.
+  const summaryError =
+    allLoaded && totalFiat === 0 && (pricesError || balanceQueries.some(q => q.isError));
 
   const allocations = perChain.map(({ chain, fiatValue }) => ({
     chain,
@@ -116,7 +142,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-7">
+      <main className="w-full mx-auto max-w-6xl px-4 py-6 md:px-5 md:py-7">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Portfolio</h1>
           <div className="flex gap-2">
@@ -130,12 +156,7 @@ export default function DashboardPage() {
         </div>
 
         {!hasAnything ? (
-          <div className="rounded-lg border border-dashed py-12 px-6 text-center text-muted-foreground">
-            <p className="text-base mb-2">No assets yet</p>
-            <p className="text-sm">
-              Add wallets, cash savings, or stock positions to track your portfolio.
-            </p>
-          </div>
+          <FirstRunHero />
         ) : (
           <>
             <PortfolioSummary
@@ -144,6 +165,7 @@ export default function DashboardPage() {
               change24h={allLoaded ? weightedChange : undefined}
               sparklineData={sparklineValues}
               isLoading={!allLoaded}
+              isError={summaryError}
               hideBalance={hideBalance}
             />
 
@@ -184,6 +206,7 @@ export default function DashboardPage() {
                   wallet={wallet}
                   balance={balanceQueries[i]?.data}
                   isLoading={balanceQueries[i]?.isLoading}
+                  isError={balanceQueries[i]?.isError || pricesError}
                   price={priceMap.get(wallet.chain)}
                   currency={currency}
                   connected={connectedAddressSet.has(wallet.address.toLowerCase())}
@@ -192,14 +215,24 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {(evmAddresses.length > 0 || solAddresses.length > 0) && (
-              <LiquidationHealth
-                addressesByChain={{ eth: evmAddresses, sol: solAddresses }}
-                hideBalance={hideBalance}
-              />
+            {(evmAddresses.length > 0 || solAddresses.length > 0 || stxAddresses.length > 0) && (
+              <WidgetErrorBoundary label="Liquidation health">
+                <LiquidationHealth
+                  addressesByChain={{ eth: evmAddresses, sol: solAddresses, stx: stxAddresses }}
+                  hideBalance={hideBalance}
+                />
+              </WidgetErrorBoundary>
             )}
 
-            <RecentActivity wallets={allWallets} />
+            {stxAddresses.length > 0 && (
+              <WidgetErrorBoundary label="Collectibles">
+                <Collectibles addressesByChain={{ stx: stxAddresses }} hideBalance={hideBalance} />
+              </WidgetErrorBoundary>
+            )}
+
+            <WidgetErrorBoundary label="Recent activity">
+              <RecentActivity wallets={allWallets} />
+            </WidgetErrorBoundary>
           </>
         )}
       </main>

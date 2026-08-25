@@ -38,15 +38,23 @@ pnpm format:check  # Prettier check (CI mode)
 All env vars are optional. Without them, stackr falls back to public RPCs
 where possible.
 
-| Variable                      | Purpose                                          |
-| ----------------------------- | ------------------------------------------------ |
-| `NEXT_PUBLIC_ALCHEMY_API_KEY` | Higher-rate Ethereum RPC + ERC-20 token metadata |
-| `NEXT_PUBLIC_HELIUS_API_KEY`  | Higher-rate Solana RPC + SPL token metadata      |
-| (user-entered in Settings)    | Etherscan API key for richer ETH balance data    |
-| (user-entered in Settings)    | Alpha Vantage API key for stock prices + charts  |
+| Variable               | Purpose                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `ALCHEMY_API_KEY`      | Higher-rate Ethereum RPC (server-only, via `/api/rpc/eth`)                       |
+| `HELIUS_API_KEY`       | Higher-rate Solana RPC + SPL token metadata (server-only, via `/api/rpc/solana`) |
+| `ETHERSCAN_API_KEY`    | Higher-rate ETH balances + transactions (server-only, via `/api/etherscan`)      |
+| `ALPHAVANTAGE_API_KEY` | Stock quotes / search / price history (server-only, via `/api/stocks`)           |
 
-Copy `.env.local` from any existing example or just create one — never
-commit it.
+Public (`NEXT_PUBLIC_`) vars go in `.env.local`. Server-only secrets —
+`ALCHEMY_API_KEY`, `HELIUS_API_KEY`, `ETHERSCAN_API_KEY`,
+`ALPHAVANTAGE_API_KEY` — must **never** carry a `NEXT_PUBLIC_` prefix; that
+would inline them into the browser bundle. They go in `apps/web/.dev.vars`
+(copy `apps/web/.dev.vars.example`) for local dev and become
+`wrangler secret put <NAME>` secrets for deploys — never commit them. Each is
+consumed exclusively by its same-origin proxy (`/api/rpc/eth`,
+`/api/rpc/solana`, `/api/etherscan`, `/api/stocks`); client code never reads
+them directly, and each proxy falls back to a public keyless upstream when its
+key is absent.
 
 ## Workspace layout
 
@@ -55,8 +63,11 @@ apps/
   web/                  Next.js 15 web app
 packages/
   models/               Zod schemas (Wallet, Balance, Chain, Price, …)
-  services/             Multi-chain API clients (BTC, ETH, SOL, STX)
+  services/             Multi-chain API clients (BTC, ETH, SOL, STX, SUI)
   queries/              TanStack Query hooks + query keys
+  controllers/          Controller/messenger layer (ActivityController)
+  features/             Platform-independent view-models (web + mobile share)
+  analytics/            PostHog wrapper — opt-in, PII-free events
   ui/                   Hand-rolled component library (Radix + Tailwind)
   charts/               Custom SVG charting (Kraken-inspired)
   eslint-config/        Shared ESLint flat config
@@ -69,8 +80,12 @@ docs/
 ## CI
 
 GitHub Actions runs lint → typecheck → test → build → Playwright on every pull
-request (and on push to `main`). Deploys auto-trigger on push to `main` via
-Cloudflare Workers (`@opennextjs/cloudflare`).
+request (and on push to `main`). Deploys to Cloudflare Workers
+(`@opennextjs/cloudflare`) run via the Deploy workflow
+(`.github/workflows/deploy.yml`) on push to `main` — it requires the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets and
+fails loudly when they are missing. Manual fallback:
+`pnpm --filter @stackr/web run build:cf && pnpm --filter @stackr/web run deploy:cf`.
 
 ## Conventions
 

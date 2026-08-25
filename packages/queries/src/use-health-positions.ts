@@ -50,8 +50,10 @@ export function mergeHealthPositions(
 
 /**
  * Pairs each adapter only with addresses on its own chain — Aave with EVM
- * accounts, Kamino with Solana accounts — so an adapter never reads an address
- * it can't serve. Pure, so the fan-out is unit-testable without React Query.
+ * accounts, Kamino with Solana accounts, Zest + Granite with Stacks accounts —
+ * so an adapter never reads an address it can't serve, and a Stacks address
+ * fans out to both Stacks protocols. Pure, so the fan-out is unit-testable
+ * without React Query.
  */
 export function healthQueryPairs(addressesByChain: HealthAddressesByChain): HealthQueryPair[] {
   return healthAdapters.flatMap(adapter =>
@@ -62,9 +64,9 @@ export function healthQueryPairs(addressesByChain: HealthAddressesByChain): Heal
 /**
  * Fans the health adapters out across the given addresses (grouped by chain),
  * one query per adapter × matching address, and merges the results. Ships the
- * Aave v3 (EVM) and Kamino (SOL) adapters; later stages register the Stacks
- * protocols. Each pair is its own query, so one adapter erroring leaves the
- * others' results intact (per-adapter isolation).
+ * Aave v3 (EVM), Kamino (SOL), Zest (STX) and Granite (STX) adapters. Each pair
+ * is its own query, so one adapter erroring leaves the others' results intact
+ * (per-adapter isolation).
  */
 export function useHealthPositions(
   addressesByChain: HealthAddressesByChain,

@@ -36,7 +36,7 @@ export function RecentActivity({ wallets }: { wallets: Wallet[] }) {
 
   return (
     <Card className="mt-4 overflow-hidden">
-      <div className="border-b p-4 text-sm font-semibold">Recent activity</div>
+      <h2 className="border-b p-4 text-sm font-semibold">Recent activity</h2>
       <div className="p-2">
         {stillLoading ? (
           <div className="flex flex-col gap-2">
@@ -60,7 +60,7 @@ export function RecentActivity({ wallets }: { wallets: Wallet[] }) {
                     href={getExplorerUrl(chain, 'tx', activity.hash)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between gap-3 rounded-md p-3 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-between gap-3 rounded-md p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <ChainAvatar chain={chain} size="sm" />

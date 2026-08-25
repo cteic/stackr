@@ -3,6 +3,8 @@ import type {
   Chain,
   Currency,
   HealthPosition,
+  NftAsset,
+  NftProtocol,
   OrderBook,
   Price,
   PriceHistoryPoint,
@@ -28,24 +30,11 @@ import type {
  * No vendor response interface appears here; that is the whole point.
  */
 
-/**
- * Per-call options threaded into a balance adapter.
- *
- * Only the ETH adapter currently consumes `apiKey` (a user-supplied Etherscan
- * key); the other chains ignore it. Modeling it as an optional field on a
- * shared options object keeps the port uniform across chains while letting the
- * dashboard pass one object to all of them.
- */
-export interface BalanceAdapterOptions {
-  /** User-supplied API key for the underlying vendor (ETH → Etherscan). */
-  apiKey?: string;
-}
-
 /** A single-chain balance source (one adapter per chain). */
 export interface BalanceAdapter {
   /** The chain this adapter serves; used to build the dispatch registry. */
   readonly chain: Chain;
-  fetchBalance(address: string, options?: BalanceAdapterOptions): Promise<Balance>;
+  fetchBalance(address: string): Promise<Balance>;
 }
 
 /** Spot prices and historical price series for the supported chains. */
@@ -59,12 +48,16 @@ export interface TransactionAdapter {
   fetchTransactions(chain: Chain, address: string): Promise<Transaction[]>;
 }
 
-/** Equities data (symbol search, quotes, daily history). */
+/**
+ * Equities data (symbol search, quotes, daily history). The Alpha Vantage key
+ * is app-owned and applied server-side by the `/api/stocks` proxy, so the port
+ * no longer threads a caller-supplied key.
+ */
 export interface StockAdapter {
-  search(query: string, apiKey: string): Promise<StockSearchResult[]>;
-  fetchQuote(symbol: string, apiKey: string): Promise<StockQuote>;
-  fetchQuotes(symbols: string[], apiKey: string): Promise<StockQuote[]>;
-  fetchPriceHistory(symbol: string, apiKey: string, days: number): Promise<PriceHistoryPoint[]>;
+  search(query: string): Promise<StockSearchResult[]>;
+  fetchQuote(symbol: string): Promise<StockQuote>;
+  fetchQuotes(symbols: string[]): Promise<StockQuote[]>;
+  fetchPriceHistory(symbol: string, days: number): Promise<PriceHistoryPoint[]>;
 }
 
 /**
@@ -84,6 +77,27 @@ export interface HealthAdapter {
   /** The chain this protocol lives on. */
   readonly chain: Chain;
   fetchPosition(address: string): Promise<HealthPosition | null>;
+}
+
+/**
+ * A single NFT source (one adapter per chain × protocol). The adapter reads an
+ * address's holdings from its vendor (Hiro + Gamma for Stacks SIP-9, Alchemy
+ * for EVM, …), maps each token onto the normalized `NftAsset` shape, resolves
+ * its media to a gateway URL, and validates on egress — so a vendor payload
+ * never leaks past the adapter (same anti-corruption rule as balances and
+ * health; see #93 / ADR 0012).
+ *
+ * `fetchNfts` resolves to `[]` for an address that holds nothing on this
+ * source, so the hook can fan out across every watched address and concat the
+ * results. One source failing must never blank the others (the hook isolates
+ * each adapter × address as its own query).
+ */
+export interface NftAdapter {
+  /** The chain this adapter serves; used to build the dispatch registry. */
+  readonly chain: Chain;
+  /** The NFT standard this adapter reads. */
+  readonly protocol: NftProtocol;
+  fetchNfts(address: string): Promise<NftAsset[]>;
 }
 
 /**
