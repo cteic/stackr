@@ -4,6 +4,7 @@ import {
   normalizeEthTransactions,
   normalizeStxTransactions,
   normalizeSolTransactions,
+  normalizeSolTransactionDetail,
   normalizeSuiTransactions,
 } from './transactions';
 
@@ -122,6 +123,92 @@ describe('normalizeSolTransactions', () => {
       confirmed: true,
     });
     expect(result[1]).toMatchObject({ hash: 'sig2', confirmed: false });
+  });
+});
+
+describe('normalizeSolTransactionDetail', () => {
+  const ME = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+  const THEM = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
+  const BLOCK_TIME = 1_700_000_000;
+
+  function detail(
+    accountKeys: string[],
+    preBalances: number[],
+    postBalances: number[],
+    fee = 5_000,
+    err: unknown = null,
+  ) {
+    return {
+      transaction: {
+        signatures: ['sig1'],
+        message: { accountKeys: accountKeys.map(pubkey => ({ pubkey })) },
+      },
+      meta: { fee, preBalances, postBalances, err },
+      blockTime: BLOCK_TIME,
+    };
+  }
+
+  it('reads a receive from the owner lamport delta', () => {
+    // The owner is not the fee payer here, so no fee is added back.
+    const tx = normalizeSolTransactionDetail(
+      ME,
+      detail([THEM, ME], [3_000_000_000, 0], [1_999_995_000, 1_000_000_000]),
+    );
+
+    expect(tx).toMatchObject({
+      hash: 'sig1',
+      chain: 'sol',
+      type: 'receive',
+      amount: '1.000000000',
+      counterparty: THEM,
+      confirmed: true,
+    });
+  });
+
+  it('excludes the fee when the owner paid it, so a send reports the transfer', () => {
+    const tx = normalizeSolTransactionDetail(
+      ME,
+      detail([ME, THEM], [2_000_000_000, 0], [999_995_000, 1_000_000_000]),
+    );
+
+    expect(tx).toMatchObject({
+      type: 'send',
+      // 1.000000000 transferred, not 1.000005000 including the fee.
+      amount: '1.000000000',
+      counterparty: THEM,
+    });
+  });
+
+  it('leaves the counterparty unknown when nothing opposes the owner delta', () => {
+    // A fee-only transaction: the owner loses the fee and nobody gains.
+    const tx = normalizeSolTransactionDetail(ME, detail([ME], [1_000_000_000], [999_995_000]));
+
+    expect(tx).toMatchObject({ counterparty: 'unknown', amount: '0.000000000' });
+  });
+
+  it('marks a failed transaction unconfirmed', () => {
+    const tx = normalizeSolTransactionDetail(
+      ME,
+      detail([ME, THEM], [1_000_000_000, 0], [999_995_000, 0], 5_000, { InstructionError: [] }),
+    );
+
+    expect(tx?.confirmed).toBe(false);
+  });
+
+  it('degrades to a zero-amount row when the address is not an account key', () => {
+    const tx = normalizeSolTransactionDetail(ME, detail([THEM], [1_000], [1_000]));
+
+    expect(tx).toMatchObject({ amount: '0', counterparty: 'unknown', type: 'receive' });
+  });
+
+  it('degrades to a zero-amount row when balance metadata is missing', () => {
+    const tx = normalizeSolTransactionDetail(ME, {
+      transaction: { signatures: ['sig1'], message: { accountKeys: [{ pubkey: ME }] } },
+      meta: null,
+      blockTime: BLOCK_TIME,
+    });
+
+    expect(tx).toMatchObject({ amount: '0', confirmed: false });
   });
 });
 

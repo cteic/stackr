@@ -13,9 +13,12 @@ export interface SafeFetchOptions {
  * Thin wrapper around `fetch` with a uniform error contract.
  *
  * - Network failures (thrown by `fetch` itself) map to `kind: 'network'`.
- * - Non-2xx HTTP responses map to `kind: 'upstream'` with the status code.
- *   The upstream response body is intentionally discarded — echoing it could
- *   leak keyed URLs or internal details.
+ * - HTTP 429 maps to `kind: 'rate-limited'`, carrying `Retry-After` when the
+ *   responder sent one. It is split out of `upstream` because it is the only
+ *   status a caller should retry on a timer rather than surface as a fault.
+ * - Other non-2xx HTTP responses map to `kind: 'upstream'` with the status
+ *   code. The upstream response body is intentionally discarded — echoing it
+ *   could leak keyed URLs or internal details.
  * - Callers are responsible for parse-error mapping (`kind: 'parse'`) and
  *   address validation (`kind: 'invalid-address'`); this layer only covers the
  *   transport.
@@ -36,6 +39,15 @@ export async function safeFetch(url: string, options?: SafeFetchOptions): Promis
     throw new ServiceException({
       kind: 'network',
       message: cause instanceof Error ? cause.message : 'fetch failed',
+    });
+  }
+
+  if (response.status === 429) {
+    const retryAfter = Number(response.headers.get('retry-after'));
+    throw new ServiceException({
+      kind: 'rate-limited',
+      ...(Number.isFinite(retryAfter) && retryAfter > 0 ? { retryAfterSeconds: retryAfter } : {}),
+      message: 'rate limit exceeded',
     });
   }
 

@@ -26,8 +26,9 @@ import {
 import { validateAddress } from '@stackr/models';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { removeWalletAtom, updateLabelAtom, walletsAtom } from '@/lib/wallet-store';
-import { currencyAtom } from '@/lib/settings-store';
+import { currencyAtom, hideBalanceAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
+import { TokenPositions } from '@/components/token-positions';
 import { TransactionList } from '@/components/transaction-list';
 import { useActivityState, useTrackWallet } from '@/lib/controllers/activity-controller-provider';
 
@@ -59,6 +60,7 @@ export function WalletDetailView({
   const removeWallet = useSetAtom(removeWalletAtom);
   const updateLabel = useSetAtom(updateLabelAtom);
   const currency = useAtomValue(currencyAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
   const { data: balance, isLoading, error } = useBalance(chain, address);
   const { data: prices } = usePrices([chain], currency);
   const price = prices?.[0];
@@ -186,6 +188,8 @@ export function WalletDetailView({
             </>
           ) : null}
         </Card>
+
+        <TokenPositions chain={chain} address={address} hideBalance={hideBalance} />
 
         <Card className="mt-6 overflow-hidden">
           <div className="text-sm text-muted-foreground p-4 border-b">Recent Transactions</div>
