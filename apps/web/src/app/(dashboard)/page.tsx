@@ -8,7 +8,7 @@ import { useHoldingsStore } from '@/lib/holdings-store';
 import { useBalances, usePrices, usePriceHistory, useStockQuotes } from '@stackr/queries';
 import { formatFiat } from '@stackr/services';
 import { maskFiat } from '@/lib/mask-fiat';
-import type { Chain, Wallet } from '@stackr/models';
+import type { Chain } from '@stackr/models';
 import { Header } from '@/components/header';
 import {
   aggregateCryptoPositions,
@@ -16,6 +16,11 @@ import {
   sumGoldValue,
   type CryptoPosition,
 } from '@/lib/portfolio-aggregation';
+import {
+  buildConnectedWallets,
+  connectedAddressKeys,
+  isConnectedWallet,
+} from '@/lib/connected-wallets';
 import { useGoldPrice } from '@/lib/gold-price-queries';
 import { WalletCard } from '@/components/wallet-card';
 import { PortfolioSummary } from '@/components/portfolio-summary';
@@ -33,22 +38,12 @@ export default function DashboardPage() {
   const hideBalance = useSettingsStore(s => s.hideBalance);
   const holdings = useHoldingsStore(s => s.holdings);
 
-  // Build virtual wallet objects for connected ETH addresses not already watch-listed
-  const watchedEthAddresses = new Set(
-    wallets.filter(w => w.chain === 'eth').map(w => w.address.toLowerCase()),
-  );
-  const connectedWallets: Wallet[] = (connectedAddresses.eth ?? [])
-    .filter(addr => !watchedEthAddresses.has(addr.toLowerCase()))
-    .map(addr => ({
-      id: `connected:${addr}`,
-      label: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
-      chain: 'eth' as Chain,
-      address: addr,
-      createdAt: new Date().toISOString(),
-    }));
-
+  // Connected addresses that are not already watch-listed become virtual
+  // wallets, so an ETH or SOL account reached through a wallet renders through
+  // the same card as a watch-only address.
+  const connectedWallets = buildConnectedWallets(wallets, connectedAddresses);
   const allWallets = [...wallets, ...connectedWallets];
-  const connectedAddressSet = new Set((connectedAddresses.eth ?? []).map(a => a.toLowerCase()));
+  const connectedKeys = connectedAddressKeys(connectedAddresses);
 
   // Addresses (watched + connected) feed the liquidation-health adapters,
   // grouped by chain: EVM → Aave, Solana → Kamino, Stacks → Zest + Granite.
@@ -209,7 +204,7 @@ export default function DashboardPage() {
                   isError={balanceQueries[i]?.isError || pricesError}
                   price={priceMap.get(wallet.chain)}
                   currency={currency}
-                  connected={connectedAddressSet.has(wallet.address.toLowerCase())}
+                  connected={isConnectedWallet(connectedKeys, wallet)}
                   hideBalance={hideBalance}
                 />
               ))}

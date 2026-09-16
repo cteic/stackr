@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConnect, useDisconnect } from 'wagmi';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { PhantomWalletName } from '@solana/wallet-adapter-phantom';
+import type { WalletName } from '@solana/wallet-adapter-base';
 import type { Chain } from '@stackr/models';
 import { useWalletStore } from '@/lib/wallet-store';
 import {
@@ -20,6 +20,8 @@ import {
   restoreSuiWallet,
   subscribeSuiWalletAvailability,
 } from '@/lib/sui-connect';
+
+import { getSolanaWallets } from '@/lib/solana-wallet-instance';
 
 import { detectInstalledWallets, INSTALL_URLS, type WalletId } from './wallet-detect';
 
@@ -40,9 +42,9 @@ export interface WalletConnection {
 }
 
 /**
- * Single source of truth for connecting/disconnecting the four supported
- * wallets and reading their connected state. The unified connect modal and the
- * header status indicators both consume this — there is no per-wallet button.
+ * Single source of truth for connecting/disconnecting every supported wallet
+ * and reading its connected state. The unified connect modal and the header
+ * status indicators both consume this — there is no per-wallet button.
  *
  * Connected state is read from `wallet-store.connectedAddresses`, which the
  * ETH/SOL sync components keep in step with wagmi and the Solana adapter.
@@ -61,6 +63,7 @@ export function useWalletConnections(): WalletConnection[] {
   const [installed, setInstalled] = useState<Record<WalletId, boolean>>({
     metamask: false,
     phantom: false,
+    solflare: false,
     leather: false,
     slush: false,
   });
@@ -96,12 +99,15 @@ export function useWalletConnections(): WalletConnection[] {
     };
   }, [slushInstalled, setConnectedAddresses]);
 
-  // --- Phantom: connect after the adapter has selected the wallet ---
-  const wantPhantomRef = useRef(false);
+  // --- Solana: connect after the provider has selected the wallet ---
+  // `select()` only swaps the active adapter; the connect has to wait for that
+  // swap to land, so the intent is parked in a ref and acted on by the effect.
+  const wantSolanaRef = useRef<WalletName | null>(null);
   const { select, connect: solConnect, wallet: solWallet, connected: solConnected } = solana;
   useEffect(() => {
-    if (wantPhantomRef.current && solWallet?.adapter.name === PhantomWalletName && !solConnected) {
-      wantPhantomRef.current = false;
+    const wanted = wantSolanaRef.current;
+    if (wanted !== null && solWallet?.adapter.name === wanted && !solConnected) {
+      wantSolanaRef.current = null;
       void solConnect().catch(() => undefined);
     }
   }, [solWallet, solConnected, solConnect]);
@@ -112,14 +118,17 @@ export function useWalletConnections(): WalletConnection[] {
     await connectAsync({ connector });
   }, [connectors, connectAsync]);
 
-  const connectPhantom = useCallback(() => {
-    if (solWallet?.adapter.name === PhantomWalletName) {
-      void solConnect().catch(() => undefined);
-    } else {
-      wantPhantomRef.current = true;
-      select(PhantomWalletName);
-    }
-  }, [solWallet, solConnect, select]);
+  const connectSolana = useCallback(
+    (name: WalletName) => {
+      if (solWallet?.adapter.name === name) {
+        void solConnect().catch(() => undefined);
+      } else {
+        wantSolanaRef.current = name;
+        select(name);
+      }
+    },
+    [solWallet, solConnect, select],
+  );
 
   const connectLeather = useCallback(async () => {
     const addrs = await connectStacksWallet();
@@ -158,16 +167,19 @@ export function useWalletConnections(): WalletConnection[] {
       connect: connectMetaMask,
       disconnect: () => disconnectEvm(),
     },
-    {
-      id: 'phantom',
-      name: 'Phantom',
+    // One row per Solana wallet. `connected` is read from the active adapter
+    // rather than from `has('sol')`, so only the wallet actually holding the
+    // session offers Disconnect — two rows cannot both claim the connection.
+    ...getSolanaWallets().map<WalletConnection>(entry => ({
+      id: entry.id,
+      name: entry.label,
       chains: ['sol'],
-      connected: has('sol'),
-      installed: installed.phantom,
-      installUrl: INSTALL_URLS.phantom,
-      connect: connectPhantom,
+      connected: solConnected && solWallet?.adapter.name === entry.name && has('sol'),
+      installed: installed[entry.id],
+      installUrl: INSTALL_URLS[entry.id],
+      connect: () => connectSolana(entry.name),
       disconnect: () => solana.disconnect(),
-    },
+    })),
     {
       id: 'leather',
       name: 'Leather',

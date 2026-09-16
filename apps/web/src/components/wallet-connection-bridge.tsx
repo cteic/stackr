@@ -13,7 +13,7 @@ import {
 import type { Chain } from '@stackr/models';
 import { useWalletStore } from '@/lib/wallet-store';
 import { wagmiConfig } from '@/lib/wagmi-config';
-import { getPhantomWalletAdapter } from '@/lib/solana-wallet-instance';
+import { getSolanaWallets } from '@/lib/solana-wallet-instance';
 import { createEvmWalletAdapter } from '@/lib/wallet-adapters/evm-wallet-adapter';
 import { createSolanaWalletAdapter } from '@/lib/wallet-adapters/solana-wallet-adapter';
 
@@ -49,7 +49,11 @@ export function WalletConnectionBridge() {
       messenger: messenger.getRestricted<WalletConnectionControllerMessenger>(),
       adapters: [
         createEvmWalletAdapter(wagmiConfig),
-        createSolanaWalletAdapter(getPhantomWalletAdapter()),
+        // One source per Solana wallet brand: the controller keys state by
+        // source id, so Phantom and Solflare stay independently observable.
+        ...getSolanaWallets().map(entry =>
+          createSolanaWalletAdapter(entry.adapter, `solana:${entry.id}`),
+        ),
       ],
     });
 
