@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { Button, Card } from '@stackr/ui';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useSettingsStore } from '@/lib/settings-store';
-import { useHoldingsStore } from '@/lib/holdings-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom, walletsAtom } from '@/lib/wallet-store';
+import { currencyAtom, hideBalanceAtom } from '@/lib/settings-store';
+import { holdingsAtom } from '@/lib/holdings-store';
 import { useBalances, usePrices, usePriceHistory, useStockQuotes } from '@stackr/queries';
 import { formatFiat } from '@stackr/services';
 import { maskFiat } from '@/lib/mask-fiat';
@@ -32,11 +33,11 @@ import { FirstRunHero } from '@/components/first-run-hero';
 import { WidgetErrorBoundary } from '@/components/widget-error-boundary';
 
 export default function DashboardPage() {
-  const wallets = useWalletStore(s => s.wallets);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const currency = useSettingsStore(s => s.currency);
-  const hideBalance = useSettingsStore(s => s.hideBalance);
-  const holdings = useHoldingsStore(s => s.holdings);
+  const wallets = useAtomValue(walletsAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
+  const currency = useAtomValue(currencyAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
+  const holdings = useAtomValue(holdingsAtom);
 
   // Connected addresses that are not already watch-listed become virtual
   // wallets, so an ETH or SOL account reached through a wallet renders through

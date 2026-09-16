@@ -47,7 +47,7 @@ import { createStacksWalletAdapter } from '@/lib/wallet-adapters/stacks-wallet-a
  * wallet source adapters, so /labs reflects live connection state and the
  * PortfolioController re-aggregates through the messenger when accounts change.
  * This demo wiring is still scoped to /labs — the rest of the app reads
- * connection state from the Zustand store via the WalletConnectionBridge.
+ * connection state from the Jotai wallet atoms via the WalletConnectionBridge.
  */
 
 type RootMessenger = Messenger<

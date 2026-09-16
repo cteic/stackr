@@ -2,7 +2,8 @@
 
 import { ChainAvatar, Tooltip, TooltipTrigger, TooltipContent } from '@stackr/ui';
 import { chainMeta, type Chain } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom } from '@/lib/wallet-store';
 
 const CHAINS: Chain[] = ['eth', 'sol', 'stx', 'btc', 'sui'];
 
@@ -12,7 +13,7 @@ const CHAINS: Chain[] = ['eth', 'sol', 'stx', 'btc', 'sui'];
  * from the wallet store, which the wallet sync layer keeps current.
  */
 export function ChainStatusIndicators() {
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
 
   return (
     <div className="flex items-center gap-1" aria-label="Connected chains">

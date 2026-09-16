@@ -24,8 +24,9 @@ import {
   Skeleton,
 } from '@stackr/ui';
 import { validateAddress } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { removeWalletAtom, updateLabelAtom, walletsAtom } from '@/lib/wallet-store';
+import { currencyAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 import { TransactionList } from '@/components/transaction-list';
 import { useActivityState, useTrackWallet } from '@/lib/controllers/activity-controller-provider';
@@ -53,12 +54,11 @@ export function WalletDetailView({
     if (chainResult.success) track('chain_viewed', { chain });
   }, [chainResult.success, chain]);
 
-  const wallet = useWalletStore(s =>
-    s.wallets.find(w => w.chain === chain && w.address === address),
-  );
-  const removeWallet = useWalletStore(s => s.removeWallet);
-  const updateLabel = useWalletStore(s => s.updateLabel);
-  const currency = useSettingsStore(s => s.currency);
+  const wallets = useAtomValue(walletsAtom);
+  const wallet = wallets.find(w => w.chain === chain && w.address === address);
+  const removeWallet = useSetAtom(removeWalletAtom);
+  const updateLabel = useSetAtom(updateLabelAtom);
+  const currency = useAtomValue(currencyAtom);
   const { data: balance, isLoading, error } = useBalance(chain, address);
   const { data: prices } = usePrices([chain], currency);
   const price = prices?.[0];

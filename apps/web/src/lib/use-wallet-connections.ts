@@ -5,7 +5,12 @@ import { useConnect, useDisconnect } from 'wagmi';
 import { useWallet } from '@solana/wallet-adapter-react';
 import type { WalletName } from '@solana/wallet-adapter-base';
 import type { Chain } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import {
+  clearConnectedAddressesAtom,
+  connectedAddressesAtom,
+  setConnectedAddressesAtom,
+} from '@/lib/wallet-store';
 import {
   connectStacksWallet,
   disconnectStacksWallet,
@@ -55,9 +60,9 @@ export function useWalletConnections(): WalletConnection[] {
   const { connectors, connectAsync } = useConnect();
   const { disconnect: disconnectEvm } = useDisconnect();
   const solana = useWallet();
-  const setConnectedAddresses = useWalletStore(s => s.setConnectedAddresses);
-  const clearConnectedAddresses = useWalletStore(s => s.clearConnectedAddresses);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
+  const setConnectedAddresses = useSetAtom(setConnectedAddressesAtom);
+  const clearConnectedAddresses = useSetAtom(clearConnectedAddressesAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
 
   // --- Detect installed extensions (client-only) ---
   const [installed, setInstalled] = useState<Record<WalletId, boolean>>({

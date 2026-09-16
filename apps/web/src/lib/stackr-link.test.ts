@@ -5,7 +5,11 @@ import {
   readStoredLinkAddresses,
   useStackrLinkConnection,
 } from './stackr-link';
-import { useWalletStore } from '@/lib/wallet-store';
+import type { Chain } from '@stackr/models';
+import { getDefaultStore } from 'jotai';
+import { clearConnectedAddressesAtom, connectedAddressesAtom } from '@/lib/wallet-store';
+
+const store = getDefaultStore();
 
 const STORAGE_KEY = 'stackr-link-addresses';
 const STX_ADDRESS = 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7';
@@ -16,7 +20,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  const { clearConnectedAddresses } = useWalletStore.getState();
+  const clearConnectedAddresses = (chain: Chain) => store.set(clearConnectedAddressesAtom, chain);
   for (const chain of ['btc', 'eth', 'sol', 'stx', 'sui'] as const) {
     clearConnectedAddresses(chain);
   }
@@ -79,8 +83,8 @@ describe('useStackrLinkConnection', () => {
 
     expect(result.current.connected).toBe(true);
     expect(result.current.chains).toEqual(['stx', 'eth']);
-    expect(useWalletStore.getState().connectedAddresses.stx).toEqual([STX_ADDRESS]);
-    expect(useWalletStore.getState().connectedAddresses.eth).toEqual([ETH_ADDRESS]);
+    expect(store.get(connectedAddressesAtom).stx).toEqual([STX_ADDRESS]);
+    expect(store.get(connectedAddressesAtom).eth).toEqual([ETH_ADDRESS]);
     expect(readStoredLinkAddresses()).toHaveLength(2);
   });
 
@@ -91,7 +95,7 @@ describe('useStackrLinkConnection', () => {
 
     expect(result.current.connected).toBe(true);
     expect(result.current.chains).toEqual(['stx']);
-    expect(useWalletStore.getState().connectedAddresses.stx).toEqual([STX_ADDRESS]);
+    expect(store.get(connectedAddressesAtom).stx).toEqual([STX_ADDRESS]);
   });
 
   it('disconnect clears the store, the memory, and the connected state', () => {
@@ -105,7 +109,7 @@ describe('useStackrLinkConnection', () => {
     });
 
     expect(result.current.connected).toBe(false);
-    expect(useWalletStore.getState().connectedAddresses.stx).toBeUndefined();
+    expect(store.get(connectedAddressesAtom).stx).toBeUndefined();
     expect(readStoredLinkAddresses()).toEqual([]);
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
