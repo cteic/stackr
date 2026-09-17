@@ -8,7 +8,7 @@ import type { Chain } from '@stackr/models';
 import { useBalance, usePrices } from '@stackr/queries';
 import { selectActivityByWallet } from '@stackr/controllers';
 import { track } from '@stackr/analytics';
-import { formatFiat } from '@stackr/services';
+import { formatFiat, supportsTokenPositions } from '@stackr/services';
 import {
   Button,
   Input,
@@ -189,7 +189,9 @@ export function WalletDetailView({
           ) : null}
         </Card>
 
-        <TokenPositions chain={chain} address={address} hideBalance={hideBalance} />
+        {supportsTokenPositions(chain) ? (
+          <TokenPositions chain={chain} address={address} hideBalance={hideBalance} />
+        ) : null}
 
         <Card className="mt-6 overflow-hidden">
           <div className="text-sm text-muted-foreground p-4 border-b">Recent Transactions</div>
