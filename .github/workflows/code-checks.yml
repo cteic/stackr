@@ -56,7 +56,16 @@ jobs:
       # PRODUCTION dependencies. Known-unfixable transitive advisories are
       # allow-listed in root package.json (`pnpm.auditConfig.ignoreGhsas`) and
       # tracked under #69; any NEW high/critical fails the build.
+      # `pnpm audit` renders every dependency path to every advisory, and the
+      # Expo/Metro graph in apps/mobile produces thousands per advisory (4425
+      # for js-yaml alone). Path enumeration, not resolution, is what exhausts
+      # the default ~4 GB V8 heap, so the step died with exit 134 before it
+      # could print the list. This raises the ceiling; it does not remove the
+      # cost. Fewer advisories means fewer paths, so the headroom grows as the
+      # allow-list burns down.
       - name: Security audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm audit --prod --audit-level high
 
       - name: Build
