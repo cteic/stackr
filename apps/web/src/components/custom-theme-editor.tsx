@@ -21,7 +21,13 @@ import {
   contrastRatio,
   isBaseThemeId,
 } from '@/lib/custom-theme';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import {
+  customThemeAtom,
+  resetCustomThemeAtom,
+  setCustomThemeBaseAtom,
+  setCustomThemeTokenAtom,
+} from '@/lib/settings-store';
 
 interface CustomThemeEditorProps {
   open: boolean;
@@ -29,10 +35,10 @@ interface CustomThemeEditorProps {
 }
 
 export function CustomThemeEditor({ open, onOpenChange }: CustomThemeEditorProps) {
-  const customTheme = useSettingsStore(s => s.customTheme);
-  const setCustomThemeBase = useSettingsStore(s => s.setCustomThemeBase);
-  const setCustomThemeToken = useSettingsStore(s => s.setCustomThemeToken);
-  const resetCustomTheme = useSettingsStore(s => s.resetCustomTheme);
+  const customTheme = useAtomValue(customThemeAtom);
+  const setCustomThemeBase = useSetAtom(setCustomThemeBaseAtom);
+  const setCustomThemeToken = useSetAtom(setCustomThemeTokenAtom);
+  const resetCustomTheme = useSetAtom(resetCustomThemeAtom);
 
   const { tokens } = customTheme;
   const ratio = contrastRatio(tokens.background, tokens.foreground);

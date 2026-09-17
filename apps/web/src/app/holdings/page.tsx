@@ -10,8 +10,9 @@ import { useStockQuotes, usePrices } from '@stackr/queries';
 import { Button, Card, Badge, ChainAvatar, Input } from '@stackr/ui';
 import { toTroyOunces } from '@/lib/gold';
 import { useGoldPrice } from '@/lib/gold-price-queries';
-import { useHoldingsStore } from '@/lib/holdings-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { holdingsAtom, removeHoldingAtom, updateHoldingAtom } from '@/lib/holdings-store';
+import { currencyAtom, hideBalanceAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const FOCUS_RING =
@@ -20,11 +21,11 @@ const REMOVE_BUTTON_CLASS = `text-xs text-muted-foreground hover:text-destructiv
 const LINK_BUTTON_CLASS = `text-xs text-muted-foreground hover:text-foreground transition-colors ${FOCUS_RING}`;
 
 export default function HoldingsPage() {
-  const holdings = useHoldingsStore(s => s.holdings);
-  const removeHolding = useHoldingsStore(s => s.removeHolding);
-  const updateHolding = useHoldingsStore(s => s.updateHolding);
-  const currency = useSettingsStore(s => s.currency);
-  const hideBalance = useSettingsStore(s => s.hideBalance);
+  const holdings = useAtomValue(holdingsAtom);
+  const removeHolding = useSetAtom(removeHoldingAtom);
+  const updateHolding = useSetAtom(updateHoldingAtom);
+  const currency = useAtomValue(currencyAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
 
   // Inline re-valuation of a self-valued asset (no price feed to do it for us).
   const [revaluingId, setRevaluingId] = useState<string | null>(null);

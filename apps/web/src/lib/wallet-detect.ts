@@ -1,4 +1,4 @@
-export type WalletId = 'metamask' | 'phantom' | 'leather' | 'slush';
+export type WalletId = 'metamask' | 'phantom' | 'solflare' | 'leather' | 'slush';
 
 /**
  * Slush announces itself through the Wallet Standard event registry instead of
@@ -10,6 +10,7 @@ export type WindowDetectedWalletId = Exclude<WalletId, 'slush'>;
 export const INSTALL_URLS: Record<WalletId, string> = {
   metamask: 'https://metamask.io/download',
   phantom: 'https://phantom.app/download',
+  solflare: 'https://solflare.com/download',
   leather: 'https://leather.io/install-extension',
   slush: 'https://slush.app/download',
 };
@@ -23,6 +24,7 @@ export function detectInstalledWallets(w: object): Record<WindowDetectedWalletId
   return {
     metamask: 'ethereum' in w,
     phantom: 'phantom' in w,
+    solflare: 'solflare' in w,
     leather: 'LeatherProvider' in w,
   };
 }

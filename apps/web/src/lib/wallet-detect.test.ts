@@ -13,6 +13,15 @@ feature('wallet detection — which extensions are installed', () => {
     });
   });
 
+  scenario('detects Solflare from its provider global', () => {
+    const result = detectInstalledWallets({ solflare: {} });
+    then('only Solflare is reported installed', () => {
+      expect(result.solflare).toBe(true);
+      expect(result.phantom).toBe(false);
+      expect(result.metamask).toBe(false);
+    });
+  });
+
   scenario('detects Phantom and Leather from their provider globals', () => {
     const result = detectInstalledWallets({ phantom: {}, LeatherProvider: {} });
     then('both Phantom and Leather are installed, MetaMask is not', () => {
@@ -27,6 +36,7 @@ feature('wallet detection — which extensions are installed', () => {
     then('no wallet is detected', () => {
       expect(result.metamask).toBe(false);
       expect(result.phantom).toBe(false);
+      expect(result.solflare).toBe(false);
       expect(result.leather).toBe(false);
     });
   });

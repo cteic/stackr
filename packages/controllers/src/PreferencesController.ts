@@ -16,7 +16,7 @@ import type { Messenger } from './Messenger.js';
  * preference here and the PortfolioController recomputes — purely through the
  * messenger, with neither controller referencing the other.
  *
- * It deliberately does NOT absorb the existing Zustand `settings-store`'s user
+ * It deliberately does NOT absorb the existing `settings-store` atoms' user
  * API keys. This spike is additive: the settings-store remains the source of
  * truth for secrets, and this controller only mirrors the two display knobs the
  * coordination demo needs.

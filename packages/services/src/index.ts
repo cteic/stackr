@@ -1,10 +1,11 @@
-import type { Balance, Chain } from '@stackr/models';
+import type { Balance, Chain, TokenPosition } from '@stackr/models';
 import { btcBalanceAdapter } from './btc.js';
 import { stxBalanceAdapter } from './stx.js';
 import { ethBalanceAdapter } from './eth.js';
 import { solBalanceAdapter } from './sol.js';
+import { solTokenPositionAdapter } from './sol-tokens.js';
 import { suiBalanceAdapter } from './sui.js';
-import type { BalanceAdapter } from './ports.js';
+import type { BalanceAdapter, TokenPositionAdapter } from './ports.js';
 
 // Provider ports (the contracts the app depends on) and the concrete adapters.
 export type {
@@ -12,6 +13,7 @@ export type {
   PriceAdapter,
   TransactionAdapter,
   StockAdapter,
+  TokenPositionAdapter,
   OrderBookAdapter,
   HealthAdapter,
   NftAdapter,
@@ -21,6 +23,17 @@ export { fetchBtcBalance, btcBalanceAdapter } from './btc.js';
 export { fetchStxBalance, lookupStacksBnsName, stxBalanceAdapter } from './stx.js';
 export { fetchEthBalance, ethBalanceAdapter } from './eth.js';
 export { fetchSolBalance, solBalanceAdapter } from './sol.js';
+export {
+  fetchSolTokenPositions,
+  normalizeSolTokenPositions,
+  solTokenPositionAdapter,
+} from './sol-tokens.js';
+export {
+  SOL_TOKEN_REGISTRY,
+  resolveTokenMeta,
+  truncateMint,
+  type SolTokenMeta,
+} from './sol-token-registry.js';
 export { fetchSuiBalance, suiBalanceAdapter } from './sui.js';
 export {
   fetchPrices,
@@ -39,7 +52,12 @@ export {
 export { STOCKS_PROXY_PATH, stocksPublicBase, resolveStocksBase } from './stocks-config.js';
 export { assertValidAddress } from './address-guard.js';
 export { parseOrThrow } from './validate.js';
-export { ServiceException, isServiceException, type ServiceError } from './service-error.js';
+export {
+  ServiceException,
+  isServiceException,
+  isRateLimited,
+  type ServiceError,
+} from './service-error.js';
 export { safeFetch } from './fetch-wrapper.js';
 export { formatBaseUnits } from './base-units.js';
 export { formatFiat, formatUsd, formatCrypto, formatChange, maskFiat } from './format.js';
@@ -176,4 +194,30 @@ export async function fetchBalance(chain: Chain, address: string): Promise<Balan
   // The ETH adapter's Etherscan key is now app-owned and applied server-side by
   // the `/api/etherscan` proxy, so no per-call key is threaded through.
   return balanceAdapters[chain].fetchBalance(address);
+}
+
+/**
+ * Token-position adapters, keyed by chain. Partial on purpose: Solana is the
+ * only chain with a token adapter today, and `tokenPositionChains` is the
+ * runtime guard callers use before dispatching. When the ERC-20 adapter lands
+ * it is one entry here and nothing else.
+ */
+const tokenPositionAdapters: Partial<Record<Chain, TokenPositionAdapter>> = {
+  sol: solTokenPositionAdapter,
+};
+
+/** Whether token positions can be read for a chain at all. */
+export function supportsTokenPositions(chain: Chain): boolean {
+  return tokenPositionAdapters[chain] !== undefined;
+}
+
+/**
+ * Fungible token positions for an address. Chains with no adapter resolve to
+ * `[]` rather than throwing: "this chain has no token layer we read" and "this
+ * account holds no tokens" are the same empty state to a caller.
+ */
+export async function fetchTokenPositions(chain: Chain, address: string): Promise<TokenPosition[]> {
+  const adapter = tokenPositionAdapters[chain];
+  if (!adapter) return [];
+  return adapter.fetchTokenPositions(address);
 }

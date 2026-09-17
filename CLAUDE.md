@@ -24,7 +24,7 @@ Stackr is a multi-chain address watcher where users can add BTC/STX/ETH/SOL/SUI 
 - **Web**: Next.js (App Router) deployed to Cloudflare via @opennextjs/cloudflare
 - **Mobile**: Stackr Wallet, a native signer app — Expo + Tamagui + Privy (ADR 0020), sharing `@stackr/models`/`@stackr/services`/`@stackr/features` with the web app. Supersedes the earlier Capacitor watch-only wrap (ADR 0014).
 - **Styling**: Tailwind v4 + hand-rolled `@stackr/ui` (Radix headless primitives, styled by us)
-- **State**: TanStack React Query (server) + Zustand (client/persisted wallet list)
+- **State**: TanStack React Query (server) + Jotai (client/persisted wallet list)
 - **Testing**: Vitest (unit) + Playwright (e2e)
 - **CI/CD**: GitHub Actions + release-please
 

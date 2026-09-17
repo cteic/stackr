@@ -3,14 +3,15 @@
 import { CurrencySchema, currencyMeta } from '@stackr/models';
 import type { Currency } from '@stackr/models';
 import { Card, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@stackr/ui';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { currencyAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
 
 export default function SettingsPage() {
-  const currency = useSettingsStore(s => s.currency);
-  const setCurrency = useSettingsStore(s => s.setCurrency);
+  const currency = useAtomValue(currencyAtom);
+  const setCurrency = useSetAtom(currencyAtom);
 
   return (
     <>
