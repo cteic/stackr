@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fetchTransactions } from './transactions';
+import { isServiceException } from './service-error';
 import {
   normalizeBtcTransactions,
   normalizeEthTransactions,
@@ -289,5 +291,47 @@ describe('normalizeSuiTransactions', () => {
 
     const [tx] = normalizeSuiTransactions(txs, SUI_ME);
     expect(tx).toMatchObject({ type: 'send', amount: '0.000000000', counterparty: 'unknown' });
+  });
+});
+
+describe('fetchSolTransactions failure handling', () => {
+  const ME = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+  const SIGNATURE = 'sig-1';
+
+  function signaturePage() {
+    return Response.json({
+      result: [{ signature: SIGNATURE, slot: 1, blockTime: 1_700_000_000, err: null }],
+    });
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('surfaces a rate limit on the detail read instead of degrading silently', async () => {
+    // The signature list succeeds; enriching it with lamport deltas is refused.
+    let call = 0;
+    vi.stubGlobal('fetch', async () => {
+      call += 1;
+      return call === 1 ? signaturePage() : new Response('{}', { status: 429 });
+    });
+
+    // Returning amountless rows here would resolve the query successfully, so
+    // the UI would cache them and never show its rate-limit state.
+    const error: unknown = await fetchTransactions('sol', ME).catch((e: unknown) => e);
+    expect(isServiceException(error) && error.serviceError.kind).toBe('rate-limited');
+  });
+
+  it('still renders signature-only rows when the detail read fails for another reason', async () => {
+    let call = 0;
+    vi.stubGlobal('fetch', async () => {
+      call += 1;
+      return call === 1 ? signaturePage() : new Response('{}', { status: 503 });
+    });
+
+    const transactions = await fetchTransactions('sol', ME);
+
+    expect(transactions).toHaveLength(1);
+    expect(transactions[0]).toMatchObject({ hash: SIGNATURE, chain: 'sol' });
   });
 });

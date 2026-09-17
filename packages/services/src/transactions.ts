@@ -9,6 +9,7 @@ import { resolveEtherscanBase } from './etherscan-config.js';
 import { resolveHiroBase } from './hiro-config.js';
 import { resolveSolanaRpcUrl } from './sol-rpc.js';
 import { safeFetch } from './fetch-wrapper.js';
+import { isRateLimited } from './service-error.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
@@ -448,7 +449,11 @@ async function fetchSolTransactions(address: string): Promise<Transaction[]> {
   let details: Map<string, SolanaTransactionDetail>;
   try {
     details = await fetchSolTransactionDetails(signatures.map(sig => sig.signature));
-  } catch {
+  } catch (error) {
+    // A rate limit is the one failure that must not degrade quietly. Returning
+    // signature-only rows here would resolve the query successfully, so the UI
+    // would cache amountless rows and never show the "come back shortly" state.
+    if (isRateLimited(error)) throw error;
     return normalizeSolTransactions(signatures);
   }
 
