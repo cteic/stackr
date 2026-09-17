@@ -10,6 +10,25 @@ export interface SafeFetchOptions {
 }
 
 /**
+ * `Retry-After` is either a delay in seconds or an HTTP date (RFC 9110). Both
+ * are read here and expressed as seconds from now, because a caller wants "how
+ * long until I may retry" and should not care which form the responder chose.
+ * A malformed or already-elapsed value resolves to `undefined` rather than a
+ * misleading zero.
+ */
+function parseRetryAfter(header: string | null): number | undefined {
+  if (header === null) return undefined;
+
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) return seconds > 0 ? seconds : undefined;
+
+  const retryAt = Date.parse(header);
+  if (Number.isNaN(retryAt)) return undefined;
+  const delay = Math.ceil((retryAt - Date.now()) / 1000);
+  return delay > 0 ? delay : undefined;
+}
+
+/**
  * Thin wrapper around `fetch` with a uniform error contract.
  *
  * - Network failures (thrown by `fetch` itself) map to `kind: 'network'`.
@@ -43,10 +62,10 @@ export async function safeFetch(url: string, options?: SafeFetchOptions): Promis
   }
 
   if (response.status === 429) {
-    const retryAfter = Number(response.headers.get('retry-after'));
+    const retryAfterSeconds = parseRetryAfter(response.headers.get('retry-after'));
     throw new ServiceException({
       kind: 'rate-limited',
-      ...(Number.isFinite(retryAfter) && retryAfter > 0 ? { retryAfterSeconds: retryAfter } : {}),
+      ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
       message: 'rate limit exceeded',
     });
   }
