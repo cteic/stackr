@@ -4,6 +4,7 @@ import { TokenPositionSchema } from '@stackr/models';
 import { assertValidAddress } from './address-guard.js';
 import { formatBaseUnits } from './base-units.js';
 import { safeFetch } from './fetch-wrapper.js';
+import { ServiceException } from './service-error.js';
 import type { TokenPositionAdapter } from './ports.js';
 import { resolveSolanaRpcUrl } from './sol-rpc.js';
 import { resolveTokenMeta } from './sol-token-registry.js';
@@ -164,7 +165,23 @@ export async function fetchSolTokenPositions(address: string): Promise<TokenPosi
         },
       ];
 
-  const accounts = parsed.flatMap(entry => entry.result?.value ?? []);
+  // Every requested program must answer. If one errored or went missing,
+  // returning the other program's accounts would cache half a portfolio as a
+  // complete one — a silently wrong balance is worse than a visible failure.
+  const byId = new Map(parsed.map(entry => [entry.id, entry]));
+  const accounts: TokenAccount[] = [];
+  for (let id = 0; id < TOKEN_PROGRAM_IDS.length; id += 1) {
+    const entry = byId.get(id);
+    if (!entry?.result) {
+      throw new ServiceException({
+        kind: 'upstream',
+        status: 502,
+        message: `sol.fetchTokenPositions: no result for token program ${id}`,
+      });
+    }
+    accounts.push(...entry.result.value);
+  }
+
   return normalizeSolTokenPositions(address, accounts);
 }
 

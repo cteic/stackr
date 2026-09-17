@@ -153,6 +153,28 @@ describe('fetchSolTokenPositions', () => {
     expect(isServiceException(error) && error.serviceError.kind).toBe('upstream');
   });
 
+  it('rejects a batch where one token program returned an error', async () => {
+    vi.stubGlobal('fetch', async () =>
+      Response.json([
+        { jsonrpc: '2.0', id: 0, result: { value: [account(USDC, '2000000', 6)] } },
+        { jsonrpc: '2.0', id: 1, error: { message: 'program unavailable' } },
+      ]),
+    );
+
+    // Half a portfolio must not resolve as a complete one.
+    const error: unknown = await fetchSolTokenPositions(OWNER).catch((e: unknown) => e);
+    expect(isServiceException(error) && error.serviceError.kind).toBe('upstream');
+  });
+
+  it('rejects a batch that is missing one of the requested programs', async () => {
+    vi.stubGlobal('fetch', async () =>
+      Response.json([{ jsonrpc: '2.0', id: 0, result: { value: [account(USDC, '2000000', 6)] } }]),
+    );
+
+    const error: unknown = await fetchSolTokenPositions(OWNER).catch((e: unknown) => e);
+    expect(isServiceException(error) && error.serviceError.kind).toBe('upstream');
+  });
+
   it('rejects an address that is not a Solana address before any network call', async () => {
     let calls = 0;
     vi.stubGlobal('fetch', async () => {
