@@ -53,6 +53,12 @@ feature('persisted state reaches a mounted component', () => {
   });
 
   scenario('a corrupt record is dropped before it reaches the component', async () => {
+    // A distinct address from the previous scenario on purpose: Jotai's default
+    // store keeps atom values across renders, so asserting on a shared fixture
+    // would still pass if the mount-time read stopped working and the previous
+    // scenario's wallet was simply left in place.
+    const ONLY_VALID = 'bc1qcorruptfixture456';
+
     given('a persisted list holding one valid and one corrupt record', () =>
       seed(
         'stackr-wallets',
@@ -62,7 +68,7 @@ feature('persisted state reaches a mounted component', () => {
               id: crypto.randomUUID(),
               label: 'Cold storage',
               chain: 'btc',
-              address: 'bc1qtest123',
+              address: ONLY_VALID,
               createdAt: new Date().toISOString(),
             },
             { id: 'not-a-uuid', chain: 'doge' },
@@ -75,10 +81,13 @@ feature('persisted state reaches a mounted component', () => {
     const { result } = renderHook(() => useAtomValue(walletsAtom));
 
     when('a component subscribes', async () => {
-      await waitFor(() => expect(result.current).toHaveLength(1));
+      await waitFor(() => expect(result.current[0]?.address).toBe(ONLY_VALID));
     });
 
-    then('only the valid wallet is rendered', () => expect(result.current[0].chain).toBe('btc'));
+    then('the corrupt record is gone and only the valid wallet remains', () => {
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].chain).toBe('btc');
+    });
   });
 
   scenario('a saved currency is restored', async () => {
