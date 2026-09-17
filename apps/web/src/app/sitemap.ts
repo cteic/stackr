@@ -14,6 +14,9 @@ const PUBLIC_ROUTES = [
   '/market',
   '/collectibles',
   '/wallet/add',
+  '/privacy',
+  '/terms',
+  '/support',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

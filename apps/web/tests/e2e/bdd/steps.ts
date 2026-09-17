@@ -56,6 +56,22 @@ defineStep(/^they open the dashboard$/, async ({ page }) => {
   await page.goto('/');
 });
 
+defineStep(/^they open settings$/, async ({ page }) => {
+  await page.goto('/settings');
+});
+
+defineStep(/^they follow the "([^"]+)" footer link$/, async ({ page }, name) => {
+  const link = page.getByRole('contentinfo').getByRole('link', { name, exact: true });
+  const href = await link.getAttribute('href');
+  await link.click();
+  // A first visit to a route on the dev server compiles it on demand, which can
+  // outlast the default assertion timeout; settle on the new URL before the
+  // scenario asserts on its content.
+  if (href !== null) {
+    await page.waitForURL(url => url.pathname === href, { timeout: 30_000 });
+  }
+});
+
 defineStep(/^they open the connect modal$/, async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
@@ -142,4 +158,24 @@ defineStep(/^a pairing QR code is shown$/, async ({ page }) => {
   await expect(page.getByRole('img', { name: 'Stackr Link pairing QR code' })).toBeVisible({
     timeout: 15_000,
   });
+});
+
+defineStep(/^the "([^"]+)" page heading is visible$/, async ({ page }, name) => {
+  await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible();
+});
+
+defineStep(/^the "([^"]+)" text is shown$/, async ({ page }, text) => {
+  await expect(page.getByText(text, { exact: true })).toBeVisible();
+});
+
+defineStep(/^the "([^"]+)" mail link is shown$/, async ({ page }, email) => {
+  const link = page.getByRole('link', { name: email, exact: true }).first();
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute('href', `mailto:${email}`);
+});
+
+defineStep(/^the non-custodial notice is visible$/, async ({ page }) => {
+  const notice = page.getByRole('note', { name: 'Non-custodial' });
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('never leave it');
 });
