@@ -96,6 +96,19 @@ describe('normalizeSolTokenPositions', () => {
     expect(positions.map(p => p.symbol)).toEqual(['BONK', 'USDC']);
   });
 
+  it('orders positions correctly for a mint with more than 36 decimals', () => {
+    // The sort once scaled against a fixed 36-decimal ceiling, which produced a
+    // negative BigInt exponent (a throw) for anything finer.
+    const positions = normalizeSolTokenPositions(
+      OWNER,
+      [account(USDC, '1000000', 6), account(BONK, '5' + '0'.repeat(40), 40)],
+      NOW,
+    );
+
+    // 5e40 base units at 40dp is 5 tokens; 1e6 at 6dp is 1 token.
+    expect(positions.map(p => p.symbol)).toEqual(['BONK', 'USDC']);
+  });
+
   it('returns an empty list for an account holding nothing', () => {
     expect(normalizeSolTokenPositions(OWNER, [], NOW)).toEqual([]);
   });

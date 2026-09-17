@@ -23,7 +23,7 @@ export const TokenPositionSchema = z.object({
   tokenId: z.string(),
   symbol: z.string(),
   name: z.string(),
-  decimals: z.number().int().min(0).max(36),
+  decimals: z.number().int().min(0).max(255),
   /** Exact base-unit amount, as an integer string. */
   rawAmount: z.string().regex(/^\d+$/, 'rawAmount must be a non-negative integer string'),
   /** `rawAmount` scaled by `decimals`, for display. */

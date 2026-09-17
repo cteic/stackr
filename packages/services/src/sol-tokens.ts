@@ -111,14 +111,16 @@ export function normalizeSolTokenPositions(
         updatedAt,
       };
     })
-    // Largest position first. Comparing scaled BigInts keeps the ordering exact
-    // across mints with different decimals, without ever building a float.
+    // Largest position first. Both sides are raised to the finer of the two
+    // decimal scales, so the comparison stays exact across mints that disagree
+    // on decimals and never builds a float. Scaling to the pair rather than to
+    // a fixed ceiling means no mint can outgrow the comparison.
     .sort((a, b) => {
-      const scale = (position: TokenPosition) =>
-        BigInt(position.rawAmount) * 10n ** BigInt(36 - position.decimals);
-      const delta = scale(b) - scale(a);
-      if (delta > 0n) return 1;
-      if (delta < 0n) return -1;
+      const scale = Math.max(a.decimals, b.decimals);
+      const left = BigInt(a.rawAmount) * 10n ** BigInt(scale - a.decimals);
+      const right = BigInt(b.rawAmount) * 10n ** BigInt(scale - b.decimals);
+      if (right > left) return 1;
+      if (right < left) return -1;
       return a.tokenId.localeCompare(b.tokenId);
     });
 
