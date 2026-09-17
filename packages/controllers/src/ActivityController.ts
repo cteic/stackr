@@ -213,7 +213,7 @@ export class ActivityController extends BaseController<
 
   /**
    * Replace the watch-only address set (the bridge from the app's wallet
-   * store). Re-runs the feed if the effective wallet set changed. Registered as
+   * atoms). Re-runs the feed if the effective wallet set changed. Registered as
    * `ActivityController:setWatchedWallets`.
    */
   setWatchedWallets(wallets: WalletRef[]): void {
