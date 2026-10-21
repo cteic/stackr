@@ -3,11 +3,12 @@ import path from 'node:path';
 
 // Logic-layer tests only: the tested modules are pure TS (state machine,
 // stores, adapters behind injected ports) with no react-native imports, so
-// they run under node without a native renderer.
+// they run under node without a native renderer. `scripts/` is in scope for
+// the same reason: the brand-asset generator is pure geometry and bytes.
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
   },
   resolve: {
     alias: {

@@ -2,3 +2,11 @@
 .expo-export/
 ios/
 android/
+
+# Production configuration comes from EAS environment variables, never from a
+# committed file. A local `.env.production` is for reproducing a production
+# build on this machine only; see README.md, "Environment separation".
+.env.production
+
+# Play Console service-account key for `eas submit --platform android`.
+credentials/
