@@ -1,5 +1,5 @@
 import { describe as feature, it as scenario, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import { bdd } from '../lib/bdd';
 import { Footer } from './footer';
 
@@ -26,5 +26,24 @@ feature('footer', () => {
         expect(link.className).toContain('focus-visible:ring-ring');
       },
     );
+  });
+
+  scenario('links every page to the privacy policy, terms and support', () => {
+    when('the footer renders', () => render(<Footer />));
+    then('the legal nav exposes the three public routes', () => {
+      const nav = screen.getByRole('navigation', { name: 'Legal and support' });
+      expect(within(nav).getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe(
+        '/privacy',
+      );
+      expect(within(nav).getByRole('link', { name: 'Terms' }).getAttribute('href')).toBe('/terms');
+      expect(within(nav).getByRole('link', { name: 'Support' }).getAttribute('href')).toBe(
+        '/support',
+      );
+    });
+    then('each legal link carries the same focus-visible ring as the source link', () => {
+      ['Privacy', 'Terms', 'Support'].forEach(name => {
+        expect(screen.getByRole('link', { name }).className).toContain('focus-visible:ring-2');
+      });
+    });
   });
 });
