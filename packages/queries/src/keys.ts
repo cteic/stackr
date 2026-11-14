@@ -1,5 +1,13 @@
 import type { Chain, Currency, Protocol } from '@stackr/models';
 
+/**
+ * Every remote read's cache key, built here and nowhere else.
+ *
+ * The convention is documented in `docs/DATA-FETCHING.md`. In short: keys are
+ * hierarchical and read left to right from broadest to narrowest, so a prefix
+ * is always a valid invalidation target — `queryKeys.balances()` invalidates
+ * every chain's balance, `queryKeys.balance('sol', addr)` invalidates one.
+ */
 export const queryKeys = {
   all: ['stackr'] as const,
   health: () => [...queryKeys.all, 'health'] as const,
@@ -7,6 +15,12 @@ export const queryKeys = {
     [...queryKeys.health(), protocol, address] as const,
   balances: () => [...queryKeys.all, 'balance'] as const,
   balance: (chain: Chain, address: string) => [...queryKeys.balances(), chain, address] as const,
+  tokenPositionsAll: () => [...queryKeys.all, 'token-positions'] as const,
+  tokenPositions: (chain: Chain, address: string) =>
+    [...queryKeys.tokenPositionsAll(), chain, address] as const,
+  transactionsAll: () => [...queryKeys.all, 'transactions'] as const,
+  transactions: (chain: Chain, address: string) =>
+    [...queryKeys.transactionsAll(), chain, address] as const,
   prices: () => [...queryKeys.all, 'prices'] as const,
   pricesByChains: (chains: Chain[], currency: Currency = 'usd') =>
     [...queryKeys.prices(), currency, ...chains] as const,

@@ -3,8 +3,16 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { TooltipProvider } from '@stackr/ui';
 import type { ReactNode } from 'react';
 import { bdd } from '../lib/bdd';
-import { useWalletStore } from '../lib/wallet-store';
+import { getDefaultStore } from 'jotai';
+import {
+  connectedAddressesAtom,
+  setConnectedAddressesAtom,
+  walletsAtom,
+} from '../lib/wallet-store';
+
 import { ChainStatusIndicators } from './chain-status-indicators';
+
+const store = getDefaultStore();
 
 const { given, when, then } = bdd;
 
@@ -13,7 +21,8 @@ function renderWithProviders(ui: ReactNode) {
 }
 
 beforeEach(() => {
-  useWalletStore.setState({ wallets: [], connectedAddresses: {} });
+  store.set(walletsAtom, []);
+  store.set(connectedAddressesAtom, {});
 });
 afterEach(cleanup);
 
@@ -30,7 +39,7 @@ feature('chain status indicators', () => {
 
   scenario('a connected chain is lit and others are dimmed', () => {
     given('a connected Ethereum address', () =>
-      useWalletStore.getState().setConnectedAddresses('eth', ['0xabc']),
+      store.set(setConnectedAddressesAtom, 'eth', ['0xabc']),
     );
     when('the status row renders', () => renderWithProviders(<ChainStatusIndicators />));
     then('the Ethereum dot is at full opacity', () => {

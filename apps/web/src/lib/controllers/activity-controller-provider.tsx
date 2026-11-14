@@ -19,7 +19,8 @@ import {
   type WalletRef,
 } from '@stackr/controllers';
 import type { Chain } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom, walletsAtom } from '@/lib/wallet-store';
 
 /**
  * Production wiring for the ActivityController — the one place the app builds an
@@ -27,8 +28,8 @@ import { useWalletStore } from '@/lib/wallet-store';
  * the wallet-detail transaction list can mirror it via `useActivityState`.
  *
  * Unlike the /labs ControllerProvider (which is a self-contained spike), this
- * provider feeds the controller from the production source of truth: the Zustand
- * wallet store. A small bridge mirrors the store's watch-only `wallets` and the
+ * provider feeds the controller from the production source of truth: the Jotai
+ * wallet atoms. A small bridge mirrors the store's watch-only `wallets` and the
  * `connectedAddresses` (already populated by `WalletConnectionBridge`) into the
  * controller via `setWatchedWallets` — the same store→controller direction the
  * WalletConnectionBridge uses. The controller owns the fan-out, dedupe and
@@ -87,8 +88,8 @@ export function ActivityControllerProvider({ children }: { children: ReactNode }
     return { messenger, activity };
   });
 
-  const wallets = useWalletStore(s => s.wallets);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
+  const wallets = useAtomValue(walletsAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
   const [pinned, setPinned] = useState<WalletRef[]>([]);
 
   const trackWallet = useCallback((ref: WalletRef) => {
