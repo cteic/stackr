@@ -6,3 +6,4 @@ import { runFeature } from './runner';
 runFeature('first-run.feature');
 runFeature('wallet-connect.feature');
 runFeature('stackr-link-pairing.feature');
+runFeature('legal-pages.feature');
