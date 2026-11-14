@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { useWalletStore } from '@/lib/wallet-store';
+import { getDefaultStore } from 'jotai';
+import { clearConnectedAddressesAtom, connectedAddressesAtom } from '@/lib/wallet-store';
+
 import { useWalletConnections, type WalletConnection } from './use-wallet-connections';
+
+const store = getDefaultStore();
 
 /**
  * The wagmi / Solana-adapter halves of the hook need their provider trees, so
@@ -66,7 +70,7 @@ describe('useWalletConnections — Slush (sui)', () => {
 
   afterEach(() => {
     cleanup();
-    useWalletStore.getState().clearConnectedAddresses('sui');
+    store.set(clearConnectedAddressesAtom, 'sui');
     vi.clearAllMocks();
   });
 
@@ -87,7 +91,7 @@ describe('useWalletConnections — Slush (sui)', () => {
       await slushEntry(result.current).connect();
     });
 
-    expect(useWalletStore.getState().connectedAddresses.sui).toEqual([mocks.address]);
+    expect(store.get(connectedAddressesAtom).sui).toEqual([mocks.address]);
     expect(slushEntry(result.current).connected).toBe(true);
   });
 
@@ -99,7 +103,7 @@ describe('useWalletConnections — Slush (sui)', () => {
       await slushEntry(result.current).connect();
     });
 
-    expect(useWalletStore.getState().connectedAddresses.sui).toBeUndefined();
+    expect(store.get(connectedAddressesAtom).sui).toBeUndefined();
   });
 
   it('disconnect() clears the sui addresses and forgets the wallet session', async () => {
@@ -112,7 +116,7 @@ describe('useWalletConnections — Slush (sui)', () => {
       await slushEntry(result.current).disconnect();
     });
 
-    expect(useWalletStore.getState().connectedAddresses.sui).toBeUndefined();
+    expect(store.get(connectedAddressesAtom).sui).toBeUndefined();
     expect(mocks.disconnectSuiWallet).toHaveBeenCalledOnce();
     expect(slushEntry(result.current).connected).toBe(false);
   });
@@ -123,9 +127,7 @@ describe('useWalletConnections — Slush (sui)', () => {
 
     const { result } = renderHook(() => useWalletConnections());
 
-    await waitFor(() =>
-      expect(useWalletStore.getState().connectedAddresses.sui).toEqual([mocks.address]),
-    );
+    await waitFor(() => expect(store.get(connectedAddressesAtom).sui).toEqual([mocks.address]));
     expect(slushEntry(result.current).connected).toBe(true);
   });
 });

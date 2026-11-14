@@ -5,8 +5,9 @@ import type { Chain } from '@stackr/models';
 import type { NftAddressesByChain } from '@stackr/queries';
 import { Header } from '@/components/header';
 import { Collectibles } from '@/components/collectibles';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom, walletsAtom } from '@/lib/wallet-store';
+import { hideBalanceAtom } from '@/lib/settings-store';
 
 // Chains with a registered NFT adapter today. STX ships the SIP-9 adapter; EVM,
 // Bitcoin ordinals/runes/stamps and Solana plug in here as their adapters land
@@ -14,9 +15,9 @@ import { useSettingsStore } from '@/lib/settings-store';
 const NFT_CHAINS: Chain[] = ['stx'];
 
 export default function CollectiblesPage() {
-  const wallets = useWalletStore(s => s.wallets);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const hideBalance = useSettingsStore(s => s.hideBalance);
+  const wallets = useAtomValue(walletsAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
 
   // Group every watched + connected address under its chain, deduped, for the
   // chains we have an adapter for. Mirrors the dashboard's assembly so the page

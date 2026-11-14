@@ -2,15 +2,19 @@ import { describe as feature, it as scenario, expect, beforeEach, afterEach } fr
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { ThemeProvider } from './theme-provider';
 import { ThemePicker } from './theme-picker';
-import { useSettingsStore } from '../lib/settings-store';
+import { getDefaultStore } from 'jotai';
+import { customThemeAtom } from '../lib/settings-store';
+
 import { defaultCustomTheme } from '../lib/custom-theme';
 import { bdd } from '../lib/bdd';
+
+const store = getDefaultStore();
 
 const { given, when, then } = bdd;
 
 beforeEach(() => {
   localStorage.clear();
-  useSettingsStore.setState({ customTheme: defaultCustomTheme() });
+  store.set(customThemeAtom, defaultCustomTheme());
 });
 afterEach(cleanup);
 

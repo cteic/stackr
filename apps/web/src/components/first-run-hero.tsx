@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { Button, ChainAvatar } from '@stackr/ui';
 import type { Chain, CreateWallet } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { addWalletAtom, walletsAtom } from '@/lib/wallet-store';
 
 /**
  * Well-known public addresses that boot the dashboard in one click: enough to
@@ -40,8 +41,8 @@ const CHAINS: { chain: Chain; name: string }[] = [
  * the demo portfolio.
  */
 export function FirstRunHero() {
-  const wallets = useWalletStore(s => s.wallets);
-  const addWallet = useWalletStore(s => s.addWallet);
+  const wallets = useAtomValue(walletsAtom);
+  const addWallet = useSetAtom(addWalletAtom);
 
   function loadDemoPortfolio() {
     const existing = new Set(wallets.map(w => w.address.toLowerCase()));

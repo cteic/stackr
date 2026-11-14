@@ -8,7 +8,7 @@ import type { Chain } from '@stackr/models';
 import { useBalance, usePrices } from '@stackr/queries';
 import { selectActivityByWallet } from '@stackr/controllers';
 import { track } from '@stackr/analytics';
-import { formatFiat } from '@stackr/services';
+import { formatFiat, supportsTokenPositions } from '@stackr/services';
 import {
   Button,
   Input,
@@ -24,9 +24,11 @@ import {
   Skeleton,
 } from '@stackr/ui';
 import { validateAddress } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { removeWalletAtom, updateLabelAtom, walletsAtom } from '@/lib/wallet-store';
+import { currencyAtom, hideBalanceAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
+import { TokenPositions } from '@/components/token-positions';
 import { TransactionList } from '@/components/transaction-list';
 import { useActivityState, useTrackWallet } from '@/lib/controllers/activity-controller-provider';
 
@@ -53,12 +55,12 @@ export function WalletDetailView({
     if (chainResult.success) track('chain_viewed', { chain });
   }, [chainResult.success, chain]);
 
-  const wallet = useWalletStore(s =>
-    s.wallets.find(w => w.chain === chain && w.address === address),
-  );
-  const removeWallet = useWalletStore(s => s.removeWallet);
-  const updateLabel = useWalletStore(s => s.updateLabel);
-  const currency = useSettingsStore(s => s.currency);
+  const wallets = useAtomValue(walletsAtom);
+  const wallet = wallets.find(w => w.chain === chain && w.address === address);
+  const removeWallet = useSetAtom(removeWalletAtom);
+  const updateLabel = useSetAtom(updateLabelAtom);
+  const currency = useAtomValue(currencyAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
   const { data: balance, isLoading, error } = useBalance(chain, address);
   const { data: prices } = usePrices([chain], currency);
   const price = prices?.[0];
@@ -186,6 +188,10 @@ export function WalletDetailView({
             </>
           ) : null}
         </Card>
+
+        {supportsTokenPositions(chain) ? (
+          <TokenPositions chain={chain} address={address} hideBalance={hideBalance} />
+        ) : null}
 
         <Card className="mt-6 overflow-hidden">
           <div className="text-sm text-muted-foreground p-4 border-b">Recent Transactions</div>

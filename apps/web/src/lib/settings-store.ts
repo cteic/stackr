@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { atom } from 'jotai';
 import { CurrencySchema } from '@stackr/models';
 import type { Currency } from '@stackr/models';
+import { persistedAtom } from './persisted-atom';
 import {
   CUSTOM_THEME_TOKENS,
   defaultCustomTheme,
@@ -43,59 +43,85 @@ function sanitizeCustomTheme(value: unknown): CustomTheme {
   return { base, tokens };
 }
 
-interface SettingsState {
+/** The fields that survive a reload. `hideBalance` deliberately does not. */
+interface PersistedSettings {
   currency: Currency;
-  setCurrency: (currency: Currency) => void;
-  hideBalance: boolean;
-  toggleHideBalance: () => void;
   customTheme: CustomTheme;
-  setCustomThemeBase: (base: BaseThemeId) => void;
-  setCustomThemeToken: (key: CustomThemeTokenKey, value: string) => void;
-  resetCustomTheme: () => void;
 }
 
-export const useSettingsStore = create<SettingsState>()(
-  persist(
-    set => ({
-      currency: 'usd',
-      setCurrency: currency => set({ currency }),
-      hideBalance: false,
-      toggleHideBalance: () => set(s => ({ hideBalance: !s.hideBalance })),
-      customTheme: defaultCustomTheme(),
-      // Picking a base reseeds the palette — the base theme is the starting point.
-      setCustomThemeBase: base => set({ customTheme: { base, tokens: { ...THEME_SEEDS[base] } } }),
-      setCustomThemeToken: (key, value) =>
-        set(s => ({
-          customTheme: { ...s.customTheme, tokens: { ...s.customTheme.tokens, [key]: value } },
-        })),
-      resetCustomTheme: () =>
-        set(s => ({
-          customTheme: { ...s.customTheme, tokens: { ...THEME_SEEDS[s.customTheme.base] } },
-        })),
-    }),
-    {
-      name: 'stackr-settings',
-      version: PERSIST_VERSION,
-      partialize: state => ({
-        currency: state.currency,
-        customTheme: state.customTheme,
-      }),
-      // v2 also drops the removed `etherscanApiKey` / `alphaVantageApiKey`
-      // fields: they are simply not read back out, so any value an older blob
-      // carried is discarded rather than rehydrated.
-      migrate: persisted => {
-        if (!isRecord(persisted)) {
-          return {
-            currency: 'usd',
-            customTheme: defaultCustomTheme(),
-          };
-        }
-        const currency = CurrencySchema.safeParse(persisted.currency);
-        return {
-          currency: currency.success ? currency.data : 'usd',
-          customTheme: sanitizeCustomTheme(persisted.customTheme),
-        };
-      },
-    },
-  ),
+function defaultSettings(): PersistedSettings {
+  return { currency: 'usd', customTheme: defaultCustomTheme() };
+}
+
+// v2 also drops the removed `etherscanApiKey` / `alphaVantageApiKey` fields:
+// they are simply not read back out, so any value an older blob carried is
+// discarded rather than rehydrated.
+function migrateSettings(persisted: unknown): PersistedSettings {
+  if (!isRecord(persisted)) return defaultSettings();
+  const currency = CurrencySchema.safeParse(persisted.currency);
+  return {
+    currency: currency.success ? currency.data : 'usd',
+    customTheme: sanitizeCustomTheme(persisted.customTheme),
+  };
+}
+
+const { valueAtom: settingsAtom, rehydrate: rehydrateSettings } = persistedAtom(
+  'stackr-settings',
+  PERSIST_VERSION,
+  defaultSettings(),
+  migrateSettings,
 );
+
+export { settingsAtom, rehydrateSettings };
+
+/**
+ * One atom per field, derived from the single persisted blob.
+ *
+ * Splitting them is what keeps a subscription narrow: the header reads
+ * `currencyAtom` only, so editing a theme token republishes `settingsAtom` but
+ * leaves the header alone. Jotai compares a derived atom's recomputed value
+ * with `Object.is` and skips the notification when it is unchanged, so a
+ * currency string that did not move re-renders nothing.
+ */
+export const currencyAtom = atom(
+  get => get(settingsAtom).currency,
+  (get, set, currency: Currency) => {
+    set(settingsAtom, { ...get(settingsAtom), currency });
+  },
+);
+
+export const customThemeAtom = atom(
+  get => get(settingsAtom).customTheme,
+  (get, set, customTheme: CustomTheme) => {
+    set(settingsAtom, { ...get(settingsAtom), customTheme });
+  },
+);
+
+/**
+ * Whether fiat amounts are masked. Session-only by design: hiding balances is a
+ * "someone is looking over my shoulder" gesture, so it resets on reload rather
+ * than following the user to their next visit.
+ */
+export const hideBalanceAtom = atom(false);
+
+export const toggleHideBalanceAtom = atom(null, (get, set) => {
+  set(hideBalanceAtom, !get(hideBalanceAtom));
+});
+
+/** Picking a base reseeds the palette — the base theme is the starting point. */
+export const setCustomThemeBaseAtom = atom(null, (_get, set, base: BaseThemeId) => {
+  set(customThemeAtom, { base, tokens: { ...THEME_SEEDS[base] } });
+});
+
+export const setCustomThemeTokenAtom = atom(
+  null,
+  (get, set, key: CustomThemeTokenKey, value: string) => {
+    const current = get(customThemeAtom);
+    set(customThemeAtom, { ...current, tokens: { ...current.tokens, [key]: value } });
+  },
+);
+
+export const resetCustomThemeAtom = atom(null, (get, set) => {
+  const current = get(customThemeAtom);
+  set(customThemeAtom, { ...current, tokens: { ...THEME_SEEDS[current.base] } });
+});

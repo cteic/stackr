@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { validateAddress } from '@stackr/models';
-import { useWalletStore } from '@/lib/wallet-store';
+import { getDefaultStore } from 'jotai';
+import { removeWalletAtom, walletsAtom } from '@/lib/wallet-store';
+
 import { DEMO_WALLETS, FirstRunHero } from './first-run-hero';
+
+const store = getDefaultStore();
 
 /**
  * The hero's one job is getting a first-time visitor from an empty dashboard
@@ -13,7 +17,8 @@ import { DEMO_WALLETS, FirstRunHero } from './first-run-hero';
 describe('FirstRunHero', () => {
   afterEach(() => {
     cleanup();
-    const { wallets, removeWallet } = useWalletStore.getState();
+    const wallets = store.get(walletsAtom);
+    const removeWallet = (id: string) => store.set(removeWalletAtom, id);
     wallets.forEach(w => removeWallet(w.id));
   });
 
@@ -33,7 +38,7 @@ describe('FirstRunHero', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Load demo portfolio' }));
 
-    const { wallets } = useWalletStore.getState();
+    const wallets = store.get(walletsAtom);
     expect(wallets).toHaveLength(DEMO_WALLETS.length);
     wallets.forEach(w => expect(w.label).toMatch(/^Demo · /));
   });
@@ -45,7 +50,7 @@ describe('FirstRunHero', () => {
     fireEvent.click(button);
     fireEvent.click(button);
 
-    expect(useWalletStore.getState().wallets).toHaveLength(DEMO_WALLETS.length);
+    expect(store.get(walletsAtom)).toHaveLength(DEMO_WALLETS.length);
   });
 
   it('ships demo addresses that pass the same validation as user input', () => {

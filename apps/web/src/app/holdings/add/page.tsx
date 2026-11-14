@@ -28,7 +28,14 @@ import {
   TabsTrigger,
   TabsContent,
 } from '@stackr/ui';
-import { useHoldingsStore } from '@/lib/holdings-store';
+import { useSetAtom } from 'jotai';
+import {
+  addAssetHoldingAtom,
+  addCashHoldingAtom,
+  addCryptoHoldingAtom,
+  addGoldHoldingAtom,
+  addStockHoldingAtom,
+} from '@/lib/holdings-store';
 import { Header } from '@/components/header';
 
 const currencies = CurrencySchema.options;
@@ -38,11 +45,11 @@ const assetCategories = AssetCategorySchema.options;
 
 export default function AddHoldingPage() {
   const router = useRouter();
-  const addCashHolding = useHoldingsStore(s => s.addCashHolding);
-  const addStockHolding = useHoldingsStore(s => s.addStockHolding);
-  const addCryptoHolding = useHoldingsStore(s => s.addCryptoHolding);
-  const addGoldHolding = useHoldingsStore(s => s.addGoldHolding);
-  const addAssetHolding = useHoldingsStore(s => s.addAssetHolding);
+  const addCashHolding = useSetAtom(addCashHoldingAtom);
+  const addStockHolding = useSetAtom(addStockHoldingAtom);
+  const addCryptoHolding = useSetAtom(addCryptoHoldingAtom);
+  const addGoldHolding = useSetAtom(addGoldHoldingAtom);
+  const addAssetHolding = useSetAtom(addAssetHoldingAtom);
 
   // Cash form state
   const [cashLabel, setCashLabel] = useState('');

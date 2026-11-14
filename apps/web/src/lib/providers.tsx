@@ -12,7 +12,7 @@ import { ActivityControllerProvider } from '@/lib/controllers/activity-controlle
 import { PostHogProvider, PostHogPageview } from '@/lib/posthog-provider';
 import { wagmiConfig } from '@/lib/wagmi-config';
 import { solanaEndpoint } from '@/lib/solana-config';
-import { getPhantomWalletAdapter } from '@/lib/solana-wallet-instance';
+import { getSolanaWalletAdapters } from '@/lib/solana-wallet-instance';
 import { useMemo, useState, type ReactNode } from 'react';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -28,9 +28,9 @@ export function Providers({ children }: { children: ReactNode }) {
       }),
   );
 
-  // Share one Phantom adapter instance with the WalletConnectionController's
-  // Solana source, so its connect/disconnect events reach the controller.
-  const solanaWallets = useMemo(() => [getPhantomWalletAdapter()], []);
+  // Share the same adapter instances with the WalletConnectionController's
+  // Solana sources, so their connect/disconnect events reach the controller.
+  const solanaWallets = useMemo(() => getSolanaWalletAdapters(), []);
 
   return (
     <ThemeProvider>
