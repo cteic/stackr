@@ -1,4 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
+import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex, concatBytes, utf8ToBytes } from '@noble/hashes/utils';
 import {
@@ -74,6 +75,15 @@ export function signStxTransaction(
   payload: StxTransactionPayload,
 ): SignTransactionResult {
   const transaction = deserializeTransaction(payload.transactionHex);
+  // signOrigin does not check that the key belongs to the transaction's sender,
+  // so a mismatched key would produce a signature the node rejects.
+  const ownHash = bytesToHex(ripemd160(sha256(secp256k1.getPublicKey(privateKey, true))));
+  if (transaction.auth.spendingCondition.signer !== ownHash) {
+    throw new SignerError(
+      signerErrorCodes.signingFailed,
+      'Stacks transaction sender does not match this account',
+    );
+  }
   const signer = new TransactionSigner(transaction);
   try {
     signer.signOrigin(compressedPrivateKeyHex(privateKey));

@@ -98,8 +98,10 @@ for what's next.
 
 See [SETUP.md](./SETUP.md) for prerequisites, install, and common commands.
 
-## License
+## Licence
 
-Proprietary — All Rights Reserved. See [LICENSE](./LICENSE).
+Copyright (c) 2026 Pete Watters. Licensed under the GNU Affero General Public License v3.0 only (AGPL-3.0-only). See [LICENSE](./LICENSE).
+
+A commercial licence for use without the AGPL obligations is available from cteic. Contact [Pete Watters](https://github.com/pete-watters).
 
 Built and maintained by [Pete Watters](https://github.com/pete-watters) in Dublin.

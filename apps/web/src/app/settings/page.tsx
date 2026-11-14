@@ -2,7 +2,15 @@
 
 import { CurrencySchema, currencyMeta } from '@stackr/models';
 import type { Currency } from '@stackr/models';
-import { Card, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@stackr/ui';
+import {
+  Card,
+  NonCustodialNotice,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@stackr/ui';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { currencyAtom } from '@/lib/settings-store';
 import { Header } from '@/components/header';
@@ -39,6 +47,8 @@ export default function SettingsPage() {
             </Select>
           </div>
         </Card>
+
+        <NonCustodialNotice className="mt-4" />
       </main>
     </>
   );

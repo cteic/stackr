@@ -7,3 +7,4 @@ runFeature('first-run.feature');
 runFeature('wallet-connect.feature');
 runFeature('stackr-link-pairing.feature');
 runFeature('solana-portfolio.feature');
+runFeature('legal-pages.feature');
