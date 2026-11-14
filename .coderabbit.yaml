@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-GB
+
+tone_instructions: >-
+  Be direct and concise. No praise, no preamble, no restating what the diff
+  does. Raise only real defects and concrete violations of the conventions
+  below. If a change is fine, say nothing.
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  poem: false
+  review_status: false
+  auto_review:
+    enabled: true
+    drafts: false
+    # Both, deliberately. `dev` is the integration branch, but `hotfix/*`
+    # branches off `main` and those PRs go straight to production — the
+    # last place to skip a review.
+    base_branches: [dev, main]
+  path_filters:
+    - '!**/pnpm-lock.yaml'
+    - '!**/package-lock.json'
+    - '!**/dist/**'
+    - '!**/.next/**'
+    - '!**/.turbo/**'
+    - '!**/*.snap'
+  path_instructions:
+    - path: '**/*.{ts,tsx}'
+      instructions: >-
+        Flag: `enum` declarations (use const objects or unions); `as` casts,
+        `!` non-null assertions, and `any` (use runtime checks and type
+        guards); `type` used for a plain object shape where `interface` fits;
+        React component props not named `ComponentNameProps` or not
+        destructured in the signature; top-level functions or React components
+        written as arrow-function consts (arrow functions are for callbacks
+        only); `let` where `prefer-const` applies; nested ternaries;
+        non-kebab-case filenames.
+        Do not comment on pre-existing comments unless the diff changes them,
+        and do not suggest adding comments.
+    - path: '**/*.{ts,tsx,js,jsx,mjs,cjs,astro}'
+      instructions: >-
+        Treat any secret reaching the client bundle as a blocking defect.
+        Flag API keys, tokens, or service credentials read through
+        framework-public env vars (NEXT_PUBLIC_*, VITE_*, PUBLIC_*,
+        EXPO_PUBLIC_*) or inlined at build time. Secret-bearing calls belong
+        in a server route or proxy; the client calls same-origin.
+        Flag API-sourced or user-supplied values accepted with a cast instead
+        of a type guard, and any input validated only on the client.
+    - path: '**/*.{test,spec}.{ts,tsx}'
+      instructions: >-
+        Tests must assert observable behaviour, not implementation details.
+        Flag assertions on internal state, mock call counts standing in for
+        behaviour, and tests that would pass without the change under review.
+    - path: '**/*.{yml,yaml}'
+      instructions: >-
+        For CI workflows, flag actions pinned to a mutable tag rather than a
+        commit SHA, secrets echoed into logs or step outputs, and
+        `pull_request_target` used with a checkout of untrusted head code.
+  tools:
+    gitleaks:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: local
