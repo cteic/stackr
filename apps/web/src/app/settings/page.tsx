@@ -15,7 +15,7 @@ export default function SettingsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="w-full mx-auto max-w-lg px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
         <Card className="p-4">

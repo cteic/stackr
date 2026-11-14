@@ -153,7 +153,7 @@ export default function MarketsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="w-full mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between gap-2">
           <h1 className="text-2xl font-bold">Markets</h1>
           <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export default function MarketsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
           <Card className={`p-4 ${isCrypto ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className="mb-3 flex items-baseline justify-between">
               <div className="text-sm font-semibold">{selected?.label ?? '—'}</div>

@@ -36,7 +36,7 @@ export default function CollectiblesPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="w-full mx-auto max-w-5xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Collectibles</h1>
         </div>

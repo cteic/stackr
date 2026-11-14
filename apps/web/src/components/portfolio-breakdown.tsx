@@ -33,7 +33,7 @@ export function PortfolioBreakdown({ allocations }: PortfolioBreakdownProps) {
 
   return (
     <Card className="p-4 mb-6">
-      <div className="text-sm text-muted-foreground mb-3">Allocation</div>
+      <h2 className="text-sm text-muted-foreground mb-3">Allocation</h2>
 
       {/* Stacked bar */}
       <div className="flex h-2 rounded-full overflow-hidden mb-3">

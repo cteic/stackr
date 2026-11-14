@@ -27,7 +27,7 @@ export function PortfolioSummary({
 }: PortfolioSummaryProps) {
   return (
     <Card className="p-6 mb-6">
-      <div className="text-sm text-muted-foreground mb-2">Total Portfolio Value</div>
+      <h2 className="text-sm text-muted-foreground mb-2">Total Portfolio Value</h2>
       <div className="flex items-center gap-4">
         <div>
           {isLoading ? (

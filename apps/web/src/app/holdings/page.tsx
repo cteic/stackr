@@ -78,7 +78,7 @@ export default function HoldingsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="w-full mx-auto max-w-3xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Holdings</h1>
           <Button asChild>

@@ -142,7 +142,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-6 md:px-5 md:py-7">
+      <main className="w-full mx-auto max-w-6xl px-4 py-6 md:px-5 md:py-7">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Portfolio</h1>
           <div className="flex gap-2">
@@ -206,6 +206,7 @@ export default function DashboardPage() {
                   wallet={wallet}
                   balance={balanceQueries[i]?.data}
                   isLoading={balanceQueries[i]?.isLoading}
+                  isError={balanceQueries[i]?.isError || pricesError}
                   price={priceMap.get(wallet.chain)}
                   currency={currency}
                   connected={connectedAddressSet.has(wallet.address.toLowerCase())}
