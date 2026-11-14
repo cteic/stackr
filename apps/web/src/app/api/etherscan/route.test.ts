@@ -48,6 +48,14 @@ describe('GET /api/etherscan', () => {
     expect(fetch).toHaveBeenCalledOnce();
   });
 
+  it('calls the Etherscan V2 endpoint for Ethereum mainnet', async () => {
+    await GET(proxyRequest(`${balanceQuery}&chainid=137`));
+
+    const upstream = new URL(String(vi.mocked(fetch).mock.calls[0]?.[0]));
+    expect(upstream.origin + upstream.pathname).toBe('https://api.etherscan.io/v2/api');
+    expect(upstream.searchParams.getAll('chainid')).toEqual(['1']);
+  });
+
   it('forwards an allow-listed account/txlist request upstream', async () => {
     const res = await GET(proxyRequest(txlistQuery));
 

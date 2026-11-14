@@ -107,6 +107,20 @@ export function createSigner(storage: SecureStorage): StackrSigner {
     }
   }
 
+  // Serialises initialize(): without it, two concurrent calls both read an
+  // empty slot before either writes, and the second mnemonic overwrites the first.
+  let initializeQueue: Promise<void> = Promise.resolve();
+
+  async function initializeOnce(mnemonic: string): Promise<void> {
+    if ((await storage.get(MNEMONIC_STORAGE_KEY)) !== null) {
+      throw new SignerError(
+        signerErrorCodes.alreadyInitialized,
+        'Signer is already initialized — wipe() first to replace the wallet',
+      );
+    }
+    await storage.set(MNEMONIC_STORAGE_KEY, mnemonic.normalize('NFKD').trim());
+  }
+
   return {
     async initialize(mnemonic: string): Promise<void> {
       if (!validateMnemonic(mnemonic)) {
@@ -115,13 +129,9 @@ export function createSigner(storage: SecureStorage): StackrSigner {
           'Mnemonic failed BIP-39 validation',
         );
       }
-      if ((await storage.get(MNEMONIC_STORAGE_KEY)) !== null) {
-        throw new SignerError(
-          signerErrorCodes.alreadyInitialized,
-          'Signer is already initialized — wipe() first to replace the wallet',
-        );
-      }
-      await storage.set(MNEMONIC_STORAGE_KEY, mnemonic.normalize('NFKD').trim());
+      const run = initializeQueue.then(() => initializeOnce(mnemonic));
+      initializeQueue = run.catch(() => undefined);
+      return run;
     },
 
     async isInitialized(): Promise<boolean> {

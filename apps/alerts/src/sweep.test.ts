@@ -95,6 +95,27 @@ describe('runSweep', () => {
     ]);
   });
 
+  it('does not record an alert as sent when every push delivery fails', async () => {
+    const deps = makeDeps({ sendPush: vi.fn(async () => ({ ok: false, gone: false })) });
+    const summary = await runSweep(deps);
+
+    expect(summary.deliveries).toBe(0);
+    expect(deps.saveState).not.toHaveBeenCalled();
+    expect(deps.logEvents).toHaveBeenCalledWith([
+      expect.objectContaining({ subscription_id: SUB, delivered: false }),
+    ]);
+  });
+
+  it('still records state when the user has no push subscriptions', async () => {
+    const deps = makeDeps({ listPushSubscriptions: async () => [] });
+    await runSweep(deps);
+
+    expect(deps.saveState).toHaveBeenCalledWith(SUB, {
+      band: 'warn',
+      alertedAt: NOW.toISOString(),
+    });
+  });
+
   it('stays silent (no push, no state write) inside the cooldown window', async () => {
     const alertedAt = new Date(NOW.getTime() - 1000).toISOString();
     const deps = makeDeps({

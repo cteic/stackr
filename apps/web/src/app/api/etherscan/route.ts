@@ -22,7 +22,11 @@ import { checkProxyRateLimit } from '../proxy-limit';
  * key-bearing URL). Mirrors `apps/web/src/app/api/rpc/{solana,eth}/route.ts`.
  */
 
-const ETHERSCAN_API = 'https://api.etherscan.io/api';
+// Etherscan retired the V1 endpoint (https://api.etherscan.io/api); V2 needs a
+// chainid. stackr only reads Ethereum mainnet, so the chain is fixed here and
+// never taken from the client.
+const ETHERSCAN_API = 'https://api.etherscan.io/v2/api';
+const ETHEREUM_MAINNET_CHAIN_ID = '1';
 
 // The only Etherscan `module`/`action` combos stackr actually issues:
 //   account/balance — ETH balance (services/eth)
@@ -105,7 +109,7 @@ export async function GET(request: Request): Promise<Response> {
 
   // Rebuild the forwarded query from the whitelist only — never relay arbitrary
   // client params, and never accept a client-supplied apikey.
-  const forwarded = new URLSearchParams();
+  const forwarded = new URLSearchParams({ chainid: ETHEREUM_MAINNET_CHAIN_ID });
   for (const [key, value] of url.searchParams) {
     if (ALLOWED_PARAMS.has(key)) {
       forwarded.set(key, value);
