@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { validateAddress, type Chain } from '@stackr/models';
 import { AnnouncedAddressSchema, type AnnouncedAddress } from '@stackr/wallet-link/messages';
 import type { WebLinkSession } from '@stackr/wallet-link';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useSetAtom } from 'jotai';
+import { clearConnectedAddressesAtom, setConnectedAddressesAtom } from '@/lib/wallet-store';
 
 /**
  * Stackr Link: pair the Stackr Wallet mobile signer with the web portfolio.
@@ -85,8 +86,8 @@ export interface StackrLinkConnection {
  * remembered link repopulates the store after a refresh like Leather/Slush do.
  */
 export function useStackrLinkConnection(): StackrLinkConnection {
-  const setConnectedAddresses = useWalletStore(s => s.setConnectedAddresses);
-  const clearConnectedAddresses = useWalletStore(s => s.clearConnectedAddresses);
+  const setConnectedAddresses = useSetAtom(setConnectedAddressesAtom);
+  const clearConnectedAddresses = useSetAtom(clearConnectedAddressesAtom);
   const [chains, setChains] = useState<Chain[]>([]);
 
   const applyGrouped = useCallback(

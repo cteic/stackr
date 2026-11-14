@@ -21,9 +21,10 @@ import {
 } from '@stackr/ui';
 import { Header } from '@/components/header';
 import { Orderbook } from '@/components/orderbook';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useHoldingsStore } from '@/lib/holdings-store';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom, walletsAtom } from '@/lib/wallet-store';
+import { holdingsAtom } from '@/lib/holdings-store';
+import { currencyAtom } from '@/lib/settings-store';
 import { useLiveOrderbookFallback } from '@/lib/use-live-orderbook-fallback';
 import {
   CHART_RANGES,
@@ -82,10 +83,10 @@ function ChartBody({ isLoading, isError, onRetry, points, currency, rangeDays }:
 }
 
 export default function MarketsPage() {
-  const wallets = useWalletStore(s => s.wallets);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const holdings = useHoldingsStore(s => s.holdings);
-  const currency = useSettingsStore(s => s.currency);
+  const wallets = useAtomValue(walletsAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
+  const holdings = useAtomValue(holdingsAtom);
+  const currency = useAtomValue(currencyAtom);
 
   const options = useMemo(() => {
     const walletChains = wallets.map(w => w.chain);

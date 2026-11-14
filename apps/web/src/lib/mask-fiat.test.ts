@@ -2,10 +2,13 @@ import { describe as feature, it as scenario, expect, beforeEach } from 'vitest'
 import { bdd } from '../lib/bdd';
 const { given, when, then } = bdd;
 import { maskFiat } from '../lib/mask-fiat';
-import { useSettingsStore } from '../lib/settings-store';
+import { getDefaultStore } from 'jotai';
+import { hideBalanceAtom, toggleHideBalanceAtom } from '../lib/settings-store';
+
+const store = getDefaultStore();
 
 beforeEach(() => {
-  useSettingsStore.setState({ hideBalance: false });
+  store.set(hideBalanceAtom, false);
 });
 
 feature('maskFiat helper', () => {
@@ -31,22 +34,22 @@ feature('maskFiat helper', () => {
 feature('settings — hide-balance toggle', () => {
   scenario('starts visible', () => {
     then('hideBalance is false by default', () => {
-      expect(useSettingsStore.getState().hideBalance).toBe(false);
+      expect(store.get(hideBalanceAtom)).toBe(false);
     });
   });
 
   scenario('toggling once hides balances', () => {
-    when('the toggle is activated', () => useSettingsStore.getState().toggleHideBalance());
+    when('the toggle is activated', () => store.set(toggleHideBalanceAtom));
     then('hideBalance is true', () => {
-      expect(useSettingsStore.getState().hideBalance).toBe(true);
+      expect(store.get(hideBalanceAtom)).toBe(true);
     });
   });
 
   scenario('toggling twice restores visibility', () => {
-    given('balances are hidden', () => useSettingsStore.getState().toggleHideBalance());
-    when('the toggle is activated again', () => useSettingsStore.getState().toggleHideBalance());
+    given('balances are hidden', () => store.set(toggleHideBalanceAtom));
+    when('the toggle is activated again', () => store.set(toggleHideBalanceAtom));
     then('hideBalance is false', () => {
-      expect(useSettingsStore.getState().hideBalance).toBe(false);
+      expect(store.get(hideBalanceAtom)).toBe(false);
     });
   });
 });

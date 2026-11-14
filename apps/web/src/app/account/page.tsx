@@ -26,7 +26,8 @@ import {
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/alerts/push';
 import { protocolsForChain } from '@/lib/alerts/protocols';
 import { FREE_SUBSCRIPTION_LIMIT, type AlertSubscriptionRow } from '@/lib/alerts/types';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue } from 'jotai';
+import { walletsAtom } from '@/lib/wallet-store';
 
 type PushStatus = 'unsupported' | 'off' | 'on';
 
@@ -202,7 +203,7 @@ function PushSection({ supabase, userId }: SectionProps) {
 }
 
 function SubscriptionsSection({ supabase, userId }: SectionProps) {
-  const wallets = useWalletStore(s => s.wallets);
+  const wallets = useAtomValue(walletsAtom);
   const [subscriptions, setSubscriptions] = useState<AlertSubscriptionRow[]>([]);
   const [selectedWalletId, setSelectedWalletId] = useState('');
   const [busy, setBusy] = useState(false);

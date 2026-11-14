@@ -11,6 +11,7 @@ export {
 } from './price.js';
 export { OrderSchema, OrderBookSchema, type Order, type OrderBook } from './orderbook.js';
 export { TransactionSchema, type Transaction } from './transaction.js';
+export { TokenPositionSchema, type TokenPosition } from './token-position.js';
 export {
   ProtocolSchema,
   HealthPositionNativeSchema,

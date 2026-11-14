@@ -44,7 +44,7 @@ import {
  *     `WalletConnectionController:stateChange` — no reference to that
  *     controller, exactly the decoupling PortfolioController uses.
  *   - **Watch-only addresses** are pushed in via `setWatchedWallets`, the bridge
- *     from the Zustand wallet store (which lives in the app, not a controller).
+ *     from the app's wallet atoms (which live in the app, not a controller).
  * Either changing re-runs the feed, with no UI glue in between.
  */
 
@@ -212,8 +212,8 @@ export class ActivityController extends BaseController<
   }
 
   /**
-   * Replace the watch-only address set (the bridge from the Zustand wallet
-   * store). Re-runs the feed if the effective wallet set changed. Registered as
+   * Replace the watch-only address set (the bridge from the app's wallet
+   * atoms). Re-runs the feed if the effective wallet set changed. Registered as
    * `ActivityController:setWatchedWallets`.
    */
   setWatchedWallets(wallets: WalletRef[]): void {

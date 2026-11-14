@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { Button, Card } from '@stackr/ui';
-import { useWalletStore } from '@/lib/wallet-store';
-import { useSettingsStore } from '@/lib/settings-store';
-import { useHoldingsStore } from '@/lib/holdings-store';
+import { useAtomValue } from 'jotai';
+import { connectedAddressesAtom, walletsAtom } from '@/lib/wallet-store';
+import { currencyAtom, hideBalanceAtom } from '@/lib/settings-store';
+import { holdingsAtom } from '@/lib/holdings-store';
 import { useBalances, usePrices, usePriceHistory, useStockQuotes } from '@stackr/queries';
 import { formatFiat } from '@stackr/services';
 import { maskFiat } from '@/lib/mask-fiat';
-import type { Chain, Wallet } from '@stackr/models';
+import type { Chain } from '@stackr/models';
 import { Header } from '@/components/header';
 import {
   aggregateCryptoPositions,
@@ -16,6 +17,11 @@ import {
   sumGoldValue,
   type CryptoPosition,
 } from '@/lib/portfolio-aggregation';
+import {
+  buildConnectedWallets,
+  connectedAddressKeys,
+  isConnectedWallet,
+} from '@/lib/connected-wallets';
 import { useGoldPrice } from '@/lib/gold-price-queries';
 import { WalletCard } from '@/components/wallet-card';
 import { PortfolioSummary } from '@/components/portfolio-summary';
@@ -27,28 +33,18 @@ import { FirstRunHero } from '@/components/first-run-hero';
 import { WidgetErrorBoundary } from '@/components/widget-error-boundary';
 
 export default function DashboardPage() {
-  const wallets = useWalletStore(s => s.wallets);
-  const connectedAddresses = useWalletStore(s => s.connectedAddresses);
-  const currency = useSettingsStore(s => s.currency);
-  const hideBalance = useSettingsStore(s => s.hideBalance);
-  const holdings = useHoldingsStore(s => s.holdings);
+  const wallets = useAtomValue(walletsAtom);
+  const connectedAddresses = useAtomValue(connectedAddressesAtom);
+  const currency = useAtomValue(currencyAtom);
+  const hideBalance = useAtomValue(hideBalanceAtom);
+  const holdings = useAtomValue(holdingsAtom);
 
-  // Build virtual wallet objects for connected ETH addresses not already watch-listed
-  const watchedEthAddresses = new Set(
-    wallets.filter(w => w.chain === 'eth').map(w => w.address.toLowerCase()),
-  );
-  const connectedWallets: Wallet[] = (connectedAddresses.eth ?? [])
-    .filter(addr => !watchedEthAddresses.has(addr.toLowerCase()))
-    .map(addr => ({
-      id: `connected:${addr}`,
-      label: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
-      chain: 'eth' as Chain,
-      address: addr,
-      createdAt: new Date().toISOString(),
-    }));
-
+  // Connected addresses that are not already watch-listed become virtual
+  // wallets, so an ETH or SOL account reached through a wallet renders through
+  // the same card as a watch-only address.
+  const connectedWallets = buildConnectedWallets(wallets, connectedAddresses);
   const allWallets = [...wallets, ...connectedWallets];
-  const connectedAddressSet = new Set((connectedAddresses.eth ?? []).map(a => a.toLowerCase()));
+  const connectedKeys = connectedAddressKeys(connectedAddresses);
 
   // Addresses (watched + connected) feed the liquidation-health adapters,
   // grouped by chain: EVM → Aave, Solana → Kamino, Stacks → Zest + Granite.
@@ -209,7 +205,7 @@ export default function DashboardPage() {
                   isError={balanceQueries[i]?.isError || pricesError}
                   price={priceMap.get(wallet.chain)}
                   currency={currency}
-                  connected={connectedAddressSet.has(wallet.address.toLowerCase())}
+                  connected={isConnectedWallet(connectedKeys, wallet)}
                   hideBalance={hideBalance}
                 />
               ))}

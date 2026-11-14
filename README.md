@@ -49,9 +49,44 @@ configuring a key.
 ## Tech
 
 Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind v4 ·
-TanStack Query · Zustand · wagmi + viem · `@solana/wallet-adapter` ·
+TanStack Query · Jotai · wagmi + viem · `@solana/wallet-adapter` ·
 `@stacks/connect` · custom SVG charts · pnpm workspaces · Turborepo ·
 Cloudflare Workers (`@opennextjs/cloudflare`).
+
+## Architecture
+
+Stackr defines one interface per capability and one adapter per chain. The ports
+live in `packages/services/src/ports.ts` — `BalanceAdapter`,
+`TokenPositionAdapter`, `TransactionAdapter`, `HealthAdapter`, `NftAdapter`,
+`PriceAdapter` — and the dispatch registries that map a chain onto its adapter
+live in `packages/services/src/index.ts`. Adding a chain is a new adapter plus
+one registry entry; `balanceAdapters` is declared
+`satisfies Record<Chain, BalanceAdapter>`, so a missing adapter is a compile
+error rather than a runtime `undefined`. Every adapter returns domain types from
+`@stackr/models` and never a vendor payload. That is why one component renders a
+position or a transaction from any chain.
+
+Remote data belongs to TanStack Query; client UI state belongs to Jotai. The
+dividing line is ownership: if the server owns the value and the app can only ask
+for it again, it is a query; if the app owns it and no refetch could produce it,
+it is an atom. A balance, a token position or a price is shared, cached,
+refetched on a cadence and able to fail, so it gets a key, a `staleTime` and a
+retry policy — see [DATA-FETCHING.md](./docs/DATA-FETCHING.md). The selected
+currency, hidden balances and the watch-only wallet list are app-owned and never
+refetched, so they sit in Jotai atoms where a component subscribes to one value
+instead of a whole store. The reasoning is recorded in
+[ADR 0022](./docs/DECISIONS/0022-jotai-for-client-state.md).
+
+No provider key ever reaches the browser. Keyed providers are reached through App
+Router route handlers under `apps/web/src/app/api/`, and the Solana one is
+`apps/web/src/app/api/rpc/solana/route.ts`. It reads `HELIUS_API_KEY`
+server-side, with no `NEXT_PUBLIC_` prefix, so the value is never inlined into
+the client bundle; the browser only ever calls the same-origin path
+`/api/rpc/solana`, resolved in `packages/services/src/sol-rpc.ts`. The route
+constrains what it will forward so it cannot serve as an open relay: a read-only
+JSON-RPC method allow-list, a 64 KB body cap, a ten-call batch cap, a same-origin
+check and a per-client rate limit. With no key configured it forwards to the
+public mainnet cluster instead of failing, so local development needs no secret.
 
 ## Status
 

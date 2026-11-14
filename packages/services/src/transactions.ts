@@ -1,13 +1,15 @@
 import { z } from 'zod';
 import { assertValidAddress } from './address-guard.js';
 import type { Chain, Transaction } from '@stackr/models';
-import { TransactionSchema } from '@stackr/models';
+import { chainMeta, TransactionSchema } from '@stackr/models';
 import type { TransactionAdapter } from './ports.js';
 import { parseOrThrow } from './validate.js';
 import { formatBaseUnits } from './base-units.js';
 import { resolveEtherscanBase } from './etherscan-config.js';
 import { resolveHiroBase } from './hiro-config.js';
 import { resolveSolanaRpcUrl } from './sol-rpc.js';
+import { safeFetch } from './fetch-wrapper.js';
+import { isRateLimited } from './service-error.js';
 
 const TransactionListSchema = z.array(TransactionSchema);
 
@@ -265,8 +267,164 @@ export function normalizeSolTransactions(signatures: SolanaSignature[]): Transac
   return parseOrThrow(TransactionListSchema, normalized, 'sol.fetchTransactions(egress)');
 }
 
+/**
+ * A confirmed transaction as returned by `getTransaction` under `jsonParsed`.
+ * Only the fields the lamport-delta maths needs are modelled; everything else
+ * in a Solana transaction is deliberately left outside the ingress schema.
+ */
+const SolanaTransactionDetailSchema = z.object({
+  transaction: z.object({
+    signatures: z.array(z.string()),
+    message: z.object({
+      accountKeys: z.array(z.object({ pubkey: z.string() })),
+    }),
+  }),
+  meta: z
+    .object({
+      fee: z.number(),
+      preBalances: z.array(z.number()),
+      postBalances: z.array(z.number()),
+      err: z.unknown(),
+    })
+    .nullable(),
+  blockTime: z.number().nullable().optional(),
+});
+
+const SolanaTransactionBatchSchema = z.array(
+  z.object({
+    id: z.number(),
+    result: SolanaTransactionDetailSchema.nullable().optional(),
+  }),
+);
+
+type SolanaTransactionDetail = z.infer<typeof SolanaTransactionDetailSchema>;
+
+/**
+ * Turn one confirmed transaction into a domain `Transaction` from the owner's
+ * point of view.
+ *
+ * Solana has no "value" field — a transfer is a set of lamport balance deltas —
+ * so direction and amount are read from `preBalances`/`postBalances` at the
+ * owner's index in `accountKeys`. When the owner paid the fee (they are the fee
+ * payer, index 0) the fee is added back, so a send reports what was transferred
+ * rather than transfer-plus-gas. That matches what the EVM side renders, where
+ * Etherscan's `value` also excludes gas.
+ *
+ * The counterparty is the account whose delta most closely mirrors the owner's.
+ * It stays `unknown` when nothing opposes the owner's delta — a multi-party
+ * swap has no single counterparty, and guessing one would be a lie.
+ *
+ * Pure: takes a parsed detail, returns a `Transaction`. No network.
+ */
+export function normalizeSolTransactionDetail(
+  owner: string,
+  detail: SolanaTransactionDetail,
+): Transaction | null {
+  const { meta } = detail;
+  const keys = detail.transaction.message.accountKeys.map(key => key.pubkey);
+  const hash = detail.transaction.signatures[0];
+  if (hash === undefined) return null;
+
+  const timestamp = detail.blockTime
+    ? new Date(detail.blockTime * 1000).toISOString()
+    : new Date().toISOString();
+
+  const ownerIndex = keys.indexOf(owner);
+  if (meta === null || ownerIndex === -1) {
+    // No balance metadata, or the address is not an account key: the signature
+    // is real and belongs in the feed, but its amount is genuinely unknown.
+    return {
+      hash,
+      chain: 'sol',
+      type: 'receive',
+      amount: '0',
+      counterparty: 'unknown',
+      timestamp,
+      confirmed: meta !== null && meta.err === null,
+    };
+  }
+
+  const deltas = keys.map(
+    (_, index) => BigInt(meta.postBalances[index] ?? 0) - BigInt(meta.preBalances[index] ?? 0),
+  );
+
+  // Add the fee back for the fee payer, so the amount is the transfer itself.
+  const feePaidByOwner = ownerIndex === 0 ? BigInt(meta.fee) : 0n;
+  const ownerDelta = (deltas[ownerIndex] ?? 0n) + feePaidByOwner;
+
+  const received = ownerDelta >= 0n;
+  const magnitude = received ? ownerDelta : -ownerDelta;
+
+  // The counterparty is whichever other account moved the most in the opposite
+  // direction — the other side of the transfer in the common two-party case.
+  let counterparty = 'unknown';
+  let best = 0n;
+  for (const [index, delta] of deltas.entries()) {
+    if (index === ownerIndex) continue;
+    const opposing = received ? -delta : delta;
+    if (opposing > best) {
+      best = opposing;
+      counterparty = keys[index] ?? 'unknown';
+    }
+  }
+
+  return {
+    hash,
+    chain: 'sol',
+    type: received ? 'receive' : 'send',
+    amount: formatBaseUnits(magnitude, chainMeta.sol.decimals),
+    counterparty,
+    timestamp,
+    confirmed: meta.err === null,
+  };
+}
+
+/**
+ * How many `getTransaction` calls go in one JSON-RPC batch. The same-origin
+ * proxy caps a batch at 10 (see `apps/web/src/app/api/rpc/solana/route.ts`), so
+ * 20 signatures cost two round trips rather than twenty.
+ */
+const SOL_DETAIL_BATCH_SIZE = 10;
+
+async function fetchSolTransactionDetails(
+  signatures: string[],
+): Promise<Map<string, SolanaTransactionDetail>> {
+  const details = new Map<string, SolanaTransactionDetail>();
+
+  for (let start = 0; start < signatures.length; start += SOL_DETAIL_BATCH_SIZE) {
+    const batch = signatures.slice(start, start + SOL_DETAIL_BATCH_SIZE);
+    const res = await safeFetch(resolveSolanaRpcUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        batch.map((signature, index) => ({
+          jsonrpc: '2.0',
+          id: index,
+          method: 'getTransaction',
+          params: [signature, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }],
+        })),
+      ),
+    });
+
+    const parsed = parseOrThrow(
+      SolanaTransactionBatchSchema,
+      await res.json(),
+      'sol.fetchTransactions(ingress)',
+    );
+
+    for (const entry of parsed) {
+      const signature = batch[entry.id];
+      if (signature !== undefined && entry.result) {
+        details.set(signature, entry.result);
+      }
+    }
+  }
+
+  return details;
+}
+
 async function fetchSolTransactions(address: string): Promise<Transaction[]> {
-  const sigRes = await fetch(resolveSolanaRpcUrl(), {
+  const sigRes = await safeFetch(resolveSolanaRpcUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -277,14 +435,38 @@ async function fetchSolTransactions(address: string): Promise<Transaction[]> {
     }),
   });
 
-  if (!sigRes.ok) throw new Error(`Solana RPC error: ${sigRes.status}`);
-
   const data = parseOrThrow(
     SolanaSignaturesSchema,
     await sigRes.json(),
     'sol.fetchTransactions(ingress)',
   );
-  return normalizeSolTransactions(data.result ?? []);
+  const signatures = data.result ?? [];
+  if (signatures.length === 0) return [];
+
+  // Signatures alone carry no amount or direction, so each one is enriched with
+  // its lamport deltas. If that second read fails the feed still renders from
+  // the signature list — a degraded row beats an empty panel.
+  let details: Map<string, SolanaTransactionDetail>;
+  try {
+    details = await fetchSolTransactionDetails(signatures.map(sig => sig.signature));
+  } catch (error) {
+    // A rate limit is the one failure that must not degrade quietly. Returning
+    // signature-only rows here would resolve the query successfully, so the UI
+    // would cache amountless rows and never show the "come back shortly" state.
+    if (isRateLimited(error)) throw error;
+    return normalizeSolTransactions(signatures);
+  }
+
+  const normalized = signatures.flatMap(sig => {
+    const detail = details.get(sig.signature);
+    if (!detail) {
+      return normalizeSolTransactions([sig]);
+    }
+    const transaction = normalizeSolTransactionDetail(address, detail);
+    return transaction ? [transaction] : [];
+  });
+
+  return parseOrThrow(TransactionListSchema, normalized, 'sol.fetchTransactions(egress)');
 }
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import type {
   Protocol,
   StockQuote,
   StockSearchResult,
+  TokenPosition,
   Transaction,
 } from '@stackr/models';
 
@@ -41,6 +42,20 @@ export interface BalanceAdapter {
 export interface PriceAdapter {
   fetchPrices(chains: Chain[], currency?: Currency): Promise<Price[]>;
   fetchPriceHistory(chain: Chain, days?: number, currency?: Currency): Promise<PriceHistoryPoint[]>;
+}
+
+/**
+ * Fungible token positions held by an address — SPL tokens on Solana, ERC-20s
+ * on an EVM chain when that adapter lands. One adapter per chain, dispatched
+ * the same way balances are, so the caller names a chain and never a vendor.
+ *
+ * `fetchTokenPositions` resolves to `[]` for an address that holds no tokens,
+ * so "empty account" stays a success and only a real failure rejects.
+ */
+export interface TokenPositionAdapter {
+  /** The chain this adapter serves; used to build the dispatch registry. */
+  readonly chain: Chain;
+  fetchTokenPositions(address: string): Promise<TokenPosition[]>;
 }
 
 /** Recent on-chain transaction history for an address. */

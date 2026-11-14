@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
-import { useWalletStore } from '@/lib/wallet-store';
+import { getDefaultStore } from 'jotai';
+import {
+  clearConnectedAddressesAtom,
+  connectedAddressesAtom,
+  setConnectedAddressesAtom,
+} from '@/lib/wallet-store';
+
 import { WalletConnectionBridge } from './wallet-connection-bridge';
+
+const store = getDefaultStore();
 
 /**
  * The bridge replaces the two `*-address-sync` components, so its guarantee is
@@ -12,26 +20,26 @@ import { WalletConnectionBridge } from './wallet-connection-bridge';
 describe('WalletConnectionBridge', () => {
   afterEach(() => {
     cleanup();
-    useWalletStore.getState().clearConnectedAddresses('eth');
-    useWalletStore.getState().clearConnectedAddresses('sol');
+    store.set(clearConnectedAddressesAtom, 'eth');
+    store.set(clearConnectedAddressesAtom, 'sol');
   });
 
   it('clears the bridged chains on mount when nothing is connected', () => {
-    useWalletStore.getState().setConnectedAddresses('eth', ['0xstale']);
-    useWalletStore.getState().setConnectedAddresses('sol', ['SoLstale']);
+    store.set(setConnectedAddressesAtom, 'eth', ['0xstale']);
+    store.set(setConnectedAddressesAtom, 'sol', ['SoLstale']);
 
     render(<WalletConnectionBridge />);
 
-    expect(useWalletStore.getState().connectedAddresses.eth).toBeUndefined();
-    expect(useWalletStore.getState().connectedAddresses.sol).toBeUndefined();
+    expect(store.get(connectedAddressesAtom).eth).toBeUndefined();
+    expect(store.get(connectedAddressesAtom).sol).toBeUndefined();
   });
 
   it('leaves non-bridged chains (stx/btc) untouched', () => {
-    useWalletStore.getState().setConnectedAddresses('stx', ['SP123']);
+    store.set(setConnectedAddressesAtom, 'stx', ['SP123']);
 
     render(<WalletConnectionBridge />);
 
-    expect(useWalletStore.getState().connectedAddresses.stx).toEqual(['SP123']);
-    useWalletStore.getState().clearConnectedAddresses('stx');
+    expect(store.get(connectedAddressesAtom).stx).toEqual(['SP123']);
+    store.set(clearConnectedAddressesAtom, 'stx');
   });
 });

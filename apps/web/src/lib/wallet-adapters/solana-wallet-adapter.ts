@@ -25,15 +25,22 @@ export interface SolanaWalletSource {
  * them — the app's connect button, autoConnect, or our `connect()` here — which
  * is exactly the behaviour `connected-solana-address-sync.tsx` got from
  * `useWallet()`. Vendor types stay behind {@link SolanaWalletSource} (ADR 0012).
+ *
+ * `id` distinguishes one wallet brand's source from another's: the app offers
+ * Phantom and Solflare as separate sources over separate adapter instances, and
+ * the controller keys its state by source id.
  */
-export function createSolanaWalletAdapter(adapter: SolanaWalletSource): WalletSourceAdapter {
+export function createSolanaWalletAdapter(
+  adapter: SolanaWalletSource,
+  id = 'solana',
+): WalletSourceAdapter {
   function read(): WalletAccount[] {
     const key = adapter.publicKey;
     return key ? [{ chain: 'sol', address: key.toBase58() }] : [];
   }
 
   return {
-    id: 'solana',
+    id,
     chains: ['sol'],
     async connect() {
       await adapter.connect();
