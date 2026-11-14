@@ -17,7 +17,15 @@ export const base = [
     },
   },
   {
-    ignores: ['dist/', '.next/', 'node_modules/', 'styled-system/', '.turbo/'],
+    ignores: [
+      'dist/',
+      '.next/',
+      '.open-next/',
+      '.wrangler/',
+      'node_modules/',
+      'styled-system/',
+      '.turbo/',
+    ],
   },
 ];
 
