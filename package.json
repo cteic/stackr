@@ -1,5 +1,6 @@
 {
   "name": "stackr",
+  "license": "AGPL-3.0-only",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.15.4",
