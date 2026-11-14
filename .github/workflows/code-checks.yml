@@ -56,7 +56,16 @@ jobs:
       # PRODUCTION dependencies. Known-unfixable transitive advisories are
       # allow-listed in root package.json (`pnpm.auditConfig.ignoreGhsas`) and
       # tracked under #69; any NEW high/critical fails the build.
+      # `pnpm audit` renders every dependency path to every advisory, and the
+      # Expo/Metro graph in apps/mobile produces thousands per advisory (4425
+      # for js-yaml alone). Path enumeration, not resolution, is what exhausts
+      # the default ~4 GB V8 heap, so the step died with exit 134 before it
+      # could print the list. This raises the ceiling; it does not remove the
+      # cost. Fewer advisories means fewer paths, so the headroom grows as the
+      # allow-list burns down.
       - name: Security audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm audit --prod --audit-level high
 
       - name: Build
@@ -71,3 +80,49 @@ jobs:
       - name: Commitlint
         if: github.event_name == 'pull_request'
         run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/provision
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @stackr/web exec playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: pnpm --filter @stackr/web exec playwright test --project=chromium --shard=${{ matrix.shard }}
+
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ strategy.job-index }}
+          path: apps/web/blob-report/
+          retention-days: 7
+
+  # One stable check name for branch protection. The playwright matrix names
+  # change whenever the shard count does, so they cannot be required directly.
+  # `always()` is required: without it this is skipped when a dependency fails,
+  # and a skipped required check reads as success.
+  all-checks:
+    if: always()
+    needs: [checks, playwright]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any required job did not succeed
+        run: |
+          echo "checks:     ${{ needs.checks.result }}"
+          echo "playwright: ${{ needs.playwright.result }}"
+          [ "${{ needs.checks.result }}" = "success" ] \
+            && [ "${{ needs.playwright.result }}" = "success" ]

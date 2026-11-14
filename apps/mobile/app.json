@@ -7,6 +7,12 @@
     "scheme": "stackr",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0b0d10",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b0d10"
+    },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
@@ -18,7 +24,14 @@
     },
     "android": {
       "package": "ie.stackr.wallet",
-      "versionCode": 1
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0b0d10"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -38,7 +51,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Stackr uses the camera to scan the pairing code shown on stackr.ie."
+          "cameraPermission": "Stackr uses the camera to scan the pairing code shown on stackr.ie.",
+          "recordAudioAndroid": false
         }
       ]
     ],

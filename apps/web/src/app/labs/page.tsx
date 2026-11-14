@@ -12,7 +12,8 @@ import {
   type WalletSourceStatus,
 } from '@stackr/controllers';
 import { Header } from '@/components/header';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useAtomValue } from 'jotai';
+import { walletsAtom } from '@/lib/wallet-store';
 import {
   ControllerProvider,
   useController,
@@ -54,7 +55,7 @@ function truncateAddress(address: string): string {
  * /labs — a labelled demonstration surface for the controller/messenger spike.
  * The controllers own the state; this page only mirrors it via `useController`
  * and drives it through the controllers' actions. It is deliberately NOT wired
- * into the rest of the app (which still uses Zustand + React Query).
+ * into the rest of the app (which still uses Jotai + React Query).
  */
 export default function LabsPage() {
   return (
@@ -72,7 +73,7 @@ function LabsContent() {
   const activityState = useController(activity);
 
   // Additive read of the existing wallet store — the controllers never mutate it.
-  const wallets = useWalletStore(s => s.wallets);
+  const wallets = useAtomValue(walletsAtom);
   const walletRefs: WalletRef[] = wallets.map(w => ({ chain: w.chain, address: w.address }));
 
   // Feed the watch-only wallet list into the activity controller. Connected
@@ -137,7 +138,7 @@ function LabsContent() {
 
         <Callout variant="warning">
           Experimental sandbox. These controllers are self-contained and not connected to the rest
-          of Stackr — the dashboard still runs on Zustand + React Query. See ADR 0013.
+          of Stackr — the dashboard still runs on Jotai + React Query. See ADR 0013.
         </Callout>
 
         {/* PreferencesController — the source of truth for display preferences */}

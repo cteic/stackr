@@ -54,3 +54,8 @@ export {
   DropdownMenuSub,
   DropdownMenuRadioGroup,
 } from './dropdown-menu.js';
+export {
+  NonCustodialNotice,
+  NON_CUSTODIAL_STATEMENT,
+  type NonCustodialNoticeProps,
+} from './non-custodial-notice.js';

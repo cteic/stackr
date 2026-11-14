@@ -33,7 +33,7 @@ import {
   type WalletConnectionControllerState,
 } from '@stackr/controllers';
 import { wagmiConfig } from '@/lib/wagmi-config';
-import { getPhantomWalletAdapter } from '@/lib/solana-wallet-instance';
+import { getSolanaWallets } from '@/lib/solana-wallet-instance';
 import { createEvmWalletAdapter } from '@/lib/wallet-adapters/evm-wallet-adapter';
 import { createSolanaWalletAdapter } from '@/lib/wallet-adapters/solana-wallet-adapter';
 import { createStacksWalletAdapter } from '@/lib/wallet-adapters/stacks-wallet-adapter';
@@ -47,7 +47,7 @@ import { createStacksWalletAdapter } from '@/lib/wallet-adapters/stacks-wallet-a
  * wallet source adapters, so /labs reflects live connection state and the
  * PortfolioController re-aggregates through the messenger when accounts change.
  * This demo wiring is still scoped to /labs — the rest of the app reads
- * connection state from the Zustand store via the WalletConnectionBridge.
+ * connection state from the Jotai wallet atoms via the WalletConnectionBridge.
  */
 
 type RootMessenger = Messenger<
@@ -89,7 +89,9 @@ export function ControllerProvider({ children }: { children: ReactNode }) {
       messenger: messenger.getRestricted<WalletConnectionControllerMessenger>(),
       adapters: [
         createEvmWalletAdapter(wagmiConfig),
-        createSolanaWalletAdapter(getPhantomWalletAdapter()),
+        ...getSolanaWallets().map(entry =>
+          createSolanaWalletAdapter(entry.adapter, `solana:${entry.id}`),
+        ),
         createStacksWalletAdapter(),
       ],
     });
