@@ -18,5 +18,13 @@ feature('footer', () => {
       const link = screen.getByRole('link', { name: /source/i });
       expect(link.getAttribute('href')).toBe('https://github.com/pete-watters/stackr');
     });
+    then(
+      'the source link has a focus-visible ring so keyboard users can see where they are',
+      () => {
+        const link = screen.getByRole('link', { name: /source/i });
+        expect(link.className).toContain('focus-visible:ring-2');
+        expect(link.className).toContain('focus-visible:ring-ring');
+      },
+    );
   });
 });

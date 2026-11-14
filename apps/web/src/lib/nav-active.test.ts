@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isNavLinkActive } from './nav-active';
+import { isNavLinkActive, NAV_LINK_CLASS } from './nav-active';
 
 describe('isNavLinkActive', () => {
   it('matches the exact route', () => {
@@ -20,5 +20,12 @@ describe('isNavLinkActive', () => {
 
   it('treats a null pathname (no router context) as inactive', () => {
     expect(isNavLinkActive(null, '/holdings')).toBe(false);
+  });
+});
+
+describe('NAV_LINK_CLASS', () => {
+  it('gives both active and inactive states a visible keyboard focus ring', () => {
+    expect(NAV_LINK_CLASS(true)).toContain('focus-visible:ring-2');
+    expect(NAV_LINK_CLASS(false)).toContain('focus-visible:ring-2');
   });
 });

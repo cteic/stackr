@@ -16,6 +16,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       # Fail loud before spending a build: without the token, wrangler would
       # otherwise die minutes in with a generic auth error.

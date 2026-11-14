@@ -1,0 +1,34 @@
+# Stackr
+
+> Stackr is a watch-only, self-custody portfolio tracker for Bitcoin, Stacks, Ethereum, Solana and Sui. You paste a public address; Stackr reads its balance, activity, liquidation health and collectibles, and totals them alongside cash, stock and gold positions. It never holds keys, never takes custody, and keeps the wallet list in the browser rather than on a server.
+
+Stackr runs at https://stackr.ie as an installable web app. There is no account
+requirement and no server-side portfolio: the list of watched addresses lives in
+the visitor's own browser storage. Balances are read live from public chain
+APIs, prices from CoinGecko, and the order book from Kraken.
+
+Agents can query Stackr directly over the Model Context Protocol at
+https://stackr.ie/mcp — a JSON-RPC 2.0 endpoint exposing one tool,
+`get_wallet_summary`, which returns the balance and fiat valuation of a public
+address. It is unauthenticated because it only ever returns public on-chain
+data, and it will refuse any argument that is not a chain, a public address or a
+currency code.
+
+## Pages
+
+- [Portfolio dashboard](https://stackr.ie/): every watched address and holding, totalled in one currency
+- [Holdings](https://stackr.ie/holdings): cash, stock and physical-gold positions held beside on-chain balances
+- [Add a holding](https://stackr.ie/holdings/add): record a cash, stock or gold position
+- [Markets](https://stackr.ie/market): live prices, 24-hour change and a streaming Kraken order book
+- [Collectibles](https://stackr.ie/collectibles): Stacks SIP-9 NFTs with media previews and floor-price estimates
+- [Add a wallet](https://stackr.ie/wallet/add): start watching a BTC, STX, ETH, SOL or SUI address
+
+## For agents
+
+- [MCP endpoint](https://stackr.ie/mcp): JSON-RPC 2.0 over POST; GET returns a description of the endpoint
+- [robots.txt](https://stackr.ie/robots.txt): crawl rules plus the Content Signals policy (search=yes, ai-input=yes, ai-train=no)
+- [Sitemap](https://stackr.ie/sitemap.xml): the public, indexable routes
+
+## Optional
+
+- [Source code](https://github.com/pete-watters/stackr): the monorepo behind the app
