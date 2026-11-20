@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Callout, Spinner } from '@stackr/ui';
-import { Header } from '@/components/header';
+import { NarrowPage } from '@/components/narrow-page';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 /**
@@ -53,17 +53,14 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <>
-      <Header />
-      <main className="w-full mx-auto max-w-lg px-4 py-6">
-        {error === null ? (
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <Spinner /> Signing you in…
-          </div>
-        ) : (
-          <Callout variant="error">{error}</Callout>
-        )}
-      </main>
-    </>
+    <NarrowPage>
+      {error === null ? (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Spinner /> Signing you in…
+        </div>
+      ) : (
+        <Callout variant="error">{error}</Callout>
+      )}
+    </NarrowPage>
   );
 }

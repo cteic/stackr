@@ -247,6 +247,16 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  /* RainbowKit renders an unstyled wrapper div around everything below
+     <Providers>. Left as a plain block box, it breaks the flex-grow chain
+     the sticky footer relies on, so short pages (settings, login, account)
+     end up with their content stranded at the top and a dead gap before
+     the footer. Making the wrapper itself a growing flex column lets that
+     sizing pass through untouched. */
+  [data-rk] {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+
   /* Per-theme atmospheres */
   .theme-terminal body,
   .theme-onyx body {
