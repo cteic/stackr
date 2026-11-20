@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@stackr/ui';
-import { Header } from '@/components/header';
+import { NarrowPage } from '@/components/narrow-page';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { vapidPublicKey } from '@/lib/supabase/config';
 import {
@@ -40,9 +40,8 @@ export default function AccountPage() {
   const supabase = getSupabaseBrowserClient();
 
   return (
-    <>
-      <Header />
-      <main className="w-full mx-auto max-w-lg px-4 py-6 space-y-6">
+    <NarrowPage>
+      <div className="space-y-6">
         <h1 className="text-2xl font-bold">Account</h1>
         {supabase === null ? (
           <Callout variant="warning">
@@ -52,8 +51,8 @@ export default function AccountPage() {
         ) : (
           <AccountBody supabase={supabase} />
         )}
-      </main>
-    </>
+      </div>
+    </NarrowPage>
   );
 }
 

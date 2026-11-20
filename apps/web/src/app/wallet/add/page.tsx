@@ -16,7 +16,7 @@ import {
 import { track } from '@stackr/analytics';
 import { useSetAtom } from 'jotai';
 import { addWalletAtom } from '@/lib/wallet-store';
-import { Header } from '@/components/header';
+import { NarrowPage } from '@/components/narrow-page';
 
 const chains = ChainSchema.options;
 
@@ -46,62 +46,59 @@ export default function AddWalletPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="w-full mx-auto max-w-lg px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">Add Wallet</h1>
+    <NarrowPage>
+      <h1 className="text-2xl font-bold mb-6">Add Wallet</h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            label="Label"
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            placeholder="e.g. My Bitcoin Wallet"
-            required
-          />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Input
+          label="Label"
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          placeholder="e.g. My Bitcoin Wallet"
+          required
+        />
 
-          <div className="space-y-1.5">
-            <label htmlFor="chain" className="text-sm font-medium text-muted-foreground">
-              Chain
-            </label>
-            <Select
-              value={chain}
-              onValueChange={value => {
-                setChain(value as Chain);
-                setAddressError('');
-              }}
-            >
-              <SelectTrigger id="chain">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {chains.map(c => (
-                  <SelectItem key={c} value={c}>
-                    {chainMeta[c].name} ({chainMeta[c].symbol})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Input
-            label="Address"
-            value={address}
-            onChange={e => {
-              setAddress(e.target.value);
+        <div className="space-y-1.5">
+          <label htmlFor="chain" className="text-sm font-medium text-muted-foreground">
+            Chain
+          </label>
+          <Select
+            value={chain}
+            onValueChange={value => {
+              setChain(value as Chain);
               setAddressError('');
             }}
-            placeholder="Enter wallet address"
-            required
-            error={addressError}
-            className="font-mono"
-          />
+          >
+            <SelectTrigger id="chain">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {chains.map(c => (
+                <SelectItem key={c} value={c}>
+                  {chainMeta[c].name} ({chainMeta[c].symbol})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <Button type="submit" className="mt-2">
-            Add Wallet
-          </Button>
-        </form>
-      </main>
-    </>
+        <Input
+          label="Address"
+          value={address}
+          onChange={e => {
+            setAddress(e.target.value);
+            setAddressError('');
+          }}
+          placeholder="Enter wallet address"
+          required
+          error={addressError}
+          className="font-mono"
+        />
+
+        <Button type="submit" className="mt-2">
+          Add Wallet
+        </Button>
+      </form>
+    </NarrowPage>
   );
 }
