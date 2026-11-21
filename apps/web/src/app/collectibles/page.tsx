@@ -37,7 +37,7 @@ export default function CollectiblesPage() {
   return (
     <>
       <Header />
-      <main className="w-full mx-auto max-w-5xl px-4 py-6">
+      <main className="flex w-full flex-1 flex-col mx-auto max-w-5xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Collectibles</h1>
         </div>
@@ -45,17 +45,19 @@ export default function CollectiblesPage() {
         {hasAddresses ? (
           <Collectibles addressesByChain={addressesByChain} hideBalance={hideBalance} />
         ) : (
-          <div className="rounded-lg border border-dashed px-6 py-12 text-center text-muted-foreground">
-            <p className="mb-2 text-base">No collectibles to show</p>
-            <p className="text-sm">
-              Add or connect a Stacks wallet to see its collectibles here.{' '}
-              <Link
-                href="/wallet/add"
-                className="rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                Add a wallet
-              </Link>
-            </p>
+          <div className="flex min-h-[50vh] flex-1 flex-col items-center justify-center">
+            <div className="w-full rounded-lg border border-dashed px-6 py-12 text-center text-muted-foreground">
+              <p className="mb-2 text-base">No collectibles to show</p>
+              <p className="text-sm">
+                Add or connect a Stacks wallet to see its collectibles here.{' '}
+                <Link
+                  href="/wallet/add"
+                  className="rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  Add a wallet
+                </Link>
+              </p>
+            </div>
           </div>
         )}
       </main>
