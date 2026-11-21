@@ -1,4 +1,8 @@
 next-env.d.ts
 
+# Written and re-added by `next dev` itself (generate-agent-files.js) —
+# reproducible, not hand-maintained; the repo already has its own AGENTS.md.
+AGENTS.md
+
 # Capacitor static export
 out/
