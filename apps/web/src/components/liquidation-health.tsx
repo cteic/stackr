@@ -2,6 +2,7 @@
 
 import type { Protocol } from '@stackr/models';
 import { chainMeta } from '@stackr/models';
+import { AlertTriangle } from 'lucide-react';
 import { Badge, Button, Callout, Card, ChainAvatar, Skeleton } from '@stackr/ui';
 import { formatFiat } from '@stackr/services';
 import { useHealthPositions, type HealthAddressesByChain } from '@stackr/queries';
@@ -40,7 +41,10 @@ export function LiquidationHealth({
   return (
     <Card className="mt-4 p-4">
       <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-foreground">Liquidation health</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <AlertTriangle className="h-3.5 w-3.5 text-warning" aria-hidden="true" />
+          Liquidation health
+        </h2>
         <Button variant="outline" size="sm" onClick={refresh} disabled={isFetching}>
           {isFetching ? 'Refreshing…' : 'Refresh'}
         </Button>
