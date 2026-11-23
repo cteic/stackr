@@ -71,7 +71,7 @@ function ChartBody({ isLoading, isError, onRetry, points, currency, rangeDays }:
     );
   }
   return (
-    <div data-testid="price-chart">
+    <div data-testid="price-chart" className="w-full">
       <PriceChart
         data={points}
         height={360}
@@ -222,8 +222,8 @@ export default function MarketsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-          <Card className={`p-4 ${isCrypto ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card className={`flex flex-col p-4 ${isCrypto ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className="mb-3 flex items-baseline justify-between">
               <div className="text-sm font-semibold">{selected?.label ?? '—'}</div>
               {last !== undefined && (
@@ -242,14 +242,16 @@ export default function MarketsPage() {
               )}
             </div>
 
-            <ChartBody
-              isLoading={activeQuery.isLoading}
-              isError={activeQuery.isError}
-              onRetry={() => activeQuery.refetch()}
-              points={points}
-              currency={currency}
-              rangeDays={rangeDays}
-            />
+            <div className="flex w-full flex-1 items-center justify-center">
+              <ChartBody
+                isLoading={activeQuery.isLoading}
+                isError={activeQuery.isError}
+                onRetry={() => activeQuery.refetch()}
+                points={points}
+                currency={currency}
+                rangeDays={rangeDays}
+              />
+            </div>
           </Card>
 
           {isCrypto && (
