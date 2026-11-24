@@ -80,7 +80,7 @@ export function FirstRunHero() {
           <Button asChild variant="outline">
             <Link href="/holdings/add">Add a holding</Link>
           </Button>
-          <Button variant="ghost" onClick={loadDemoPortfolio}>
+          <Button variant="link" onClick={loadDemoPortfolio}>
             Load demo portfolio
           </Button>
         </div>
