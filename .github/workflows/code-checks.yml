@@ -82,7 +82,12 @@ jobs:
         run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
 
   playwright:
-    runs-on: ubuntu-latest
+    # Pinned below ubuntu-latest: GitHub moved that alias to ubuntu26.04, and
+    # the @playwright/test version here (1.49.1) predates Playwright's
+    # chromium build for that OS ("does not support chromium on
+    # ubuntu26.04-x64"). Revisit this pin once @playwright/test is bumped to a
+    # version that supports the newer image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
