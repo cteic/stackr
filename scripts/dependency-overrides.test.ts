@@ -101,6 +101,26 @@ describe('decode-uri-component override', () => {
   });
 });
 
+describe('picomatch overrides', () => {
+  // GHSA-c2c7-rcm5-vvqj: fixed in 2.3.2, 3.0.2 and 4.0.4. Each major has its
+  // own floor, so a version is safe only against the floor of its own major.
+  const floors: Record<number, readonly number[]> = { 2: [2, 3, 2], 3: [3, 0, 2], 4: [4, 0, 4] };
+
+  it('resolves no version below its major’s patched release', () => {
+    const lockfile = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
+    const versions = [...lockfile.matchAll(/^ {2}picomatch@([\d.]+):$/gm)].map(
+      match => match[1] ?? '',
+    );
+
+    expect(versions.length).toBeGreaterThan(0);
+    for (const version of versions) {
+      const floor = floors[Number(version.split('.')[0])];
+      expect(floor, `picomatch@${version} has no known floor`).toBeDefined();
+      expect(isAtLeast(version, floor ?? []), `picomatch@${version}`).toBe(true);
+    }
+  });
+});
+
 describe('zod in workspace packages', () => {
   it('requires the patched 4.6.6 line wherever our own code depends on zod', () => {
     const ranges = workspaceManifests()
