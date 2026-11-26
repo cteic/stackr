@@ -36,8 +36,8 @@ export function normalizeGoldPrice(data: PaxgSimplePrice, currency: Currency): G
   const entry = data[PAXG_ID];
 
   return {
-    fiatPerOunce: entry?.[currency] ?? entry?.usd ?? 0,
-    change24h: entry?.usd_24h_change ?? 0,
+    fiatPerOunce: entry?.[currency] ?? 0,
+    change24h: entry?.[`${currency}_24h_change`] ?? 0,
     currency,
   };
 }
@@ -57,6 +57,13 @@ export async function fetchGoldPrice(currency: Currency = 'usd'): Promise<GoldPr
     await res.json(),
     'gold.fetchGoldPrice(ingress)',
   );
+
+  // A missing display-currency price is unavailable, not a USD figure to
+  // relabel: rejecting lets the query surface an error instead of a value in
+  // the wrong currency.
+  if (typeof data[PAXG_ID]?.[currency] !== 'number') {
+    throw new Error(`CoinGecko returned no ${currency} gold price`);
+  }
 
   return normalizeGoldPrice(data, currency);
 }
