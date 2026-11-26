@@ -48,7 +48,7 @@ feature('chain status indicators', () => {
     });
     then('an unconnected chain is dimmed', () => {
       const solDot = screen.getByLabelText('SOL icon').parentElement;
-      expect(solDot?.className).toContain('opacity-50');
+      expect(solDot?.className).toContain('opacity-70');
     });
   });
 });
