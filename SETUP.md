@@ -60,7 +60,7 @@ key is absent.
 
 ```
 apps/
-  web/                  Next.js 15 web app
+  web/                  Next.js 16 web app
 packages/
   models/               Zod schemas (Wallet, Balance, Chain, Price, …)
   services/             Multi-chain API clients (BTC, ETH, SOL, STX, SUI)

@@ -48,7 +48,7 @@ configuring a key.
 
 ## Tech
 
-Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind v4 ·
+Next.js 16 (App Router) · React 19 · TypeScript strict · Tailwind v4 ·
 TanStack Query · Jotai · wagmi + viem · `@solana/wallet-adapter` ·
 `@stacks/connect` · custom SVG charts · pnpm workspaces · Turborepo ·
 Cloudflare Workers (`@opennextjs/cloudflare`).
