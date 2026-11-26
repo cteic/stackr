@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button, Callout, Card, Input } from '@stackr/ui';
-import { Header } from '@/components/header';
+import { NarrowPage } from '@/components/narrow-page';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type LoginState =
@@ -34,49 +34,46 @@ export default function LoginPage() {
   }
 
   return (
-    <>
-      <Header />
-      <main className="w-full mx-auto max-w-lg px-4 py-6">
-        <h1 className="text-2xl font-bold mb-2">Sign in</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          An account powers liquidation alerts — your portfolio itself stays on this device, no
-          account needed.
-        </p>
+    <NarrowPage>
+      <h1 className="text-2xl font-bold mb-2">Sign in</h1>
+      <p className="text-sm text-muted-foreground mb-6">
+        An account powers liquidation alerts — your portfolio itself stays on this device, no
+        account needed.
+      </p>
 
-        {supabase === null ? (
-          <Callout variant="warning">
-            Sign-in isn&apos;t set up for this deployment yet — it only unlocks liquidation alerts.
-            Your portfolio itself never needed an account.
-          </Callout>
-        ) : state.phase === 'sent' ? (
-          <Callout variant="info">
-            Check your email — we sent a sign-in link to {email}. Open it on this device.
-          </Callout>
-        ) : (
-          <Card className="p-4">
-            <form onSubmit={sendMagicLink} className="space-y-3">
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                />
-              </div>
-              {state.phase === 'error' ? <Callout variant="error">{state.message}</Callout> : null}
-              <Button type="submit" disabled={state.phase === 'sending' || email.length === 0}>
-                {state.phase === 'sending' ? 'Sending…' : 'Email me a sign-in link'}
-              </Button>
-            </form>
-          </Card>
-        )}
-      </main>
-    </>
+      {supabase === null ? (
+        <Callout variant="warning">
+          Sign-in isn&apos;t set up for this deployment yet — it only unlocks liquidation alerts.
+          Your portfolio itself never needed an account.
+        </Callout>
+      ) : state.phase === 'sent' ? (
+        <Callout variant="info">
+          Check your email — we sent a sign-in link to {email}. Open it on this device.
+        </Callout>
+      ) : (
+        <Card className="p-4">
+          <form onSubmit={sendMagicLink} className="space-y-3">
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            {state.phase === 'error' ? <Callout variant="error">{state.message}</Callout> : null}
+            <Button type="submit" disabled={state.phase === 'sending' || email.length === 0}>
+              {state.phase === 'sending' ? 'Sending…' : 'Email me a sign-in link'}
+            </Button>
+          </form>
+        </Card>
+      )}
+    </NarrowPage>
   );
 }
