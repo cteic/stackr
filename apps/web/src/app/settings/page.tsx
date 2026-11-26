@@ -13,7 +13,7 @@ import {
 } from '@stackr/ui';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { currencyAtom } from '@/lib/settings-store';
-import { Header } from '@/components/header';
+import { NarrowPage } from '@/components/narrow-page';
 
 const currencies = CurrencySchema.options;
 
@@ -22,34 +22,31 @@ export default function SettingsPage() {
   const setCurrency = useSetAtom(currencyAtom);
 
   return (
-    <>
-      <Header />
-      <main className="w-full mx-auto max-w-lg px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <NarrowPage>
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
-        <Card className="p-4">
-          <h2 className="text-sm font-semibold mb-3">Display</h2>
-          <div className="space-y-1.5">
-            <label htmlFor="currency" className="text-sm font-medium text-muted-foreground">
-              Currency
-            </label>
-            <Select value={currency} onValueChange={value => setCurrency(value as Currency)}>
-              <SelectTrigger id="currency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencies.map(c => (
-                  <SelectItem key={c} value={c}>
-                    {currencyMeta[c].symbol} {currencyMeta[c].name} ({c.toUpperCase()})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </Card>
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold mb-3">Display</h2>
+        <div className="space-y-1.5">
+          <label htmlFor="currency" className="text-sm font-medium text-muted-foreground">
+            Currency
+          </label>
+          <Select value={currency} onValueChange={value => setCurrency(value as Currency)}>
+            <SelectTrigger id="currency">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {currencies.map(c => (
+                <SelectItem key={c} value={c}>
+                  {currencyMeta[c].symbol} {currencyMeta[c].name} ({c.toUpperCase()})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
 
-        <NonCustodialNotice className="mt-4" />
-      </main>
-    </>
+      <NonCustodialNotice className="mt-4" />
+    </NarrowPage>
   );
 }
