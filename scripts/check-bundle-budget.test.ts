@@ -57,7 +57,9 @@ describe('overBudget', () => {
     expect(overBudget(rows, 600).map(r => r.route)).toEqual(['/labs']);
   });
 
-  it('passes the sample under the configured ceiling', () => {
-    expect(overBudget(firstLoadFromStats(STATS, gzipBytesOf), MAX_FIRST_LOAD_KB)).toEqual([]);
+  it('defaults to the configured ceiling', () => {
+    const rows = firstLoadFromStats(STATS, gzipBytesOf);
+    expect(overBudget(rows)).toEqual(overBudget(rows, MAX_FIRST_LOAD_KB));
+    expect(overBudget(rows).map(r => r.route)).toEqual(['/labs']);
   });
 });

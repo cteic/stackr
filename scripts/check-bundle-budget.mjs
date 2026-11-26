@@ -8,18 +8,18 @@
 // summary; gzipped bytes match what that column used to report.
 //
 // Ceiling, not a per-route baseline: a single documented ceiling is simple and
-// hard to game. On Next 16 with zod 4 the worst case is `/account` at ~762 kB
-// (measured 2026-11); the 800 kB ceiling leaves ~38 kB (~5%) of headroom. This
-// is a stopgap: moving the wallet stack out of the root providers should bring
-// it back to 650 kB. Raising it must be a deliberate, reviewed edit to this
-// file — that is the gate.
+// hard to game. With the wallet stack loaded after first paint, the worst case
+// is `/account` at ~469 kB (measured 2026-11); the 520 kB ceiling leaves ~51 kB
+// (~11%) of headroom for normal churn while still catching a real regression.
+// Raising it must be a deliberate, reviewed edit to this file — that is the
+// gate.
 
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-export const MAX_FIRST_LOAD_KB = 800;
+export const MAX_FIRST_LOAD_KB = 520;
 
 const WEB_DIR = new URL('../apps/web/', import.meta.url).pathname;
 export const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
