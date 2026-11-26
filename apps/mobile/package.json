@@ -11,7 +11,7 @@
     "build:android": "eas build --platform android",
     "export:check": "expo export --platform ios --output-dir .expo-export",
     "assets": "node scripts/generate-brand-assets.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "clean": "rm -rf .expo .expo-export node_modules"
