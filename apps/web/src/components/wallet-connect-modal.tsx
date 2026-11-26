@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAtom } from 'jotai';
 import {
   Button,
   ChainAvatar,
@@ -8,12 +9,12 @@ import {
   DialogContent,
   DialogDescription,
   DialogTitle,
-  DialogTrigger,
 } from '@stackr/ui';
 import { chainMeta, ChainSchema, type Chain } from '@stackr/models';
 import { useWalletConnections, type WalletId } from '@/lib/use-wallet-connections';
 import { useStackrLinkConnection } from '@/lib/stackr-link';
 import { StackrLinkPane } from '@/components/stackr-link-pane';
+import { walletModalOpenAtom } from '@/lib/wallet-modal-store';
 
 // Overlapping icons beyond this crowd the row and push the wallet name onto
 // a second line in the dialog's narrow width — most visibly for the Stackr
@@ -41,10 +42,10 @@ function ChainIconStack({ chains }: { chains: readonly Chain[] }) {
 export function WalletConnectModal() {
   const wallets = useWalletConnections();
   const stackrLink = useStackrLinkConnection();
+  const [open, setOpen] = useAtom(walletModalOpenAtom);
   const [view, setView] = useState<'list' | 'link'>('list');
   const [pending, setPending] = useState<WalletId | null>(null);
   const [error, setError] = useState<{ id: WalletId; message: string } | null>(null);
-  const anyConnected = wallets.some(w => w.connected) || stackrLink.connected;
 
   async function run(id: WalletId, action: () => void | Promise<void>) {
     setPending(id);
@@ -59,12 +60,7 @@ export function WalletConnectModal() {
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" variant={anyConnected ? 'outline' : 'primary'}>
-          {anyConnected ? 'Wallets' : 'Connect'}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-sm">
         <DialogTitle>Connect a wallet</DialogTitle>
         <DialogDescription>
