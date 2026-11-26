@@ -79,7 +79,7 @@ export default function HoldingsPage() {
   return (
     <>
       <Header />
-      <main className="w-full mx-auto max-w-3xl px-4 py-6">
+      <main className="flex w-full flex-1 flex-col mx-auto max-w-3xl px-4 py-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Holdings</h1>
           <Button asChild>
@@ -88,12 +88,14 @@ export default function HoldingsPage() {
         </div>
 
         {holdings.length === 0 ? (
-          <div className="rounded-lg border border-dashed py-12 px-6 text-center text-muted-foreground">
-            <p className="text-base mb-2">No holdings yet</p>
-            <p className="text-sm">
-              Add cash savings, stock positions, manual crypto balances, gold, or other assets to
-              track alongside your wallets.
-            </p>
+          <div className="flex min-h-[50vh] flex-1 flex-col items-center justify-center">
+            <div className="w-full rounded-lg border border-dashed py-12 px-6 text-center text-muted-foreground">
+              <p className="text-base mb-2">No holdings yet</p>
+              <p className="text-sm">
+                Add cash savings, stock positions, manual crypto balances, gold, or other assets to
+                track alongside your wallets.
+              </p>
+            </div>
           </div>
         ) : (
           <>
