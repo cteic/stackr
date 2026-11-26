@@ -15,8 +15,9 @@
 // gate.
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { gzipSync } from 'node:zlib';
 
 export const MAX_FIRST_LOAD_KB = 520;
@@ -62,31 +63,136 @@ export function overBudget(rows, ceilingKb = MAX_FIRST_LOAD_KB) {
   return rows.filter(r => r.firstLoadKb > ceilingKb);
 }
 
-function main() {
-  const build = spawnSync('pnpm', ['--filter', '@stackr/web', 'build'], {
+/**
+ * Gzipped size of a chunk listed in the stats. Next lists chunks relative to
+ * `apps/web` (`.next/static/...`), so they resolve against the `.next`
+ * directory being measured, which may be a base build outside this checkout.
+ */
+export function chunkReader(nextDir) {
+  return path => gzipSync(readFileSync(join(nextDir, path.replace(/^\.next\//, '')))).length;
+}
+
+function isReportRow(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof value.route === 'string' &&
+    typeof value.firstLoadKb === 'number'
+  );
+}
+
+/** Rows from a `--json` report, or `undefined` when the file is not one. */
+export function readReport(text) {
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed?.routes) && parsed.routes.every(isReportRow)) return parsed.routes;
+  } catch {
+    // Fall through: an unreadable base only loses the comparison.
+  }
+  return undefined;
+}
+
+function kb(value) {
+  return `${value.toFixed(1)} kB`;
+}
+
+function change(head, base) {
+  if (base === undefined) return 'new';
+  const delta = head - base;
+  if (Math.abs(delta) < 0.05) return '0.0 kB';
+  return `${delta > 0 ? '+' : '-'}${Math.abs(delta).toFixed(1)} kB`;
+}
+
+/**
+ * The pull-request report: one row per route, worst first, with the change
+ * against the base build when there is one. Built only from route names and
+ * numbers, so the comment cannot carry anything else.
+ */
+export function renderMarkdown(rows, baseRows, ceilingKb = MAX_FIRST_LOAD_KB) {
+  const base = new Map((baseRows ?? []).map(r => [r.route, r.firstLoadKb]));
+  const sorted = [...rows].sort((a, b) => b.firstLoadKb - a.firstLoadKb);
+  const over = overBudget(rows, ceilingKb);
+  const lines = [
+    over.length === 0
+      ? `Every route is within the ${ceilingKb} kB first-load JS ceiling (gzipped).`
+      : `${over.length} of ${rows.length} routes are over the ${ceilingKb} kB first-load JS ceiling (gzipped).`,
+    '',
+    baseRows ? '| Route | Base | This PR | Change | Budget |' : '| Route | This PR | Budget |',
+    baseRows ? '| --- | ---: | ---: | ---: | --- |' : '| --- | ---: | --- |',
+  ];
+  for (const { route, firstLoadKb } of sorted) {
+    const name = `\`${route.replaceAll('|', '\\|').replaceAll('`', '')}\``;
+    const status = firstLoadKb > ceilingKb ? 'over' : 'ok';
+    const before = base.get(route);
+    lines.push(
+      baseRows
+        ? `| ${name} | ${before === undefined ? '-' : kb(before)} | ${kb(firstLoadKb)} | ${change(firstLoadKb, before)} | ${status} |`
+        : `| ${name} | ${kb(firstLoadKb)} | ${status} |`,
+    );
+  }
+  const current = new Set(rows.map(r => r.route));
+  const removed = [...base.keys()].filter(route => !current.has(route));
+  if (removed.length > 0) {
+    lines.push('', `Removed since the base: ${removed.map(r => `\`${r}\``).join(', ')}.`);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function readArgs(argv) {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      'build-dir': { type: 'string' },
+      json: { type: 'string' },
+      base: { type: 'string' },
+      markdown: { type: 'string' },
+    },
+  });
+  return values;
+}
+
+function build() {
+  const result = spawnSync('pnpm', ['--filter', '@stackr/web', 'build'], {
     cwd: new URL('..', import.meta.url).pathname,
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
 
   // Echo the build output so CI logs still show the full route table.
-  process.stdout.write(build.stdout ?? '');
-  if (build.stderr) process.stderr.write(build.stderr);
+  process.stdout.write(result.stdout ?? '');
+  if (result.stderr) process.stderr.write(result.stderr);
 
-  if (build.status !== 0) {
+  if (result.status !== 0) {
     console.error('\n✗ bundle-budget: web build failed; cannot evaluate budget.');
-    process.exit(build.status ?? 1);
+    process.exit(result.status ?? 1);
   }
+}
 
-  const stats = JSON.parse(readFileSync(join(WEB_DIR, STATS_PATH), 'utf8'));
-  const rows = firstLoadFromStats(
-    stats,
-    path => gzipSync(readFileSync(join(WEB_DIR, path))).length,
+function main() {
+  const args = readArgs(process.argv.slice(2));
+  // With --build-dir the caller has already built (the shared CI workflow
+  // builds the pull request and its base); without it, build here.
+  const nextDir = args['build-dir'] ? resolve(args['build-dir']) : join(WEB_DIR, '.next');
+  if (!args['build-dir']) build();
+
+  const stats = JSON.parse(
+    readFileSync(join(nextDir, 'diagnostics', 'route-bundle-stats.json'), 'utf8'),
   );
+  const rows = firstLoadFromStats(stats, chunkReader(nextDir));
   if (rows.length === 0) {
     console.error(`\n✗ bundle-budget: no routes found in ${STATS_PATH}.`);
     process.exit(1);
   }
+
+  const baseRows = args.base ? readReport(readFileSync(args.base, 'utf8')) : undefined;
+  if (args.base && !baseRows) console.warn(`bundle-budget: ignoring unreadable base ${args.base}`);
+  if (args.json) {
+    writeFileSync(
+      args.json,
+      `${JSON.stringify({ ceilingKb: MAX_FIRST_LOAD_KB, routes: rows }, null, 2)}\n`,
+    );
+  }
+  if (args.markdown) writeFileSync(args.markdown, renderMarkdown(rows, baseRows));
 
   const offenders = overBudget(rows);
   const worst = rows.reduce((a, b) => (b.firstLoadKb > a.firstLoadKb ? b : a));
