@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@stackr/ui';
 import { ChainStatusIndicators } from '@/components/chain-status-indicators';
-import { WalletConnectModal } from '@/components/wallet-connect-modal';
+import { WalletConnectButton } from '@/components/wallet-connect-button';
 import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -59,7 +59,7 @@ export function Header() {
         <div className="hidden sm:flex">
           <ChainStatusIndicators />
         </div>
-        <WalletConnectModal />
+        <WalletConnectButton />
         <Button
           variant="ghost"
           size="icon"
