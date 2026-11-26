@@ -1,6 +1,6 @@
 import type { SignResult, WalletSignRequest } from '@stackr/wallet-link';
 import type { SignDecision, SignRequest, SignRequestTransport } from './sign-requests';
-import { peerLabel, renderSignDisplay } from './link-signing';
+import { assessMessagePayload, peerLabel, renderSignDisplay } from './link-signing';
 
 /**
  * The switchboard between a paired `WalletLinkSession` and the app's sign
@@ -74,6 +74,8 @@ export function createLinkSignBridge(executor: Executor): LinkSignBridge {
           originVerified: false,
           kind: request.kind,
           display: renderSignDisplay(request),
+          warning:
+            request.kind === 'message' ? assessMessagePayload(request.payload).warning : undefined,
           payload: request.payload,
           receivedAt: new Date().toISOString(),
         });
