@@ -13,7 +13,8 @@ import {
 } from '@stackr/ui';
 import { CustomThemeEditor } from '@/components/custom-theme-editor';
 import { CUSTOM_THEME_VALUE } from '@/lib/custom-theme';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue } from 'jotai';
+import { customThemeAtom } from '@/lib/settings-store';
 
 const THEMES = [
   { id: 'terminal', label: 'Terminal', swatch: ['#000000', '#00d68f', '#ff5247'] },
@@ -26,7 +27,7 @@ export function ThemePicker() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const customTheme = useSettingsStore(s => s.customTheme);
+  const customTheme = useAtomValue(customThemeAtom);
   useEffect(() => setMounted(true), []);
 
   const openCustom = () => {

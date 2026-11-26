@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { applyCustomTheme, clearCustomTheme, CUSTOM_THEME_VALUE } from '@/lib/custom-theme';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue } from 'jotai';
+import { customThemeAtom } from '@/lib/settings-store';
 
 /**
  * Applies the user's custom palette as inline CSS custom properties on the
@@ -14,7 +15,7 @@ import { useSettingsStore } from '@/lib/settings-store';
  */
 export function CustomThemeStyle() {
   const { theme } = useTheme();
-  const customTheme = useSettingsStore(s => s.customTheme);
+  const customTheme = useAtomValue(customThemeAtom);
 
   useEffect(() => {
     if (theme !== CUSTOM_THEME_VALUE) return;

@@ -88,6 +88,16 @@ describe('/api/hiro/[...path]', () => {
     expect(upstreamUrl).not.toContain(`${STX_ADDRESS}/../..`);
   });
 
+  it('refuses a dot segment that would resolve to a path outside the allow-list', async () => {
+    // ['metadata','v1','nft','..','ft'] matches the nft metadata pattern, but
+    // fetch would normalise it to /metadata/v1/ft.
+    for (const segment of ['..', '.']) {
+      const res = await GET(...proxyRequest(['metadata', 'v1', 'nft', segment, 'ft']));
+      expect(res.status).toBe(403);
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('forwards only whitelisted query params', async () => {
     await GET(
       ...proxyRequest(['extended', 'v1', 'tokens', 'nft', 'holdings'], {

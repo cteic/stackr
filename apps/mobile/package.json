@@ -10,7 +10,8 @@
     "build:ios": "eas build --platform ios",
     "build:android": "eas build --platform android",
     "export:check": "expo export --platform ios --output-dir .expo-export",
-    "typecheck": "tsc --noEmit",
+    "assets": "node scripts/generate-brand-assets.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "clean": "rm -rf .expo .expo-export node_modules"
@@ -35,6 +36,7 @@
     "expo-application": "~6.0.2",
     "expo-camera": "~16.0.18",
     "expo-clipboard": "~7.0.1",
+    "expo-constants": "~17.0.8",
     "expo-crypto": "~14.0.2",
     "expo-linking": "~7.0.5",
     "expo-local-authentication": "~15.0.2",
@@ -46,7 +48,7 @@
     "fast-text-encoding": "^1.0.6",
     "permissionless": "^0.2.47",
     "react": "18.3.1",
-    "react-native": "0.76.0",
+    "react-native": "0.76.9",
     "react-native-get-random-values": "^1.11.0",
     "react-native-passkeys": "^0.4.0",
     "react-native-qrcode-styled": "0.3.3",
@@ -56,7 +58,7 @@
     "react-native-webview": "13.12.5",
     "tamagui": "2.0.0-rc.42",
     "viem": "2.52.0",
-    "zod": "^3.24.1",
+    "zod": "^4.6.6",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

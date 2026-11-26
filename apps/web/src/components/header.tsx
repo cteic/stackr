@@ -8,7 +8,8 @@ import { ChainStatusIndicators } from '@/components/chain-status-indicators';
 import { WalletConnectModal } from '@/components/wallet-connect-modal';
 import { ThemePicker } from '@/components/theme-picker';
 import { MobileNav } from '@/components/mobile-nav';
-import { useSettingsStore } from '@/lib/settings-store';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { hideBalanceAtom, toggleHideBalanceAtom } from '@/lib/settings-store';
 import { isNavLinkActive, NAV_LINK_CLASS, NAV_LINK_FOCUS_CLASS } from '@/lib/nav-active';
 
 const NAV_LINKS = [
@@ -20,8 +21,8 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const hideBalance = useSettingsStore(s => s.hideBalance);
-  const toggleHideBalance = useSettingsStore(s => s.toggleHideBalance);
+  const hideBalance = useAtomValue(hideBalanceAtom);
+  const toggleHideBalance = useSetAtom(toggleHideBalanceAtom);
   const pathname = usePathname();
 
   return (

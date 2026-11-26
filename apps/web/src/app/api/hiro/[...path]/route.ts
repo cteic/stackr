@@ -116,6 +116,11 @@ async function handle(
   // (or any other reserved char) can't alter the upstream path, then match the
   // allow-list against exactly what will be forwarded.
   const { path } = await context.params;
+  // encodeURIComponent leaves '.' alone, so a whole '..' segment would pass
+  // the allow-list and then be resolved by fetch into a different path.
+  if (path.some(segment => segment === '.' || segment === '..')) {
+    return proxyError(403, 'request not allowed by proxy');
+  }
   const upstreamPath = path.map(segment => encodeURIComponent(segment)).join('/');
   if (!allowedPaths.some(pattern => pattern.test(upstreamPath))) {
     return proxyError(403, 'request not allowed by proxy');

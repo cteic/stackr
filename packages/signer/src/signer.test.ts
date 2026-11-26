@@ -68,6 +68,28 @@ describe('createSigner — revealMnemonic', () => {
   });
 });
 
+describe('createSigner — concurrent initialize', () => {
+  const OTHER_MNEMONIC =
+    'legal winner thank year wave sausage worth useful legal winner thank yellow';
+
+  it('keeps the first mnemonic and rejects the second when both start at once', async () => {
+    const storage = memoryStorage();
+    const signer = createSigner(storage);
+
+    const results = await Promise.allSettled([
+      signer.initialize(TEST_MNEMONIC),
+      signer.initialize(OTHER_MNEMONIC),
+    ]);
+
+    expect(results[0]?.status).toBe('fulfilled');
+    expect(results[1]).toMatchObject({
+      status: 'rejected',
+      reason: { code: 'already_initialized' },
+    });
+    expect(await signer.revealMnemonic()).toBe(TEST_MNEMONIC);
+  });
+});
+
 describe('createSigner — lifecycle', () => {
   it('fails closed before initialization', async () => {
     const signer = createSigner(memoryStorage());
@@ -291,6 +313,22 @@ describe('signTransaction — per chain', () => {
         throw new Error('expected a single-sig spending condition');
       }
     }
+  });
+
+  it('stx: refuses a transaction whose sender is a different account', async () => {
+    const { signer } = await initializedSigner();
+    const otherAccount = await signer.getAccount('stx', 1);
+    const unsigned = await makeUnsignedSTXTokenTransfer({
+      recipient: 'SP3FGQ8Z7JY9BWYZ5WM53E0M9NK7WHJF0691NZ159',
+      amount: 12_345n,
+      fee: 200n,
+      nonce: 0n,
+      publicKey: otherAccount.publicKey,
+      network: 'mainnet',
+    });
+    await expect(
+      signer.signTransaction('stx', 0, { transactionHex: serializeTransaction(unsigned) }),
+    ).rejects.toMatchObject({ code: 'signing_failed' });
   });
 
   it('sui: returns a wallet-format signature over the TransactionData intent', async () => {

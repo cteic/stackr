@@ -14,14 +14,15 @@ import {
   SelectValue,
 } from '@stackr/ui';
 import { track } from '@stackr/analytics';
-import { useWalletStore } from '@/lib/wallet-store';
+import { useSetAtom } from 'jotai';
+import { addWalletAtom } from '@/lib/wallet-store';
 import { Header } from '@/components/header';
 
 const chains = ChainSchema.options;
 
 export default function AddWalletPage() {
   const router = useRouter();
-  const addWallet = useWalletStore(s => s.addWallet);
+  const addWallet = useSetAtom(addWalletAtom);
   const [label, setLabel] = useState('');
   const [chain, setChain] = useState<Chain>('btc');
   const [address, setAddress] = useState('');

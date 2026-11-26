@@ -101,16 +101,18 @@ export default async function OGImage() {
     </div>,
     {
       ...size,
-      fonts: fontData
-        ? [
-            {
-              name: 'LiberationSans',
-              data: fontData,
-              style: 'normal' as const,
-              weight: 700 as const,
-            },
-          ]
-        : [],
+      ...(fontData
+        ? {
+            fonts: [
+              {
+                name: 'LiberationSans',
+                data: fontData,
+                style: 'normal' as const,
+                weight: 700 as const,
+              },
+            ],
+          }
+        : {}),
     },
   );
 }

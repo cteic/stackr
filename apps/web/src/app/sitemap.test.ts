@@ -17,6 +17,9 @@ describe('sitemap', () => {
     expect(urls).toContain('https://stackr.ie/holdings');
     expect(urls).toContain('https://stackr.ie/collectibles');
     expect(urls).toContain('https://stackr.ie/wallet/add');
+    expect(urls).toContain('https://stackr.ie/privacy');
+    expect(urls).toContain('https://stackr.ie/terms');
+    expect(urls).toContain('https://stackr.ie/support');
     urls.forEach(url => expect(url).toMatch(/^https:\/\/stackr\.ie\//));
   });
 
