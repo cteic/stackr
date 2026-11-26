@@ -58,3 +58,26 @@ describe('createLinkSignBridge origin binding', () => {
     expect(delivered[0].origin).not.toBe(delivered[1].origin);
   });
 });
+
+/**
+ * M1 regression (staff review round 2, #141): a message that is not plain
+ * readable text must reach the sheet with a warning, so approval takes a
+ * second, explicit tap instead of signing opaque bytes on one.
+ */
+describe('createLinkSignBridge payload warnings', () => {
+  it('attaches no warning to a plain-text message', () => {
+    const { bridge, delivered } = capture();
+
+    void bridge.handleSessionRequest(walletRequest({ payload: 'Sign in\nnonce: 1' }), CHANNEL_A);
+
+    expect(delivered[0]?.warning).toBeUndefined();
+  });
+
+  it('warns on a raw hex message, with its byte length', () => {
+    const { bridge, delivered } = capture();
+
+    void bridge.handleSessionRequest(walletRequest({ payload: `0x${'ab'.repeat(32)}` }), CHANNEL_A);
+
+    expect(delivered[0]?.warning).toMatch(/raw hex data \(66 bytes\)/);
+  });
+});

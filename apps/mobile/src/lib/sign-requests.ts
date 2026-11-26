@@ -26,6 +26,12 @@ export interface SignRequest {
   kind: 'message' | 'transaction';
   /** Human-readable rendering of what is being signed. */
   display: string;
+  /**
+   * Set when `display` cannot be trusted as a faithful rendering (raw hex,
+   * structured data, hidden characters, truncation). The sheet shows it and
+   * asks for a second, explicit approval.
+   */
+  warning?: string;
   /** Raw payload, passed to the signer untouched on approval. */
   payload: unknown;
   receivedAt: string;

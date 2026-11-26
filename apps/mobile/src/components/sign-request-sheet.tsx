@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button, Text, XStack, YStack } from 'tamagui';
 import type { SignRequest } from '@/lib/sign-requests';
 
@@ -24,6 +25,19 @@ export function SignRequestSheet({
   onReject,
   busy,
 }: SignRequestSheetProps) {
+  // A request whose display can't be trusted needs a second, deliberate tap.
+  // The sign screen keys this sheet by request id, so this resets per request.
+  const [armed, setArmed] = useState(false);
+  const needsSecondTap = request.warning !== undefined && !armed;
+
+  function handleApprove() {
+    if (needsSecondTap) {
+      setArmed(true);
+      return;
+    }
+    onApprove();
+  }
+
   return (
     <YStack
       backgroundColor="$surface"
@@ -76,6 +90,25 @@ export function SignRequestSheet({
         </Text>
       </YStack>
 
+      {request.warning === undefined ? null : (
+        <YStack
+          backgroundColor="$background"
+          borderColor="$warning"
+          borderWidth={1}
+          borderRadius="$3"
+          padding="$3"
+          gap="$1"
+          testID="sign-payload-warning"
+        >
+          <Text color="$warning" fontSize="$2" fontWeight="700" textTransform="uppercase">
+            Check before signing
+          </Text>
+          <Text color="$textMuted" fontSize="$2">
+            {request.warning}
+          </Text>
+        </YStack>
+      )}
+
       <XStack gap="$3">
         <Button
           flex={1}
@@ -89,9 +122,15 @@ export function SignRequestSheet({
             Reject
           </Text>
         </Button>
-        <Button flex={1} backgroundColor="$accent" disabled={busy} onPress={onApprove}>
+        <Button
+          flex={1}
+          backgroundColor={armed ? '$warning' : '$accent'}
+          disabled={busy}
+          onPress={handleApprove}
+          testID="sign-approve"
+        >
           <Text color="$accentText" fontSize="$4" fontWeight="700">
-            Approve
+            {armed ? 'Approve anyway' : 'Approve'}
           </Text>
         </Button>
       </XStack>
