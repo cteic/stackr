@@ -61,10 +61,15 @@ export async function fetchStockQuote(symbol: string): Promise<StockQuote> {
     'stocks.fetchQuote(ingress)',
   );
   const quote = data['Global Quote'] ?? {};
+  const price = parseFloat(quote['05. price'] ?? '');
+
+  if (!Number.isFinite(price)) {
+    throw new Error(`Alpha Vantage returned no quote for ${symbol}`);
+  }
 
   const normalized = {
     symbol: quote['01. symbol'] ?? symbol,
-    price: parseFloat(quote['05. price'] ?? '0'),
+    price,
     change: parseFloat(quote['09. change'] ?? '0'),
     changePercent: parseFloat((quote['10. change percent'] ?? '0').replace('%', '')),
   };
