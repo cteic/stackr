@@ -56,6 +56,7 @@ export default function SignScreen() {
         </YStack>
       ) : (
         <SignRequestSheet
+          key={head.id}
           request={head}
           queueLength={queue.length}
           busy={busy}
