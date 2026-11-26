@@ -11,7 +11,7 @@
     "build:android": "eas build --platform android",
     "export:check": "expo export --platform ios --output-dir .expo-export",
     "assets": "node scripts/generate-brand-assets.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "clean": "rm -rf .expo .expo-export node_modules"
@@ -58,7 +58,7 @@
     "react-native-webview": "13.12.5",
     "tamagui": "2.0.0-rc.42",
     "viem": "2.52.0",
-    "zod": "^3.24.1",
+    "zod": "^4.6.6",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
