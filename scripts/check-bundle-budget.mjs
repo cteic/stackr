@@ -1,10 +1,11 @@
 // First-load JS bundle-size budget for `apps/web` (CI gate, issue #97).
 //
 // The wallet-adapter / RainbowKit / charts stack is heavy and easy to bloat
-// silently. This script builds the web app, parses the per-route "First Load
-// JS" column from Next's build summary, and fails if any route exceeds the
-// ceiling below. It parses the build *summary* (not a fragile internal
-// manifest) because that's the same number Next reports and reviewers see.
+// silently. This script builds the web app, reads each route's first-load
+// chunk list from `.next/diagnostics/route-bundle-stats.json`, sums the
+// gzipped size of those chunks, and fails if any route exceeds the ceiling
+// below. Next 16 no longer prints a "First Load JS" column in its build
+// summary; gzipped bytes match what that column used to report.
 //
 // Ceiling, not a per-route baseline: a single documented ceiling is simple and
 // hard to game. Current worst-case is `/labs` at ~613 kB (measured 2026-06);
@@ -13,38 +14,46 @@
 // edit to this file — that is the gate.
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 export const MAX_FIRST_LOAD_KB = 650;
 
-/**
- * Parse Next's build summary into `{ route, firstLoadKb }` rows.
- *
- * Route rows look like:
- *   ├ ○ /labs                                3.78 kB         613 kB
- * The First Load JS is the last size token on the line. Sizes come in B / kB /
- * MB; everything is normalised to kB. Non-route lines are ignored.
- */
-export function parseFirstLoad(log) {
-  const rows = [];
-  for (const raw of log.split('\n')) {
-    // Defensive: strip a turbo task prefix if the log was captured through it.
-    const line = raw.replace(/^@stackr\/web:build:\s?/, '');
-    // Route rows start with a tree connector and a route-type glyph.
-    const match = line.match(/^[┌├└]\s+[○●ƒλ]\s+(\S+)\s+(.*)$/u);
-    if (!match) continue;
-    const [, route, rest] = match;
-    const sizes = [...rest.matchAll(/([\d.]+)\s?(B|kB|MB)\b/g)];
-    if (sizes.length === 0) continue;
-    const [, value, unit] = sizes[sizes.length - 1];
-    rows.push({ route, firstLoadKb: toKb(Number(value), unit) });
-  }
-  return rows;
+const WEB_DIR = new URL('../apps/web/', import.meta.url).pathname;
+export const STATS_PATH = '.next/diagnostics/route-bundle-stats.json';
+
+function isRouteStat(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof value.route === 'string' &&
+    Array.isArray(value.firstLoadChunkPaths) &&
+    value.firstLoadChunkPaths.every(p => typeof p === 'string')
+  );
 }
 
-function toKb(value, unit) {
-  if (unit === 'MB') return value * 1024;
-  if (unit === 'B') return value / 1024;
-  return value;
+/**
+ * Turn Next's route bundle stats into `{ route, firstLoadKb }` rows.
+ *
+ * `gzipBytesOf` maps a chunk path (relative to `apps/web`) to its gzipped
+ * size in bytes, so tests can supply sizes without a build. Throws on a
+ * stats shape it does not recognise, so a future Next change fails loudly
+ * instead of passing with zero routes.
+ */
+export function firstLoadFromStats(stats, gzipBytesOf) {
+  if (!Array.isArray(stats) || !stats.every(isRouteStat)) {
+    throw new Error(`unrecognised ${STATS_PATH} shape`);
+  }
+  const cache = new Map();
+  const sizeOf = path => {
+    if (!cache.has(path)) cache.set(path, gzipBytesOf(path));
+    return cache.get(path);
+  };
+  return stats.map(({ route, firstLoadChunkPaths }) => ({
+    route,
+    firstLoadKb: firstLoadChunkPaths.reduce((sum, p) => sum + sizeOf(p), 0) / 1024,
+  }));
 }
 
 /** Routes whose first-load JS exceeds the ceiling. */
@@ -68,9 +77,13 @@ function main() {
     process.exit(build.status ?? 1);
   }
 
-  const rows = parseFirstLoad(build.stdout ?? '');
+  const stats = JSON.parse(readFileSync(join(WEB_DIR, STATS_PATH), 'utf8'));
+  const rows = firstLoadFromStats(
+    stats,
+    path => gzipSync(readFileSync(join(WEB_DIR, path))).length,
+  );
   if (rows.length === 0) {
-    console.error('\n✗ bundle-budget: no route sizes parsed from the build output.');
+    console.error(`\n✗ bundle-budget: no routes found in ${STATS_PATH}.`);
     process.exit(1);
   }
 
