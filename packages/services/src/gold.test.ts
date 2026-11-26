@@ -20,18 +20,19 @@ afterEach(() => {
 describe('normalizeGoldPrice', () => {
   it('reads the display-currency price and 24h change', () => {
     const price = normalizeGoldPrice(
-      { 'pax-gold': { eur: 2100.5, usd: 2300.25, usd_24h_change: 1.2 } },
+      {
+        'pax-gold': { eur: 2100.5, eur_24h_change: 0.8, usd: 2300.25, usd_24h_change: 1.2 },
+      },
       'eur',
     );
 
-    expect(price).toEqual({ fiatPerOunce: 2100.5, change24h: 1.2, currency: 'eur' });
+    expect(price).toEqual({ fiatPerOunce: 2100.5, change24h: 0.8, currency: 'eur' });
   });
 
-  it('falls back to the usd price when the display currency is missing', () => {
-    const price = normalizeGoldPrice({ 'pax-gold': { usd: 2300.25 } }, 'eur');
+  it('never relabels the usd price as the display currency', () => {
+    const price = normalizeGoldPrice({ 'pax-gold': { usd: 2300.25, usd_24h_change: 1.2 } }, 'eur');
 
-    expect(price.fiatPerOunce).toBe(2300.25);
-    expect(price.currency).toBe('eur');
+    expect(price).toEqual({ fiatPerOunce: 0, change24h: 0, currency: 'eur' });
   });
 
   it('degrades to zeros when CoinGecko omits the id (no throw mid-render)', () => {
@@ -52,6 +53,12 @@ describe('fetchGoldPrice', () => {
     );
     expect(price.fiatPerOunce).toBe(2300);
     expect(price.change24h).toBe(-0.4);
+  });
+
+  it('rejects when CoinGecko has no price in the display currency', async () => {
+    mockFetchOnce({ 'pax-gold': { usd: 2300, usd_24h_change: -0.4 } });
+
+    await expect(fetchGoldPrice('eur')).rejects.toThrow('no eur gold price');
   });
 
   it('throws on a non-ok response', async () => {
