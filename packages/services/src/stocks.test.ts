@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseDailyCloses } from './stocks';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { fetchStockQuote, fetchStockQuotes, parseDailyCloses } from './stocks';
 
 const SERIES = {
   '2026-05-21': {
@@ -40,5 +40,57 @@ describe('parseDailyCloses', () => {
 
   it('returns an empty array when the series is missing', () => {
     expect(parseDailyCloses(undefined, 30)).toEqual([]);
+  });
+});
+
+describe('fetchStockQuote', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubQuoteResponse(body: unknown) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json(body))),
+    );
+  }
+
+  it('returns the quoted price', async () => {
+    stubQuoteResponse({
+      'Global Quote': {
+        '01. symbol': 'AAPL',
+        '05. price': '191.50',
+        '09. change': '1.25',
+        '10. change percent': '0.66%',
+      },
+    });
+
+    await expect(fetchStockQuote('AAPL')).resolves.toEqual({
+      symbol: 'AAPL',
+      price: 191.5,
+      change: 1.25,
+      changePercent: 0.66,
+    });
+  });
+
+  it('rejects a rate-limit reply instead of pricing the stock at 0', async () => {
+    stubQuoteResponse({
+      Information:
+        'Thank you for using Alpha Vantage! Please consider spreading out your requests.',
+    });
+
+    await expect(fetchStockQuote('AAPL')).rejects.toThrow('no quote for AAPL');
+  });
+
+  it('rejects an empty quote for an unknown symbol', async () => {
+    stubQuoteResponse({ 'Global Quote': {} });
+
+    await expect(fetchStockQuote('NOPE')).rejects.toThrow('no quote for NOPE');
+  });
+
+  it('leaves a rate-limited symbol out of a batch', async () => {
+    stubQuoteResponse({ Note: 'API rate limit reached.' });
+
+    await expect(fetchStockQuotes(['AAPL', 'MSFT'])).resolves.toEqual([]);
   });
 });
