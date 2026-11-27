@@ -111,6 +111,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
   // `headers()` is unsupported (and ignored, with a build warning) under
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
