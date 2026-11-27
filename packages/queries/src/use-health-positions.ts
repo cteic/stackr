@@ -2,6 +2,7 @@ import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { Chain, HealthPosition } from '@stackr/models';
 import { healthAdapters } from '@stackr/services';
 import { queryKeys } from './keys.js';
+import { retryRemoteRead } from './retry.js';
 
 /** Watched/connected addresses grouped by the chain they live on. */
 export type HealthAddressesByChain = Partial<Record<Chain, string[]>>;
@@ -81,6 +82,7 @@ export function useHealthPositions(
       queryFn: () => adapter.fetchPosition(address),
       staleTime: HEALTH_STALE_TIME,
       refetchOnWindowFocus: true,
+      retry: retryRemoteRead,
       // Deliberately no refetchInterval — health is never background-polled.
     })),
   });
