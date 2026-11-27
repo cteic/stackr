@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useState,
@@ -148,16 +147,13 @@ export function useController(
   | ActivityControllerState {
   const { messenger } = useControllers();
 
-  const subscribe = useCallback(
-    (onStoreChange: () => void) =>
-      messenger.subscribe(
-        `${controller.name}:stateChange` as PreferencesControllerEvents['type'],
-        onStoreChange,
-      ),
-    [messenger, controller],
-  );
+  const subscribe = (onStoreChange: () => void) =>
+    messenger.subscribe(
+      `${controller.name}:stateChange` as PreferencesControllerEvents['type'],
+      onStoreChange,
+    );
 
-  const getSnapshot = useCallback(() => controller.state, [controller]);
+  const getSnapshot = () => controller.state;
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

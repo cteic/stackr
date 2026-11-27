@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useState,
@@ -92,9 +91,9 @@ export function ActivityControllerProvider({ children }: { children: ReactNode }
   const connectedAddresses = useAtomValue(connectedAddressesAtom);
   const [pinned, setPinned] = useState<WalletRef[]>([]);
 
-  const trackWallet = useCallback((ref: WalletRef) => {
+  const trackWallet = (ref: WalletRef) => {
     setPinned(prev => (prev.some(entry => sameRef(entry, ref)) ? prev : [...prev, ref]));
-  }, []);
+  };
 
   useEffect(() => {
     controllers.activity.setWatchedWallets(buildWalletRefs(wallets, connectedAddresses, pinned));
@@ -124,12 +123,9 @@ function useActivityControllers(): ActivityControllers {
 export function useActivityState(): ActivityControllerState {
   const { messenger, activity } = useActivityControllers();
 
-  const subscribe = useCallback(
-    (onStoreChange: () => void) =>
-      messenger.subscribe('ActivityController:stateChange', onStoreChange),
-    [messenger],
-  );
-  const getSnapshot = useCallback(() => activity.state, [activity]);
+  const subscribe = (onStoreChange: () => void) =>
+    messenger.subscribe('ActivityController:stateChange', onStoreChange);
+  const getSnapshot = () => activity.state;
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
