@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { maxUint256 } from 'viem';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ContractFunctionExecutionError, maxUint256 } from 'viem';
+import { ServiceException } from '../service-error.js';
 import { fetchAavePosition, normalizeAaveAccountData, type AaveAccountData } from './aave.js';
 
 /**
@@ -95,6 +96,31 @@ describe('normalizeAaveAccountData', () => {
 });
 
 describe('fetchAavePosition', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([429, 503])(
+    'preserves the distinction between HTTP %i and the RPC error code',
+    async status => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          Response.json(
+            { jsonrpc: '2.0', id: null, error: { code: -32000, message: 'request refused' } },
+            { status },
+          ),
+        ),
+      );
+
+      const result = fetchAavePosition('0x00000000219ab540356cBB839Cbe05303d7705Fa');
+      if (status === 429) {
+        await expect(result).rejects.toBeInstanceOf(ServiceException);
+        await expect(result).rejects.toMatchObject({ serviceError: { kind: 'rate-limited' } });
+      } else {
+        await expect(result).rejects.toBeInstanceOf(ContractFunctionExecutionError);
+      }
+    },
+  );
+
   it('reads through the injected viem read and normalizes the result', async () => {
     const read = vi.fn(
       async (): Promise<AaveAccountData> =>

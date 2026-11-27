@@ -1,4 +1,4 @@
-import { createPublicClient, getAddress, http, maxUint256, type PublicClient } from 'viem';
+import { createPublicClient, getAddress, http, maxUint256 } from 'viem';
 import { assertValidAddress } from '../address-guard.js';
 import { mainnet } from 'viem/chains';
 import type { HealthPosition, HealthPositionNative } from '@stackr/models';
@@ -7,6 +7,7 @@ import type { HealthAdapter } from '../ports.js';
 import { resolveEthRpcUrl } from '../eth-rpc.js';
 import { parseOrThrow } from '../validate.js';
 import { formatBaseUnits } from '../base-units.js';
+import { ServiceException } from '../service-error.js';
 
 /**
  * Aave v3 liquidation-health adapter (Track B of ADR 0016).
@@ -66,23 +67,36 @@ export type AaveAccountData = readonly [bigint, bigint, bigint, bigint, bigint, 
  * `resolveEthRpcUrl`. Without a key the read still works but may be slower /
  * rate-limited.
  */
-function getClient(): PublicClient {
-  return createPublicClient({
-    chain: mainnet,
-    transport: http(resolveEthRpcUrl()),
-  });
-}
-
 async function readUserAccountData(address: string): Promise<AaveAccountData> {
-  const client = getClient();
+  let status: number | undefined;
+  const client = createPublicClient({
+    chain: mainnet,
+    transport: http(resolveEthRpcUrl(), {
+      onFetchRequest() {
+        status = undefined;
+      },
+      onFetchResponse(response) {
+        // viem drops the HTTP status when the body is a JSON-RPC error.
+        status = response.status;
+      },
+    }),
+  });
+
   // `getAddress` checksums + validates, yielding viem's `Address` type without
   // an `as` cast (and rejecting malformed input at the boundary).
-  return client.readContract({
-    address: AAVE_V3_POOL,
-    abi: poolAbi,
-    functionName: 'getUserAccountData',
-    args: [getAddress(address)],
-  });
+  try {
+    return await client.readContract({
+      address: AAVE_V3_POOL,
+      abi: poolAbi,
+      functionName: 'getUserAccountData',
+      args: [getAddress(address)],
+    });
+  } catch (error) {
+    if (status === 429) {
+      throw new ServiceException({ kind: 'rate-limited', message: 'rate limit exceeded' });
+    }
+    throw error;
+  }
 }
 
 /**
