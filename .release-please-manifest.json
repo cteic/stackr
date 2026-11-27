@@ -1,7 +1,7 @@
 {
-  "apps/web": "0.0.0",
-  "packages/models": "0.0.0",
-  "packages/services": "0.0.0",
-  "packages/queries": "0.0.0",
-  "packages/ui": "0.0.0"
+  "apps/web": "1.0.0",
+  "packages/models": "1.0.0",
+  "packages/services": "1.0.0",
+  "packages/queries": "1.0.0",
+  "packages/ui": "1.0.0"
 }
