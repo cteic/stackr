@@ -44,7 +44,7 @@ export default function AccountPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Account</h1>
         {supabase === null ? (
-          <Callout variant="warning">
+          <Callout variant="info">
             Sign-in isn&apos;t set up for this deployment yet — it only unlocks alerts and sync.
             Your portfolio itself never needed an account.
           </Callout>
