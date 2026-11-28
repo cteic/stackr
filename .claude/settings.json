@@ -14,5 +14,10 @@
       "$defaults",
       "Bash(git push origin main:*) — direct or force push to the production branch"
     ]
+  },
+  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }

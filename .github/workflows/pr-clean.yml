@@ -1,0 +1,8 @@
+name: PR clean
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions: { contents: read }
+jobs:
+  pr-clean:
+    uses: cteic/foundry/.github/workflows/pr-clean.yml@3942c71d5f918bf8ffc62339f5f265ccc336362f

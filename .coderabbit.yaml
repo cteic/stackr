@@ -17,8 +17,12 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    # One review per PR, when it opens or leaves draft. A follow-up push does
+    # not trigger another: comment `@coderabbitai review` to ask for one. This
+    # keeps the review quota for new PRs.
+    auto_incremental_review: false
     # Both, deliberately. `dev` is the integration branch, but `hotfix/*`
-    # branches off `main` and those PRs go straight to production — the
+    # branches off `main` and those PRs go straight to production, the
     # last place to skip a review.
     base_branches: [dev, main]
   path_filters:
@@ -41,6 +45,20 @@ reviews:
         non-kebab-case filenames.
         Do not comment on pre-existing comments unless the diff changes them,
         and do not suggest adding comments.
+    - path: '**/*.{tsx,jsx}'
+      instructions: >-
+        Apply the cteic React component architecture
+        (https://github.com/cteic/foundry/blob/dev/agents/react-components.md).
+        Flag: a component that fetches data or runs effects and also renders
+        more than a composition of child components (split it into a
+        container and presentational components); `useEffect`, data-library
+        hooks, router hooks, storage or analytics inside a presentational or
+        layout component; a layout component that takes domain data; logic
+        inline in JSX or a component body (ternary chains, thresholds, unit
+        maths, string building) instead of a unit-tested pure function in
+        `lib/` or a data package; inline `style={{ ... }}` object literals
+        beyond one computed value; a JSX return longer than about 40 lines
+        that should be named child components.
     - path: '**/*.{ts,tsx,js,jsx,mjs,cjs,astro}'
       instructions: >-
         Treat any secret reaching the client bundle as a blocking defect.
@@ -60,6 +78,8 @@ reviews:
         For CI workflows, flag actions pinned to a mutable tag rather than a
         commit SHA, secrets echoed into logs or step outputs, and
         `pull_request_target` used with a checkout of untrusted head code.
+    # BEGIN repo-specific (extra path_instructions items only; the drift check ignores this region)
+    # END repo-specific
   tools:
     gitleaks:
       enabled: true
