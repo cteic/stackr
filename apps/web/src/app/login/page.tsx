@@ -42,7 +42,7 @@ export default function LoginPage() {
       </p>
 
       {supabase === null ? (
-        <Callout variant="warning">
+        <Callout variant="info">
           Sign-in isn&apos;t set up for this deployment yet — it only unlocks liquidation alerts.
           Your portfolio itself never needed an account.
         </Callout>
